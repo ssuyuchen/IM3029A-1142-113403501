@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World Styles</title>
+    <style>
+        body {
+            font-family: serif;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .banner {
+            font-size: 32px;
+            font-weight: bold;
+            padding: 10px 20px;
+            width: fit-content;
+            min-width: 400px;
+        }
+
+        /* Top Banner: Double Border */
+        .top-banner {
+            background-color: lightblue;
+            border: 5px double tomato;
+            color: black;
+        }
+
+        /* Middle Banner: Rounded & Yellow */
+        .middle-banner {
+            background-color: yellow;
+            border: 3px solid dodgerblue;
+            border-radius: 15px;
+            color: black;
+        }
+
+        /* Bottom Banner: Dotted Border & Green */
+        .bottom-banner {
+            background-color: mediumseagreen;
+            border: 8px dotted gray;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="banner top-banner">Hello World</div>
+    
+    <div class="banner middle-banner">Hello World</div>
+    
+    <div class="banner bottom-banner">Hello World</div>
+
+</body>
+</html>
