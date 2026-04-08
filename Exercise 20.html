@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Assignment Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        /* Table styling */
+        table {
+            border-collapse: collapse;
+            width: 300px;
+            margin: 50px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: gray;
+            color: white;
+        }
+
+        /* Alternate row colors */
+        tr:nth-child(even) {
+            background-color: #ffff00; /* yellow */
+        }
+
+        tr:nth-child(odd):not(:first-child) {
+            background-color: #e6e6e6; /* light gray */
+        }
+
+        /* Fixed div */
+        .fixed-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            border: 3px solid green;
+            padding: 15px;
+            width: 200px;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Table -->
+    <table>
+        <tr>
+            <th>Firstname</th>
+            <th>Lastname</th>
+        </tr>
+        <tr>
+            <td>1</td>
+            <td>1</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>2</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>3</td>
+        </tr>
+    </table>
+
+    <!-- Fixed div -->
+    <div class="fixed-box">
+        This div element has position: fixed;
+    </div>
+
+</body>
+</html>
