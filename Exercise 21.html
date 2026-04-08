@@ -1,44 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>CSS Exercise - Float & Inline-block</title>
-
 <style>
-    body {
-        font-family: Georgia, serif;
-        background: #f0f0f0;
-    }
+.container {
+    width: 800px;
+    margin: auto;
+    border: 1px solid #ccc;
+    padding: 20px;
+    font-family: serif;
+}
 
-    .container {
-        width: 800px;
-        margin: 40px auto;
-        padding: 20px;
-        background: #fff;
-        border: 1px solid #ccc;
-        box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
+/* inline-block 重點 */
+.highlight {
+    display: inline-block;
+    background: yellow;
+    border: 2px solid blue;
+    padding: 3px 6px;
+    margin: 2px;
+}
 
-    /* Highlighted inline-block words */
-    .highlight {
-        display: inline-block;
-        background: yellow;
-        border: 2px solid blue;
-        padding: 2px 6px;
-        margin: 2px;
-        font-weight: bold;
-    }
-
-    /* Float box */
-    .float-box {
-        float: right;
-        width: 200px;
-        height: 200px;
-        border: 4px solid green;
-        padding: 10px;
-        overflow: auto;
-        margin-left: 15px;
-    }
+/* float + overflow auto 重點 */
+.float-box {
+    float: right;
+    width: 180px;
+    height: 200px;
+    border: 4px solid green;
+    padding: 10px;
+    overflow: auto;  /* ⭐ 這題重點 */
+    margin-left: 15px;
+}
 </style>
 </head>
 
