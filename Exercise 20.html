@@ -1,78 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Assignment Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
+  <title>My Page</title>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
 
-        /* Table styling */
-        table {
-            border-collapse: collapse;
-            width: 300px;
-            margin: 50px;
-        }
+    th, td {
+      width: 100px;
+      height: 40px;
+      padding: 5px;
+    }
 
-        th, td {
-            border: 1px solid black;
-            padding: 10px;
-            text-align: center;
-        }
+    th {
+      background-color: gray;
+      color: white;
+    }
 
-        th {
-            background-color: gray;
-            color: white;
-        }
+    .yellow {
+      background-color: yellow;
+    }
 
-        /* Alternate row colors */
-        tr:nth-child(even) {
-            background-color: #ffff00; /* yellow */
-        }
-
-        tr:nth-child(odd):not(:first-child) {
-            background-color: #e6e6e6; /* light gray */
-        }
-
-        /* Fixed div */
-        .fixed-box {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            border: 3px solid green;
-            padding: 15px;
-            width: 200px;
-            background-color: white;
-        }
-    </style>
+    div {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 150px;
+      border: 2px solid green;
+      padding: 10px;
+      background-color: white;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Table -->
-    <table>
-        <tr>
-            <th>Firstname</th>
-            <th>Lastname</th>
-        </tr>
-        <tr>
-            <td>1</td>
-            <td>1</td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td>2</td>
-        </tr>
-        <tr>
-            <td>3</td>
-            <td>3</td>
-        </tr>
-    </table>
+  <table>
+    <tr>
+      <th>Firstname</th>
+      <th>Lastname</th>
+    </tr>
+    <tr class="yellow">
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>2</td>
+    </tr>
+    <tr class="yellow">
+      <td>3</td>
+      <td>3</td>
+    </tr>
+  </table>
 
-    <!-- Fixed div -->
-    <div class="fixed-box">
-        This div element has position: fixed;
-    </div>
+  <div>
+    This div element has position: fixed;
+  </div>
 
 </body>
 </html>
