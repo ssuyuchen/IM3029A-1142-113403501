@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CSS Exercise - Float & Inline-block</title>
+
+<style>
+    body {
+        font-family: Georgia, serif;
+        background: #f0f0f0;
+    }
+
+    .container {
+        width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+        background: #fff;
+        border: 1px solid #ccc;
+        box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    }
+
+    /* Highlighted inline-block words */
+    .highlight {
+        display: inline-block;
+        background: yellow;
+        border: 2px solid blue;
+        padding: 2px 6px;
+        margin: 2px;
+        font-weight: bold;
+    }
+
+    /* Float box */
+    .float-box {
+        float: right;
+        width: 200px;
+        height: 200px;
+        border: 4px solid green;
+        padding: 10px;
+        overflow: auto;
+        margin-left: 15px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="float-box">
+        A float div with overflow auto. A float div with overflow auto.
+        A float div with overflow auto. A float div with overflow auto.
+        A float div with overflow auto. A float div with overflow auto.
+    </div>
+
+    <p>
+        (Just long sentence.) Let me not to the marriage of true minds Admit impediments.
+        <span class="highlight">Love</span> is not love Which alters when it alteration finds,
+        Or bends with the remover to remove: O, no! it is an ever-fix`ed mark,
+        That looks on tempests and is never shaken; It is the star to every wand'ring bark,
+        Whose worth's unknown, although his height be taken.
+        <span class="highlight">Love's</span> not Time's fool, though rosy lips and cheeks
+        Within his bending sickle's compass come;
+        <span class="highlight">Love</span> alters not with his brief hours and weeks,
+        But bears it out even to the edge of doom:
+        If this be error and upon me proved, I never writ, nor no man ever loved.
+    </p>
+
+</div>
+
+</body>
+</html>
