@@ -3,38 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-
     <title>My First Bootstrap Page</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <style>
+        /* Small adjustment to match the spacing in the screenshot */
+        body {
+            padding-top: 50px;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-    
-    <!-- Jumbotron -->
-    <div class="jumbotron">
-        <h1>My First Bootstrap Page</h1>
+    <div class="container">
+        
+        <div class="jumbotron">
+            <h1>My First Bootstrap Page</h1>
+        </div>
+
+        <div class="form-group">
+            <label for="usr">Input:</label>
+            <input type="text" class="form-control" id="usr">
+        </div>
+
+        <div class="alert alert-success">
+            Successful alert
+        </div>
+
+        <div style="margin-top: 20px;">
+            <button type="button" class="btn btn-default">Button</button>
+
+            <span class="badge">badge</span>
+        </div>
+
     </div>
 
-    <!-- Input -->
-    <div class="form-group">
-        <label for="inputText">Input:</label>
-        <input type="text" id="inputText" class="form-control">
-    </div>
-
-    <!-- Alert -->
-    <div class="alert alert-success">
-        Successful alert
-    </div>
-
-    <!-- Button + Badge -->
-    <button class="btn btn-default">
-        Button <span class="badge">badge</span>
-    </button>
-
-</div>
-
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 </body>
 </html>
