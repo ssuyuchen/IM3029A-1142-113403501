@@ -13,12 +13,12 @@ body {
     align-items: center;
 }
 
-/* 外層容器 */
 .container {
     width: 90%;
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* 關鍵 */
     align-items: center;
+    gap: 0; /* 確保沒有間距 */
 }
 
 /* 左圖 */
@@ -37,7 +37,7 @@ body {
     object-fit: cover;
 }
 
-/* 右圖（有變形） */
+/* 右圖 */
 .right {
     width: 33%;
     height: 300px;
@@ -49,13 +49,8 @@ body {
 <body>
 
 <div class="container">
-    <!-- 左圖 -->
     <img src="https://taiwan-water.com/wp-content/uploads/2017/06/e6b395e59c8b-01.jpg" class="left">
-
-    <!-- 中間圓形 -->
     <img src="https://m.media-amazon.com/images/I/71R5n2ezOuL.jpg" class="middle">
-
-    <!-- 右圖 -->
     <img src="https://taiwan-water.com/wp-content/uploads/2017/06/e6b395e59c8b-01.jpg" class="right">
 </div>
 
