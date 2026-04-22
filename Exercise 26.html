@@ -1,46 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>CSS Image Practice</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
+<meta charset="UTF-8">
+<title>Image Styling</title>
 
-        /* LEFT IMAGE */
-        .left-img {
-            width: 33%;
-            border-radius: 18px;
-            object-fit: cover; /* prevents distortion */
-        }
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-        /* MIDDLE IMAGE (CIRCLE) */
-        .middle-img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 15px solid #ccc;
-            object-fit: cover; /* no distortion */
-        }
+/* 外層容器 */
+.container {
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        /* RIGHT IMAGE */
-        .right-img {
-            width: 33%;
-            height: 300px;
-            /* NO object-fit → causes distortion */
-        }
-    </style>
+/* 左圖 */
+.left {
+    width: 33%;
+    border-radius: 18px;
+    object-fit: cover;
+}
+
+/* 中間圓形 */
+.middle {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 15px solid #ccc;
+    object-fit: cover;
+}
+
+/* 右圖（有變形） */
+.right {
+    width: 33%;
+    height: 300px;
+}
+</style>
+
 </head>
+
 <body>
 
-    <img src="image1.jpg" class="left-img">
-    <img src="image2.jpg" class="middle-img">
-    <img src="image1.jpg" class="right-img">
+<div class="container">
+    <!-- 左圖 -->
+    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34" class="left">
+
+    <!-- 中間圓形 -->
+    <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee" class="middle">
+
+    <!-- 右圖 -->
+    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34" class="right">
+</div>
 
 </body>
 </html>
