@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Responsive Layout</title>
+<style>
+
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #1e90ff;
+}
+
+/* Container */
+.container {
+  max-width: 900px;
+  margin: 20px auto;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* Top section */
+.header {
+  background: yellowgreen;
+  height: 80px;
+  margin-bottom: 10px;
+}
+
+/* Middle section */
+.middle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.box {
+  background: teal;
+  height: 60px;
+}
+
+/* Bottom section */
+.footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.footer div {
+  flex: 1;
+  background: lightgray;
+  height: 60px;
+}
+
+/* ===== MEDIA QUERY ===== */
+@media screen and (min-width: 480px) {
+  .middle {
+    flex-direction: row;
+  }
+
+  .middle .box {
+    flex: 1;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="header"></div>
+
+  <div class="middle">
+    <div class="box"></div>
+    <div class="box"></div>
+    <div class="box"></div>
+  </div>
+
+  <div class="footer">
+    <div></div>
+    <div></div>
+    <div></div>
+  </div>
+</div>
+
+</body>
+</html>
