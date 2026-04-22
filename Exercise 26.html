@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CSS Image Practice</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* LEFT IMAGE */
+        .left-img {
+            width: 33%;
+            border-radius: 18px;
+            object-fit: cover; /* prevents distortion */
+        }
+
+        /* MIDDLE IMAGE (CIRCLE) */
+        .middle-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 15px solid #ccc;
+            object-fit: cover; /* no distortion */
+        }
+
+        /* RIGHT IMAGE */
+        .right-img {
+            width: 33%;
+            height: 300px;
+            /* NO object-fit → causes distortion */
+        }
+    </style>
+</head>
+<body>
+
+    <img src="image1.jpg" class="left-img">
+    <img src="image2.jpg" class="middle-img">
+    <img src="image1.jpg" class="right-img">
+
+</body>
+</html>
