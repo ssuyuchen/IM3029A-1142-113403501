@@ -2,68 +2,79 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Responsive Layout</title>
 
 <style>
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #2aa3d9; /* 藍色背景 */
+  background: #2aa3d9;
 }
 
-/* 白色卡片 */
+/* 白色容器 */
 .container {
   width: 90%;
   max-width: 900px;
   margin: 40px auto;
-  background: #ffffff;
+  background: white;
   padding: 15px;
   border-radius: 12px;
   box-sizing: border-box;
 }
 
-/* 上方綠色區塊 */
+/* 上方 */
 .header {
-  background: #9acd32; /* 綠色 */
+  background: #9acd32;
   height: 80px;
-  border-radius: 6px;
   margin-bottom: 10px;
+  border-radius: 6px;
 }
 
-/* 中間區塊 */
+/* 中間（預設手機：直排） */
 .middle {
   display: flex;
-  flex-direction: column; /* 預設：直排 */
+  flex-direction: column;
   gap: 10px;
 }
 
 .box {
-  background: #1aa3a3; /* 藍綠色 */
+  background: #1aa3a3;
   height: 60px;
   border-radius: 6px;
 }
 
-/* 下方區塊 */
+/* 下方 */
 .footer {
   display: flex;
+  flex-direction: column; 
   gap: 10px;
   margin-top: 10px;
 }
 
 .footer div {
-  flex: 1;
-  background: #dddddd; /* 淺灰 */
+  background: #dddddd;
   height: 60px;
   border-radius: 6px;
 }
 
-/* 🔥 重點：螢幕 ≥ 480px 時變成橫排 */
 @media screen and (min-width: 480px) {
+
   .middle {
     flex-direction: row;
   }
 
   .box {
+    flex: 1;
+  }
+
+  .footer {
+    flex-direction: row;
+  }
+
+  .footer div {
     flex: 1;
   }
 }
@@ -74,18 +85,15 @@ body {
 <body>
 
 <div class="container">
-  
-  <!-- 上方 -->
+
   <div class="header"></div>
 
-  <!-- 中間 -->
   <div class="middle">
     <div class="box"></div>
     <div class="box"></div>
     <div class="box"></div>
   </div>
 
-  <!-- 下方 -->
   <div class="footer">
     <div></div>
     <div></div>
