@@ -92,9 +92,6 @@
     }
 
     .info-btn {
-      position: absolute;
-      top: 18px;
-      right: 26px;
       height: 22px;
       min-width: 72px;
       padding: 0 12px;
@@ -154,15 +151,20 @@
   <div class="app">
     <div class="workspace">
       <div class="topbar">
-        <div class="title">覽頁</div>
+        <div class="title">預覽</div>
+        <button class="info-btn" id="toggleBtn" aria-expanded="false">查看資訊</button>
+      </div>
         <div></div>
       </div>
 
       <div class="viewer">
-        <button class="info-btn" id="toggleBtn" aria-expanded="false">檢看資訊</button>
+        <div class="topbar">
+        <div class="title">預覽</div>
+        <button class="info-btn" id="toggleBtn" aria-expanded="false">查看資訊</button>
+      </div>
 
         <div class="photo-frame">
-          <img src="https://picsum.photos/450/240" alt="預覽圖片" />
+          <img src="https://picsum.photos/450/240" alt="預覽" />
         </div>
       </div>
 
@@ -185,6 +187,7 @@
 
     toggleBtn.addEventListener('click', () => {
       const isOpen = detailsWrap.classList.toggle('show');
+      toggleBtn.textContent = isOpen ? '收起資訊' : '查看資訊';
       toggleBtn.setAttribute('aria-expanded', String(isOpen));
     });
   </script>
