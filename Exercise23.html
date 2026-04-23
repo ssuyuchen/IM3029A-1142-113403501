@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>圖片檢視介面示意</title>
+  <title>預覽資訊面板</title>
   <style>
     :root {
       --panel-bg: #efefef;
@@ -41,9 +41,6 @@
     }
 
     .workspace {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0;
       background: var(--panel-bg);
       border: 1px solid var(--panel-border);
     }
@@ -56,39 +53,12 @@
       align-items: center;
       justify-content: space-between;
       padding: 0 12px;
+    }
+
+    .title {
       font-size: 13px;
       color: var(--text-muted);
-    }
-
-    .topbar .title {
       line-height: 1;
-    }
-
-    .viewer {
-      position: relative;
-      padding: 20px 26px 0 20px;
-      min-height: 222px;
-      background: #f7f7f7;
-      border-bottom: 1px solid var(--panel-border);
-    }
-
-    .photo-frame {
-      width: 450px;
-      height: 240px;
-      max-width: 100%;
-      background: #ead6b6;
-      border: 1px solid #dfc8a2;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .photo-frame img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
     }
 
     .info-btn {
@@ -109,18 +79,39 @@
       background: #fafafa;
     }
 
-    .info-btn:active {
-      transform: translateY(1px);
-    }
-
-    .details-wrap {
-      display: none;
-      padding: 10px 20px 20px;
+    .viewer {
+      padding: 10px 20px 0;
       background: #efefef;
     }
 
-    .details-wrap.show {
+    .photo-frame {
+      width: 100%;
+      max-width: 676px;
+      height: 194px;
+      margin: 0 auto;
+      background: #ead6b6;
+      border: 1px solid #dfc8a2;
+      overflow: hidden;
+    }
+
+    .photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       display: block;
+    }
+
+    .details-wrap {
+      max-height: 0;
+      overflow: hidden;
+      padding: 0 20px;
+      background: #efefef;
+      transition: max-height 0.35s ease, padding-top 0.35s ease, padding-bottom 0.35s ease;
+    }
+
+    .details-wrap.show {
+      max-height: 220px;
+      padding: 10px 20px 20px;
     }
 
     .details-panel {
@@ -128,6 +119,14 @@
       overflow-y: auto;
       background: #ffffff;
       border: 1px solid #d9d9d9;
+      transform: translateY(-8px);
+      opacity: 0;
+      transition: transform 0.28s ease, opacity 0.28s ease;
+    }
+
+    .details-wrap.show .details-panel {
+      transform: translateY(0);
+      opacity: 1;
     }
 
     .detail-row {
@@ -138,12 +137,26 @@
       background: var(--detail-green);
       border-bottom: 1px solid var(--detail-row-border);
       font-size: 13px;
-      color: #2f2f2f;
+      color: var(--text-muted);
       word-break: break-all;
     }
 
-    .detail-row.label {
-      font-weight: 400;
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .details-panel::-webkit-scrollbar {
+      width: 12px;
+    }
+
+    .details-panel::-webkit-scrollbar-track {
+      background: #f0f0f0;
+    }
+
+    .details-panel::-webkit-scrollbar-thumb {
+      background: #c2c2c2;
+      border-radius: 8px;
+      border: 2px solid #f0f0f0;
     }
   </style>
 </head>
@@ -154,27 +167,20 @@
         <div class="title">預覽</div>
         <button class="info-btn" id="toggleBtn" aria-expanded="false">查看資訊</button>
       </div>
-        <div></div>
-      </div>
 
       <div class="viewer">
-        <div class="topbar">
-        <div class="title">預覽</div>
-        <button class="info-btn" id="toggleBtn" aria-expanded="false">查看資訊</button>
-      </div>
-
         <div class="photo-frame">
-          <img src="https://picsum.photos/450/240" alt="預覽" />
+          <img src="https://picsum.photos/676/194" alt="預覽圖片" />
         </div>
       </div>
 
       <div class="details-wrap" id="detailsWrap">
         <div class="details-panel">
-          <div class="detail-row label">修改日期：2017/10/12</div>
-          <div class="detail-row">檔名：測試圖片.jpg</div>
-          <div class="detail-row">數量：564.97KB</div>
-          <div class="detail-row">路徑：https://designcenter.qnap.com.tw/DesignCenterPM/RD/UI/.../image2PbV/example</div>
-          <div class="detail-row">尺寸：450 × 240</div>
+          <div class="detail-row">修改日期：2017/10/12</div>
+          <div class="detail-row">檔名：測試圖片.JPG</div>
+          <div class="detail-row">大小：446.97KB</div>
+          <div class="detail-row">路徑：\\designcenter.qnap.com.tw\\DesignCenterPM\\RD\\...\\example</div>
+          <div class="detail-row">尺寸：676 × 194</div>
           <div class="detail-row">格式：JPG</div>
         </div>
       </div>
