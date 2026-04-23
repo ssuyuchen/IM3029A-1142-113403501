@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Button Interaction Demo</title>
+  <style>
+    body {
+      font-family: Roboto, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 40px;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 520px;
+    }
+
+    img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
+    /* Button spec from design */
+    .info-btn {
+      margin-top: 15px;
+      height: 22px;
+      border-radius: 8px;
+      border: 1px solid #2f2f2f;
+      background: #ffffff;
+      color: #2f2f2f;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 0 10px;
+    }
+
+    .info-btn:hover {
+      background: #f0f0f0;
+    }
+
+    .details {
+      margin-top: 15px;
+      text-align: left;
+      font-size: 13px;
+      color: #2f2f2f;
+      display: none;
+      border-top: 1px solid #ddd;
+      padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <img src="https://picsum.photos/450/240" alt="Sample Image">
+    
+    <button class="info-btn" onclick="toggleDetails()">View Info</button>
+
+    <div class="details" id="details">
+      <p><strong>Date:</strong> 2026/04/23</p>
+      <p><strong>File Name:</strong> sample.jpg</p>
+      <p><strong>Resolution:</strong> 450 x 240</p>
+      <p><strong>Source:</strong> Lorem ipsum image service</p>
+    </div>
+  </div>
+
+  <script>
+    function toggleDetails() {
+      const el = document.getElementById('details');
+      el.style.display = (el.style.display === 'none' || el.style.display === '')
+        ? 'block'
+        : 'none';
+    }
+  </script>
+
+</body>
+</html>
