@@ -84,13 +84,25 @@
       background: #efefef;
     }
 
+    .image-stage {
+      width: 100%;
+      max-width: 676px;
+      height: 240px;
+      margin: 0 auto;
+      padding: 0 18px;
+      background: #e8c890;
+      border: 1px solid #dfc8a2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
     .photo-frame {
       width: 450px;
       height: 240px;
-      margin: 0 auto;
-      background: #ead6b6;
-      border: 1px solid #dfc8a2;
+      background: #ffffff;
       overflow: hidden;
+      flex: 0 0 auto;
     }
 
     .photo-frame img {
@@ -168,8 +180,10 @@
       </div>
 
       <div class="viewer">
-        <div class="photo-frame">
-          <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=450&h=240&fit=crop" alt="風景圖片">
+        <div class="image-stage">
+          <div class="photo-frame">
+            <img src="http://www.mysite.url.tw/photograph/2014a-1/picture_10/DSC_6315b.jpg" alt="預覽圖片" />
+          </div>
         </div>
       </div>
 
