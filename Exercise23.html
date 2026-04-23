@@ -1,84 +1,192 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Button Interaction Demo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>圖片檢視介面示意</title>
   <style>
+    :root {
+      --panel-bg: #efefef;
+      --panel-border: #d8d8d8;
+      --header-bg: #f6f6f6;
+      --text-main: #2f2f2f;
+      --text-muted: #707070;
+      --button-border: #2f2f2f;
+      --button-bg: #ffffff;
+      --detail-green: #8cff8f;
+      --detail-row-border: #cfdfff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Roboto, Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      margin: 40px;
-      background-color: #f5f5f5;
+      justify-content: center;
+      background: #f3f3f3;
+      font-family: Roboto, Arial, "Noto Sans TC", sans-serif;
+      color: var(--text-main);
     }
 
-    .container {
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      text-align: center;
-      width: 520px;
-    }
-
-    img {
-      width: 100%;
-      border-radius: 8px;
-    }
-
-    /* Button spec from design */
-    .info-btn {
-      margin-top: 15px;
-      height: 22px;
-      border-radius: 8px;
-      border: 1px solid #2f2f2f;
+    .app {
+      width: 760px;
       background: #ffffff;
-      color: #2f2f2f;
+      border: 1px solid #e2e2e2;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 18px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+    }
+
+    .topbar {
+      height: 28px;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
       font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .topbar .title {
+      line-height: 1;
+    }
+
+    .viewer {
+      position: relative;
+      padding: 20px 26px 0 20px;
+      min-height: 222px;
+      background: #f7f7f7;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .photo-frame {
+      width: 450px;
+      height: 240px;
+      max-width: 100%;
+      background: #ead6b6;
+      border: 1px solid #dfc8a2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .info-btn {
+      position: absolute;
+      top: 18px;
+      right: 26px;
+      height: 22px;
+      min-width: 72px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid var(--button-border);
+      background: var(--button-bg);
+      color: var(--text-main);
+      font-size: 13px;
+      font-family: Roboto, Arial, "Noto Sans TC", sans-serif;
+      line-height: 20px;
       cursor: pointer;
-      padding: 0 10px;
     }
 
     .info-btn:hover {
-      background: #f0f0f0;
+      background: #fafafa;
     }
 
-    .details {
-      margin-top: 15px;
-      text-align: left;
+    .info-btn:active {
+      transform: translateY(1px);
+    }
+
+    .details-wrap {
+      display: none;
+      padding: 10px 20px 20px;
+      background: #efefef;
+    }
+
+    .details-wrap.show {
+      display: block;
+    }
+
+    .details-panel {
+      height: 150px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid #d9d9d9;
+    }
+
+    .detail-row {
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      background: var(--detail-green);
+      border-bottom: 1px solid var(--detail-row-border);
       font-size: 13px;
       color: #2f2f2f;
-      display: none;
-      border-top: 1px solid #ddd;
-      padding-top: 10px;
+      word-break: break-all;
+    }
+
+    .detail-row.label {
+      font-weight: 400;
     }
   </style>
 </head>
 <body>
+  <div class="app">
+    <div class="workspace">
+      <div class="topbar">
+        <div class="title">覽頁</div>
+        <div></div>
+      </div>
 
-  <div class="container">
-    <img src="https://picsum.photos/450/240" alt="Sample Image">
-    
-    <button class="info-btn" onclick="toggleDetails()">View Info</button>
+      <div class="viewer">
+        <button class="info-btn" id="toggleBtn" aria-expanded="false">檢看資訊</button>
 
-    <div class="details" id="details">
-      <p><strong>Date:</strong> 2026/04/23</p>
-      <p><strong>File Name:</strong> sample.jpg</p>
-      <p><strong>Resolution:</strong> 450 x 240</p>
-      <p><strong>Source:</strong> Lorem ipsum image service</p>
+        <div class="photo-frame">
+          <img src="https://picsum.photos/450/240" alt="預覽圖片" />
+        </div>
+      </div>
+
+      <div class="details-wrap" id="detailsWrap">
+        <div class="details-panel">
+          <div class="detail-row label">修改日期：2017/10/12</div>
+          <div class="detail-row">檔名：測試圖片.jpg</div>
+          <div class="detail-row">數量：564.97KB</div>
+          <div class="detail-row">路徑：https://designcenter.qnap.com.tw/DesignCenterPM/RD/UI/.../image2PbV/example</div>
+          <div class="detail-row">尺寸：450 × 240</div>
+          <div class="detail-row">格式：JPG</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
-    function toggleDetails() {
-      const el = document.getElementById('details');
-      el.style.display = (el.style.display === 'none' || el.style.display === '')
-        ? 'block'
-        : 'none';
-    }
-  </script>
+    const toggleBtn = document.getElementById('toggleBtn');
+    const detailsWrap = document.getElementById('detailsWrap');
 
+    toggleBtn.addEventListener('click', () => {
+      const isOpen = detailsWrap.classList.toggle('show');
+      toggleBtn.setAttribute('aria-expanded', String(isOpen));
+    });
+  </script>
 </body>
 </html>
