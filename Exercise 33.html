@@ -5,39 +5,38 @@
   <title>Form Validation Practice</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: Arial;
       margin: 40px;
     }
     #message {
       margin-top: 15px;
-      font-weight: bold;
+      color: black;
     }
   </style>
 </head>
 <body>
 
-  <h3>Please input a number between 150 and 300:</h3>
+  <p>Please input a number between 150 and 300:</p>
 
   <input type="text" id="numberInput">
   <button onclick="checkValue()">Submit</button>
 
-  <div id="message"></div>
+  <p id="message"></p>
 
   <script>
     function checkValue() {
-      const value = document.getElementById("numberInput").value;
-      const message = document.getElementById("message");
-
-      const num = Number(value);
+      var value = document.getElementById("numberInput").value;
+      var num = Number(value);
+      var message = document.getElementById("message");
 
       if (isNaN(num)) {
-        message.textContent = "Please enter a valid number";
+        message.innerText = "Please enter a valid number";
       } else if (num < 150) {
-        message.textContent = "Value too small";
+        message.innerText = "Value too small";
       } else if (num > 300) {
-        message.textContent = "Value too large";
+        message.innerText = "Value too large";
       } else {
-        message.textContent = "Input OK";
+        message.innerText = "Input OK";
       }
     }
   </script>
