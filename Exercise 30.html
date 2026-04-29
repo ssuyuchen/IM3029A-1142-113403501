@@ -1,39 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Exercise</title>
+    <title>Web Programming Exercise</title>
     <style>
+        .box {
+            width: 150px;
+            height: 120px;
+            border: 1px solid gray;
+            display: inline-block;
+            text-align: center;
+            padding-top: 20px;
+            margin: 10px;
+        }
+
         #text {
-            font-size: 24px;
+            font-size: 22px;
             color: black;
             margin-bottom: 10px;
+        }
+
+        button {
+            padding: 5px 10px;
         }
     </style>
 </head>
 <body>
 
-<div id="text">Hello</div>
-<button id="btn">Button</button>
+<div class="box">
+    <div id="text">Hello</div>
+    <button id="btn">Button</button>
+</div>
 
 <script>
     const text = document.getElementById("text");
     const btn = document.getElementById("btn");
 
     // Mouse over → change color
-    btn.onmouseover = function() {
-        text.style.color = "pink";
-    };
+    btn.addEventListener("mouseover", function() {
+        text.style.color = "magenta";
+    });
 
-    // Mouse out → reset (optional, but nice)
-    btn.onmouseout = function() {
-        text.style.color = "black";
-    };
-
-    // Mouse click → change content + color
-    btn.onclick = function() {
+    // Mouse click → change text + color
+    btn.addEventListener("click", function() {
         text.innerHTML = "Mouse Click";
-        text.style.color = "pink";
-    };
+        text.style.color = "magenta";
+    });
+
+    // Optional: mouse out → reset
+    btn.addEventListener("mouseout", function() {
+        text.style.color = "black";
+        text.innerHTML = "Hello";
+    });
 </script>
 
 </body>
