@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exercise</title>
+    <style>
+        #text {
+            font-size: 24px;
+            color: black;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="text">Hello</div>
+<button id="btn">Button</button>
+
+<script>
+    const text = document.getElementById("text");
+    const btn = document.getElementById("btn");
+
+    // Mouse over → change color
+    btn.onmouseover = function() {
+        text.style.color = "pink";
+    };
+
+    // Mouse out → reset (optional, but nice)
+    btn.onmouseout = function() {
+        text.style.color = "black";
+    };
+
+    // Mouse click → change content + color
+    btn.onclick = function() {
+        text.innerHTML = "Mouse Click";
+        text.style.color = "pink";
+    };
+</script>
+
+</body>
+</html>
