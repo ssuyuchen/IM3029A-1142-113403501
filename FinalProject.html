@@ -1,20 +1,38 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
+    <!-- 設定文件字元編碼 -->
     <meta charset="UTF-8">
+
+    <!-- 設定響應式網頁於不同裝置上的顯示比例 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 網頁標題 -->
     <title>17 Sustainable Development Goals - Image Version</title>
+
+    <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 載入標題字體 -->
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">    <style>
+
+    <!-- 載入內文字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* 設定頁面整體字體、背景色與文字顏色 */
         body {
             font-family: 'Cormorant Garamond', serif;
-            background-color: #F9F5E7; /* 接近設計圖的背景色 */
+            background-color: #F9F5E7; 
             color: #1A1A1A;
         }
+
+        /* 設定標題專用字體 */
         .title-font {
             font-family: 'Libre Baskerville', serif;
         }
+
+        /* 設定 SDG 卡片的基本外觀與互動效果 */
         .sdg-card {
             aspect-ratio: 1 / 1;
             display: flex;
@@ -26,11 +44,14 @@
             cursor: pointer;
             overflow: hidden;
         }
+
+        /* 滑鼠移入卡片時放大顯示 */
         .sdg-card:hover {
             transform: scale(1.05);
             z-index: 10;
         }
-        /* 圖片容器確保圖片填滿方塊 */
+
+        /* 設定卡片內圖片容器，使圖片置中 */
         .sdg-image-container {
             width: 100%;
             height: 100%;
@@ -38,35 +59,40 @@
             align-items: center;
             justify-content: center;
         }
+
+        /* 設定 SDG 圖片尺寸與填滿方式 */
         .sdg-image-container img {
             width: 85%;
             height: 85%;
             object-fit: cover;
         }
-        
     </style>
 </head>
+
 <body class="px-6 md:px-12 lg:px-24 py-4 md:py-6 lg:py-8">
-    <!-- Header / Logo Area (保留圖片連結) -->
+
+    <!-- 頁首 SDGs 標誌 -->
     <div class="mb-5">
-        <!-- Logo 圖片連結 -->
         <img src="https://taiwanlii.ccu.edu.tw/var/file/153/1153/img/968/SDGsLOGO.png" class="h-16 md:h-20 object-contain">
     </div>
 
+    <!-- 頁首與主要內容之間的分隔線 -->
     <div class="w-full h-px mb-5" style="background-color: #dbd7c8;"></div>
 
-    <!-- Main Content -->
+    <!-- 主要內容區塊 -->
     <main class="max-w-6xl mx-auto">
-        <!-- 標題區域 (改回原本的文字樣式) -->
+
+        <!-- 頁面主標題 -->
         <h1 class="title-font text-3xl md:text-4xl font-bold mb-3 text-gray-900">
             17 Sustainable Development Goals
         </h1>
         
+        <!-- SDGs 簡介文字 -->
         <p class="text-lg md:text-xl leading-relaxed text-gray-800 mb-8 max-w-5xl">
             In 2015, the United Nations adopted the 2030 Agenda for Sustainable Development, outlining 17 core goals for global sustainable development. These goals guide the decision-making, investment, and actions of governments, local governments, businesses, and civic groups over the next 15 years, working together to create a world where "every country achieves lasting, inclusive, and sustainable economic growth and everyone has a suitable job"—a world where natural resources, from air to land, from rivers, lakes, and groundwater to the oceans, can be produced, consumed, and used sustainably.
         </p>
 
-        <!-- SDG Grid (維持放置圖片) -->
+        <!-- SDG 卡片網格區塊 -->
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0">
             
             <!-- Goal 1 -->
@@ -191,24 +217,37 @@
         </div>
     </main>
 
-    <!-- Modal 互動彈窗 -->
+    <!-- 彈出視窗區塊 -->
     <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="bg-white p-8 rounded-lg max-w-sm w-full shadow-2xl text-center">
+
+            <!-- 彈出視窗標題，內容由 JavaScript 動態更新 -->
             <h2 id="modal-title" class="text-2xl font-bold mb-4">SDG Goal</h2>
+
+            <!-- 彈出視窗說明文字 -->
             <p class="text-gray-600 mb-6">This is a sample of detailed information about the sustainability goal.</p>
+
+            <!-- 關閉彈出視窗按鈕 -->
             <button onclick="closeModal()" class="bg-gray-800 text-white px-6 py-2 rounded-full hover:bg-black transition">Close</button>
         </div>
     </div>
 
     <script>
+        // 關閉彈出視窗
         function closeModal() {
             document.getElementById('modal').style.display = 'none';
         }
 
+        // 為所有 SDG 卡片綁定點擊事件
         document.querySelectorAll('.sdg-card').forEach(card => {
             card.addEventListener('click', () => {
+                // 取得目前卡片的 data-title 屬性內容
                 const title = card.getAttribute('data-title');
+
+                // 將卡片標題寫入彈出視窗標題
                 document.getElementById('modal-title').innerText = title;
+
+                // 顯示彈出視窗
                 document.getElementById('modal').style.display = 'flex';
             });
         });
