@@ -35,22 +35,21 @@
             justify-content: center;
         }
         .sdg-image-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* 或者使用 contain 視您的圖片比例而定 */
+            width: 85%;
+            height: 85%;
+            object-fit: cover;
         }
         
     </style>
 </head>
-<body class="p-4 md:p-6 lg:p-8">
-
+<body class="px-6 md:px-12 lg:px-24 py-4 md:py-6 lg:py-8">
     <!-- Header / Logo Area (保留圖片連結) -->
     <div class="mb-5">
         <!-- Logo 圖片連結 -->
-        <img src="https://taiwanlii.ccu.edu.tw/var/file/153/1153/img/968/SDGsLOGO.png" class="h-20 md:h-24 object-contain">
+        <img src="https://taiwanlii.ccu.edu.tw/var/file/153/1153/img/968/SDGsLOGO.png" class="h-16 md:h-20 object-contain">
     </div>
 
-    <div class="w-full h-px bg-gray-300 mb-5"></div>
+    <div class="w-full h-px mb-5" style="background-color: #DFDDD5;"></div>
 
     <!-- Main Content -->
     <main class="max-w-6xl mx-auto">
@@ -62,7 +61,7 @@
         </p>
 
         <!-- SDG Grid (維持放置圖片) -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0">
             
             <!-- Goal 1 -->
             <div class="sdg-card bg-sdg-1" data-title="SDG 1: No Poverty">
