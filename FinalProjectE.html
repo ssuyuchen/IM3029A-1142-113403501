@@ -1,59 +1,71 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <!-- 文件基礎設定：指定編碼、響應式視窗與頁面標題 -->
+    <!--
+        基礎文件設定
+        - charset：確保中文與特殊符號能正確顯示
+        - viewport：讓頁面能在手機、平板與桌機上正確縮放
+        - title：瀏覽器分頁標題
+    -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>17 Sustainable Development Goals - Morandi Edition</title>
 
-    <!-- 外部樣式資源：Tailwind CSS 與 Google Fonts -->
+    <!--
+        外部資源載入
+        - Tailwind CSS：快速建立響應式版面與常用樣式
+        - Google Fonts：提供標題與內文字型，營造典雅視覺風格
+    -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        /* ==========================================================================
+        /* ======================================================================
            Global Styles
-           建立整體視覺基調，採用莫蘭迪暗色系與柔和文字對比
-        ========================================================================== */
+           ----------------------------------------------------------------------
+           定義全站基礎視覺：字型、背景色、文字色與過場效果。
+           本頁採用深色莫蘭迪色系，讓 SDGs 圖示與互動區塊更突出。
+        ====================================================================== */
 
         body {
             font-family: 'Cormorant Garamond', serif;
             background-color: #1F2423;
-            color: #A8A394;
+            color: #D1CDC0;
             transition: background-color 0.5s ease;
         }
 
-        /* 主標題字型設定 */
+        /* 主頁標題字型：使用襯線字體提升正式與典雅感 */
         .title-font {
             font-family: 'Libre Baskerville', serif;
-            color: #8E9775;
+            color: #A3B18A;
             letter-spacing: 0.05em;
         }
 
-        /* Modal 標題字型設定 */
+        /* Modal 標題字型：保持與主標題一致的品牌視覺 */
         .modal-title-font {
             font-family: 'Libre Baskerville', serif;
-            color: #A8A394;
+            color: #E0E0E0;
             letter-spacing: 0.05em;
         }
 
-        /* 輔助強調色 */
+        /* 輔助強調色：用於副標、重點文字與互動提示 */
         .subtitle-accent {
-            color: #8E9775;
+            color: #A3B18A;
         }
 
-        /* Logo 視覺濾鏡，讓圖片融入暗色系版面 */
+        /* Logo 色彩校正：讓外部圖片更融入暗色莫蘭迪背景 */
         .logo-filter {
-            filter: brightness(0.85) sepia(0.15) contrast(1.1) grayscale(0.2);
-            opacity: 0.8;
-            transition: none;
+            filter: brightness(0.9) sepia(0.1) contrast(1.1);
+            opacity: 0.9;
         }
 
-        /* ==========================================================================
+        /* ======================================================================
            SDG Card Grid
-           SDG 目標卡片：包含比例、互動狀態與 hover 視覺效果
-        ========================================================================== */
+           ----------------------------------------------------------------------
+           SDGs 卡片區塊樣式：維持正方形比例、加入 hover 動態，
+           提升使用者對可點擊元素的辨識度。
+        ====================================================================== */
 
         .sdg-card {
             aspect-ratio: 1 / 1;
@@ -61,104 +73,113 @@
             flex-direction: column;
             padding: 0.5rem;
             position: relative;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             cursor: pointer;
             overflow: hidden;
             background-color: rgba(255, 255, 255, 0.015);
             border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
         .sdg-card:hover {
             transform: scale(1.02);
             z-index: 10;
             box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
-            background-color: rgba(142, 151, 117, 0.08);
-            border-color: rgba(142, 151, 117, 0.4);
+            background-color: rgba(163, 177, 138, 0.12);
+            border-color: rgba(163, 177, 138, 0.5);
         }
 
         .sdg-image-container img {
             width: 80%;
             height: 80%;
             object-fit: cover;
-            filter: brightness(0.75) saturate(0.85) contrast(0.9);
-            transition: filter 0.4s ease, transform 0.4s ease;
+            filter: brightness(0.8) saturate(0.85);
+            transition: filter 0.4s ease;
         }
 
         .sdg-card:hover .sdg-image-container img {
-            filter: brightness(0.95) saturate(1) contrast(1);
+            filter: brightness(1) saturate(1);
         }
 
-        /* ==========================================================================
+        /* ======================================================================
            Story & Interaction Section
-           情境故事、角色提示與互動選項區塊樣式
-        ========================================================================== */
+           ----------------------------------------------------------------------
+           情境故事與選項區塊：以卡片式設計區分內容層級，
+           讓使用者能快速理解故事、選項與回饋結果。
+        ====================================================================== */
 
         .story-box {
-            background: #2A2F2E;
+            background: #252B2A;
             padding: 32px;
             border-radius: 20px;
-            border: 1px solid rgba(197, 179, 150, 0.1);
-            color: #A8A394;
+            border: 1px solid rgba(197, 179, 150, 0.2);
+            color: #E2E2E2;
         }
 
         .avatar {
             width: 64px;
             height: 64px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #4A5150, #6B705C);
+            background: linear-gradient(135deg, #525B59, #838B6D);
             border: 2px solid #C5B396;
         }
 
         .story-note {
-            background: rgba(142, 151, 117, 0.1);
-            border-left: 3px solid #8E9775;
-            color: #8E9775;
-            font-style: italic;
+            background: rgba(163, 177, 138, 0.15);
+            border-left: 4px solid #A3B18A;
+            color: #A3B18A;
+            font-weight: 500;
         }
 
         .option-circle {
             background: #363B3A;
             color: #C5B396;
-            border: 1px solid rgba(197, 179, 150, 0.2);
+            border: 1px solid rgba(197, 179, 150, 0.3);
+            transition: all 0.2s ease;
         }
 
         .option-text {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            color: #A8A394;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #D1D1D1;
+            transition: all 0.2s ease;
         }
 
-        /* 使用者選取答案後的狀態樣式 */
+        /* 使用者選取答案後的視覺狀態 */
         .option-card.active .option-circle {
             background: #C5B396;
             color: #1F2423;
+            transform: scale(1.1);
         }
 
         .option-card.active .option-text {
             border-color: #C5B396;
-            background: rgba(197, 179, 150, 0.05);
-            color: #C5B396;
+            background: rgba(197, 179, 150, 0.1);
+            color: #F0E6D2;
+            font-weight: 500;
         }
 
-        /* ==========================================================================
+        /* ======================================================================
            Modal & Buttons
-           彈出視窗、主要按鈕與關閉按鈕樣式
-        ========================================================================== */
+           ----------------------------------------------------------------------
+           彈出視窗、按鈕與關閉按鈕樣式。
+           Modal 用於呈現 SDG 1 的情境式互動題目。
+        ====================================================================== */
 
         .modal-bg {
             background-color: #1A1E1D;
-            border: 1px solid rgba(197, 179, 150, 0.15);
+            border: 1px solid rgba(197, 179, 150, 0.3);
         }
 
         .btn-next {
             background-color: #C5B396;
             color: #1F2423;
             letter-spacing: 0.1em;
+            transition: all 0.3s ease;
         }
 
         .btn-next:hover {
-            background-color: #8E9775;
-            color: white;
+            background-color: #D6C7AE;
+            transform: translateY(-2px);
         }
 
         .close-btn {
@@ -167,7 +188,7 @@
         }
 
         .close-btn:hover {
-            color: #8E9775;
+            color: #E2E2E2;
             transform: rotate(90deg);
         }
     </style>
@@ -175,34 +196,47 @@
 
 <body class="px-6 md:px-12 lg:px-24 py-6 md:py-10">
 
-    <!-- Header：顯示 SDGs Logo -->
+    <!-- ======================================================================
+         Header
+         ----------------------------------------------------------------------
+         頁首區域：顯示 SDGs Logo，作為頁面的主題識別。
+    ====================================================================== -->
     <header class="mb-6 flex justify-between items-center">
-        <img src="https://taiwanlii.ccu.edu.tw/var/file/153/1153/img/968/SDGsLOGO.png"
-             class="h-12 md:h-16 object-contain logo-filter"
-             alt="SDGs Logo">
+        <img
+            src="https://taiwanlii.ccu.edu.tw/var/file/153/1153/img/968/SDGsLOGO.png"
+            class="h-12 md:h-16 object-contain logo-filter"
+            alt="SDGs Logo"
+        >
     </header>
 
-    <!-- 視覺分隔線 -->
-    <hr class="border-0 h-px bg-[#8E9775]/20 mb-12">
+    <hr class="border-0 h-px bg-[#A3B18A]/30 mb-12">
 
+    <!-- ======================================================================
+         Main Content
+         ----------------------------------------------------------------------
+         主內容包含頁面標題、SDGs 簡介與 17 個目標卡片。
+    ====================================================================== -->
     <main class="max-w-6xl mx-auto">
-        <!-- 頁面主標題 -->
         <h1 class="title-font text-4xl md:text-5xl font-bold mb-6">
             17 Sustainable Development Goals
         </h1>
 
-        <!-- SDGs 介紹文字 -->
         <div class="max-w-4xl mb-12 text-xl">
-            <p class="leading-relaxed italic opacity-90 mb-6">
+            <p class="leading-relaxed italic opacity-95 mb-6">
                 In 2015, the United Nations adopted the 2030 Agenda for Sustainable Development, outlining 17 core goals for global sustainable development.
             </p>
-            <p class="leading-relaxed italic opacity-90">
-                These goals guide the decision-making, investment, and actions of governments, local governments, businesses, and civic groups over the next 15 years, working together to create a world where "every country achieves lasting, inclusive, and sustainable economic growth"—a world where natural resources are consumed and used sustainably.
+            <p class="leading-relaxed italic opacity-95">
+                These goals guide the decision-making, investment, and actions of governments, local governments, businesses, and civic groups over the next 15 years.
             </p>
         </div>
 
-        <!-- SDG 目標卡片網格 -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-white/5">
+        <!--
+            SDGs 卡片網格
+            - 使用 Tailwind 的 grid 系統建立響應式欄位
+            - 每張卡片透過 data-title 儲存對應 SDG 名稱
+            - 目前 JavaScript 僅針對 SDG 1 開啟互動 Modal
+        -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-white/10">
             <div class="sdg-card border-r border-b" data-title="SDG 1: No Poverty">
                 <div class="sdg-image-container flex items-center justify-center w-full h-full">
                     <img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="Goal 1">
@@ -307,111 +341,134 @@
         </div>
     </main>
 
-    <!-- Modal：SDG 1 情境互動視窗 -->
-    <div id="modal" class="fixed inset-0 bg-black/80 hidden items-center justify-center p-4 z-50">
-        <div class="modal-bg rounded-3xl max-w-5xl w-full shadow-2xl overflow-y-auto max-h-[90vh] p-8 md:p-12 relative">
+    <!-- ======================================================================
+         Modal：SDG 1 情境互動視窗
+         ----------------------------------------------------------------------
+         使用者點擊 SDG 1 卡片後顯示。
+         內容包含情境敘事、四個選項與送出後的即時回饋。
+    ====================================================================== -->
+    <div id="modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center p-4 z-50">
+        <div class="modal-bg rounded-3xl max-w-5xl w-full shadow-2xl overflow-y-auto max-h-[95vh] p-8 md:p-12 relative">
 
             <!-- Modal 關閉按鈕 -->
-            <button id="closeModal" class="absolute top-6 right-8 text-3xl close-btn" aria-label="Close modal">&times;</button>
+            <button id="closeModal" class="absolute top-6 right-8 text-4xl close-btn" aria-label="Close modal">
+                &times;
+            </button>
 
-            <!-- Modal 標題區：SDG 圖示與目標名稱 -->
+            <!-- Modal 標題區：顯示 SDG 圖示、名稱與分類資訊 -->
             <div class="flex items-center gap-6 mb-10">
-                <img id="modalImg"
-                     src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png"
-                     class="w-24 logo-filter"
-                     alt="SDG Icon">
+                <img
+                    id="modalImg"
+                    src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png"
+                    class="w-24 logo-filter"
+                    alt="SDG Icon"
+                >
                 <div>
                     <h2 id="modalTitle" class="text-5xl font-bold modal-title-font">No Poverty</h2>
-                    <p class="subtitle-accent tracking-widest text-sm mt-1 uppercase font-semibold">
+                    <p class="subtitle-accent tracking-widest text-sm mt-1 uppercase font-bold">
                         GOAL 01 / 17 Sustainable Development Goals
-                    </p>    
+                    </p>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <!-- 情境故事內容 -->
-                <div class="story-box">
+                <!-- 情境故事內容：引導使用者理解 SDG 1 與生活情境的連結 -->
+                <div class="story-box shadow-inner">
                     <div class="flex items-center gap-4 mb-6">
-                        <div class="avatar"></div>
-                        <div id="storyNote" class="story-note px-4 py-2 rounded-lg text-base">
+                        <div class="avatar shadow-lg"></div>
+                        <div id="storyNote" class="story-note px-5 py-2 rounded-lg text-base">
                             A quiet change is noticed during lunch time.
                         </div>
                     </div>
 
                     <div class="space-y-6">
-                        <p id="storyMain" class="text-xl leading-relaxed">
+                        <p id="storyMain" class="text-2xl font-medium leading-relaxed text-white">
                             You notice that one of your classmates has recently stopped bringing lunch to school.
                         </p>
-                        <p class="text-lg opacity-90">
+                        <p class="text-lg text-[#D1D1D1] leading-relaxed">
                             You start to realize this may not be a temporary situation.
                         </p>
-                        <p id="storySub" class="text-lg opacity-80 leading-relaxed">
+                        <p id="storySub" class="text-lg text-[#B0B0B0] leading-relaxed italic border-t border-white/5 pt-4">
                             Over time, you realize that this is not a temporary situation — it may be due to financial difficulties at home.
                         </p>
-                        <p class="text-lg font-medium subtitle-accent">
-                            You begin to think carefully about what the most appropriate and respectful action would be.
+                        <p class="text-xl font-semibold subtitle-accent bg-white/5 p-4 rounded-lg">
+                            What would be the most appropriate and respectful action?
                         </p>
                     </div>
                 </div>
 
-                <!-- 互動選項區 -->
-                <div class="space-y-4">
-                    <div class="option-card flex items-center gap-4 cursor-pointer" data-option="A">
-                        <div class="option-circle h-16 w-16 min-w-[64px] rounded-full flex items-center justify-center font-bold text-xl">A</div>
-                        <div class="option-text flex-grow p-4 rounded-xl">
-                            Tell the whole class about the situation and suggest raising money together.
+                <!-- 互動選項區：使用 data-option 記錄使用者選擇 -->
+                <div class="space-y-5">
+                    <div class="option-card flex items-center gap-4 cursor-pointer group" data-option="A">
+                        <div class="option-circle h-14 w-14 min-w-[56px] rounded-full flex items-center justify-center font-bold text-xl">A</div>
+                        <div class="option-text flex-grow p-5 rounded-xl text-lg">
+                            Tell the whole class about the situation and suggest raising money.
                         </div>
                     </div>
 
-                    <div class="option-card flex items-center gap-4 cursor-pointer" data-option="B">
-                        <div class="option-circle h-16 w-16 min-w-[64px] rounded-full flex items-center justify-center font-bold text-xl">B</div>
-                        <div class="option-text flex-grow p-4 rounded-xl">
+                    <div class="option-card flex items-center gap-4 cursor-pointer group" data-option="B">
+                        <div class="option-circle h-14 w-14 min-w-[56px] rounded-full flex items-center justify-center font-bold text-xl">B</div>
+                        <div class="option-text flex-grow p-5 rounded-xl text-lg">
                             Decide not to interfere because it is their personal matter.
                         </div>
                     </div>
 
-                    <div class="option-card flex items-center gap-4 cursor-pointer" data-option="C">
-                        <div class="option-circle h-16 w-16 min-w-[64px] rounded-full flex items-center justify-center font-bold text-xl">C</div>
-                        <div class="option-text flex-grow p-4 rounded-xl">
+                    <div class="option-card flex items-center gap-4 cursor-pointer group" data-option="C">
+                        <div class="option-circle h-14 w-14 min-w-[56px] rounded-full flex items-center justify-center font-bold text-xl">C</div>
+                        <div class="option-text flex-grow p-5 rounded-xl text-lg">
                             Quietly give them food every day without telling anyone.
                         </div>
                     </div>
 
-                    <div class="option-card flex items-center gap-4 cursor-pointer" data-option="D">
-                        <div class="option-circle h-16 w-16 min-w-[64px] rounded-full flex items-center justify-center font-bold text-xl">D</div>
-                        <div class="option-text flex-grow p-4 rounded-xl">
-                            Talk to them privately and help them find support.
+                    <div class="option-card flex items-center gap-4 cursor-pointer group" data-option="D">
+                        <div class="option-circle h-14 w-14 min-w-[56px] rounded-full flex items-center justify-center font-bold text-xl">D</div>
+                        <div class="option-text flex-grow p-5 rounded-xl text-lg">
+                            Talk to them privately and help them find formal support.
                         </div>
                     </div>
 
-                    <!-- 送出互動選擇 -->
+                    <!-- 送出按鈕：檢查使用者是否已選擇答案並顯示結果 -->
                     <div class="flex justify-end pt-6">
-                        <button id="nextBtn" class="btn-next px-12 py-4 rounded-full font-bold text-lg shadow-lg transition-all active:scale-95">
-                            NEXT STEP
+                        <button id="nextBtn" class="btn-next px-14 py-4 rounded-full font-bold text-xl shadow-xl active:scale-95">
+                            SUBMIT CHOICE
                         </button>
                     </div>
 
-                    <!-- 顯示回饋結果 -->
-                    <div id="resultBox" class="mt-4"></div>
+                    <!-- 結果訊息容器：由 JavaScript 動態寫入提示內容 -->
+                    <div id="resultBox" class="mt-6 transition-all duration-500"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        /* ======================================================================
+           Interaction Logic
+           ----------------------------------------------------------------------
+           功能說明：
+           1. 點擊 SDG 1 卡片後開啟 Modal
+           2. 點擊選項後記錄使用者答案並更新選取狀態
+           3. 按下送出後依答案顯示正確或提醒訊息
+           4. 支援點擊關閉按鈕或背景遮罩關閉 Modal
+        ====================================================================== */
+
         document.addEventListener("DOMContentLoaded", () => {
+            // 儲存目前使用者選取的答案；尚未選擇時為 null
             let selectedOption = null;
 
+            // 快取常用 DOM 元素，避免重複查詢並提升程式可讀性
             const modal = document.getElementById("modal");
             const closeBtn = document.getElementById("closeModal");
             const resultBox = document.getElementById("resultBox");
             const nextBtn = document.getElementById("nextBtn");
+            const sdgCards = document.querySelectorAll(".sdg-card");
+            const optionCards = document.querySelectorAll(".option-card");
 
-            /*
-             * SDG 卡片點擊事件
-             * 目前僅 SDG 1 開啟互動 Modal，其餘卡片保留未來擴充彈性。
+            /**
+             * 開啟 SDG 1 互動視窗。
+             * 目前互動題目僅配置於 SDG 1，因此需先判斷 data-title。
              */
-            document.querySelectorAll(".sdg-card").forEach(card => {
+            sdgCards.forEach((card) => {
                 card.addEventListener("click", () => {
                     const title = card.getAttribute("data-title");
 
@@ -422,30 +479,29 @@
                 });
             });
 
-            /*
-             * 選項點擊事件
-             * 清除其他選項狀態後，標記目前使用者選取的答案。
+            /**
+             * 處理選項點擊事件。
+             * 每次點擊前先清除所有 active 狀態，再將目前選項標記為 active。
              */
-            document.querySelectorAll(".option-card").forEach(card => {
+            optionCards.forEach((card) => {
                 card.addEventListener("click", () => {
-                    document.querySelectorAll(".option-card").forEach(item => {
-                        item.classList.remove("active");
-                    });
+                    optionCards.forEach((item) => item.classList.remove("active"));
 
                     card.classList.add("active");
                     selectedOption = card.dataset.option;
+                    resultBox.innerHTML = "";
                 });
             });
 
-            /*
-             * 下一步按鈕事件
-             * 根據使用者選擇顯示對應回饋訊息。
+            /**
+             * 送出答案並顯示回饋。
+             * 正確答案為 D：私下關心並協助尋求正式支持。
              */
             nextBtn.addEventListener("click", () => {
                 if (!selectedOption) {
                     resultBox.innerHTML = `
-                        <div class="text-[#B07D62] text-center font-medium">
-                            Please select an option.
+                        <div class="text-[#FF8A8A] text-center font-bold bg-[#FF8A8A]/10 p-3 rounded-lg border border-[#FF8A8A]/30">
+                            Please select an option first.
                         </div>
                     `;
                     return;
@@ -453,44 +509,50 @@
 
                 if (selectedOption === "D") {
                     resultBox.innerHTML = `
-                        <div class="p-4 rounded-xl bg-[#8E9775]/20 text-[#8E9775] border border-[#8E9775]/30">
-                            ✅ Excellent choice. Empathy with respect is the key to true sustainability.
+                        <div class="p-6 rounded-xl bg-[#A3B18A]/20 text-[#A3B18A] border-2 border-[#A3B18A] shadow-lg animate-pulse">
+                            <h4 class="font-bold text-xl mb-1">✅ Excellent choice!</h4>
+                            <p class="text-white/90">
+                                Empathy with respect is the key to true sustainability. Seeking formal support ensures long-term stability.
+                            </p>
                         </div>
                     `;
                 } else {
                     resultBox.innerHTML = `
-                        <div class="p-4 rounded-xl bg-[#B07D62]/20 text-[#B07D62] border border-[#B07D62]/30">
-                            ⚠️ Consider the privacy and feelings of the person you are helping.
+                        <div class="p-6 rounded-xl bg-[#D68C7A]/20 text-[#D68C7A] border-2 border-[#D68C7A] shadow-lg">
+                            <h4 class="font-bold text-xl mb-1">⚠️ Think again...</h4>
+                            <p class="text-white/90">
+                                Consider the privacy and dignity of the individual. Protecting their feelings is as important as the help itself.
+                            </p>
                         </div>
                     `;
                 }
             });
 
-            /*
-             * Modal 關閉事件
-             * 支援點擊關閉按鈕與背景遮罩關閉視窗。
+            /**
+             * 關閉 Modal。
+             * 點擊右上角關閉按鈕時隱藏互動視窗。
              */
             closeBtn.addEventListener("click", () => {
                 modal.style.display = "none";
             });
 
-            modal.addEventListener("click", event => {
+            /**
+             * 點擊 Modal 背景遮罩時關閉視窗。
+             * 透過判斷事件目標是否為最外層 modal，避免點擊內容區時誤關閉。
+             */
+            modal.addEventListener("click", (event) => {
                 if (event.target.id === "modal") {
                     modal.style.display = "none";
                 }
             });
 
-            /*
-             * 重置 Modal 狀態
-             * 每次重新開啟時，清除選項與回饋內容。
+            /**
+             * 重置 Modal 狀態。
+             * 每次開啟互動視窗時，清除先前選項與結果訊息。
              */
             function resetModal() {
                 selectedOption = null;
-
-                document.querySelectorAll(".option-card").forEach(card => {
-                    card.classList.remove("active");
-                });
-
+                optionCards.forEach((card) => card.classList.remove("active"));
                 resultBox.innerHTML = "";
             }
         });
