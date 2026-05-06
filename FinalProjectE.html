@@ -82,8 +82,8 @@
         }
 
         .sdg-image-container img {
-            width: 80%;
-            height: 80%;
+            width: 85%;
+            height: 85%;
             object-fit: cover;
             filter: brightness(0.8) saturate(0.85);
             transition: filter 0.4s ease;
@@ -184,34 +184,264 @@
             color: #E2E2E2;
             transform: rotate(90deg);
         }
+
+
+        /* ======================================================================
+           Option Hover Animation
+           ----------------------------------------------------------------------
+           保留選項滑鼠移上去時的互動效果。
+        ====================================================================== */
+
+        .option-card {
+            transition: all 0.25s ease;
+        }
+
+        .option-card:hover .option-circle {
+            background: rgba(197, 179, 150, 0.2);
+            transform: scale(1.08);
+        }
+
+        .option-card:hover .option-text {
+            border-color: rgba(197, 179, 150, 0.5);
+            background: rgba(197, 179, 150, 0.08);
+            transform: translateX(4px);
+        }
+
+        /* ======================================================================
+           Learn More / Take Action Full Pages
+           ----------------------------------------------------------------------
+           這兩頁用 fixed 覆蓋原本畫面；按鈕放在內容最後，必須滑到底才會看到。
+        ====================================================================== */
+
+        .full-page {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            background-color: #111514;
+            color: #FFFFFF;
+            overflow-y: auto;
+            padding: 52px 64px;
+            box-sizing: border-box;
+        }
+
+        .full-page-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .full-page-header,
+        .action-title-area {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            margin-bottom: 42px;
+        }
+
+        .page-sdg-icon {
+            width: 85px;
+            height: 85px;
+            object-fit: contain;
+            filter: brightness(0.95) saturate(0.95);
+            border-radius: 10px;
+        }
+
+        .overlay-title {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: #A3B18A;
+            letter-spacing: 0.03em;
+        }
+
+        .learn-intro {
+            font-size: 20px;
+            line-height: 1.8;
+            color: #F1F1F1;
+            margin-bottom: 44px;
+            max-width: 1180px;
+        }
+
+        .target-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 26px;
+        }
+
+        .target-card {
+            background-color: #1F2423;
+            border: 1px solid rgba(197, 179, 150, 0.25);
+            border-radius: 22px;
+            padding: 20px 24px;
+            transition: all 0.3s ease;
+        }
+
+        .target-card:hover {
+            border-color: rgba(197, 179, 150, 0.55);
+            background-color: rgba(197, 179, 150, 0.06);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+        }
+
+        .target-number {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 34px;
+            font-weight: 700;
+            color: #C5B396;
+            margin-bottom: 14px;
+        }
+
+        .target-card p {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.65;
+            color: #FFFFFF;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px 22px;
+        }
+
+        .action-card {
+            background-color: #1F2423;
+            border: 2px dashed rgba(197, 179, 150, 0.7);
+            border-radius: 22px;
+            padding: 18px 24px;
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #FFFFFF;
+            font-size: 18px;
+            line-height: 1.35;
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover {
+            background-color: rgba(197, 179, 150, 0.08);
+            border-color: #E9C46A;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+        }
+
+        .overlay-button-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-top: 56px;
+            padding-bottom: 20px;
+        }
+
+        .overlay-right-buttons {
+            display: flex;
+            gap: 14px;
+        }
+
+        .overlay-btn,
+        .learn-more-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            letter-spacing: 0.06em;
+            transition: all 0.3s ease;
+        }
+
+        .learn-more-btn {
+            margin-top: 18px;
+            background-color: #C5B396;
+            color: #1F2423;
+            padding: 12px 28px;
+            font-size: 17px;
+        }
+
+        .home-btn {
+            background-color: #C5B396;
+            color: #1F2423;
+        }
+
+        .back-btn {
+            background-color: #363B3A;
+            color: #C5B396;
+            border: 1px solid rgba(197, 179, 150, 0.45);
+        }
+
+        .action-btn {
+            background-color: #E9C46A;
+            color: #1F2423;
+        }
+
+        .overlay-btn:hover,
+        .learn-more-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+            opacity: 0.92;
+        }
+
+        @media (max-width: 900px) {
+            .full-page {
+                padding: 36px 24px;
+            }
+
+            .target-grid,
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .overlay-title {
+                font-size: 40px;
+            }
+
+            .learn-intro {
+                font-size: 22px;
+            }
+
+            .page-sdg-icon {
+                width: 86px;
+                height: 86px;
+            }
+
+            .overlay-button-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .overlay-right-buttons {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
-
-<body class="px-6 md:px-12 lg:px-24 py-6 md:py-10">
 
     <!-- ======================================================================
          Header
          ----------------------------------------------------------------------
          頁首區域：顯示 SDGs Logo，作為頁面的主題識別。
     ====================================================================== -->
-    <header class="mb-6 flex justify-between items-center">
+<body class="px-16 md:px-28 lg:px-44 py-2 md:py-4">
+    <header class="mb-3 flex justify-between items-center -ml-6 md:-ml-10">
         <img
             src="https://taiwanlii.ccu.edu.tw/var/file/153/1153/img/968/SDGsLOGO.png"
-            class="h-12 md:h-16 object-contain logo-filter"
+            class="h-12 md:h-14 object-contain logo-filter"
             alt="SDGs Logo"
         >
     </header>
 
-    <hr class="border-0 h-px bg-[#A3B18A]/30 mb-12">
+<hr class="border-0 h-px bg-[#A3B18A]/20 mb-20 mt-2 -mx-10 md:-mx-16 lg:-mx-24">
 
     <!-- ======================================================================
          Main Content
          ----------------------------------------------------------------------
          主內容包含頁面標題、SDGs 簡介與 17 個目標卡片。
     ====================================================================== -->
-    <main class="max-w-6xl mx-auto">
+    <main class="max-w-[940px] mx-auto pb-80">
         <h1 class="title-font text-4xl md:text-5xl font-bold mb-6">
-            17 Sustainable Development Goals
+                17 Sustainable Development Goals
         </h1>
 
         <div class="max-w-4xl mb-12 text-xl">
@@ -329,6 +559,7 @@
                 </div>
             </div>
         </div>
+        <div class="h-[100px]"></div>
     </main>
 
     <!-- ======================================================================
@@ -426,6 +657,142 @@
             </div>
         </div>
     </div>
+
+
+
+    <!-- ======================================================================
+         Learn More Page
+         ----------------------------------------------------------------------
+         這一頁會覆蓋原本畫面；按鈕放在內容最後，所以要滑到最下面才會看到。
+    ====================================================================== -->
+    <section id="learnPage" class="full-page hidden">
+        <div class="full-page-content">
+            <div class="full-page-header">
+                <img
+                    src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png"
+                    class="page-sdg-icon"
+                    alt="No Poverty"
+                >
+                <h1 class="overlay-title">No Poverty</h1>
+            </div>
+
+            <div class="learn-intro">
+                Eradicating poverty is not merely an act of charity, but a matter of justice, as everyone deserves the opportunity to live a basic and dignified life. However, nearly half of the world's population still lives in poverty, and every day people die due to a lack of food and clean water.
+            </div>
+
+            <div class="target-grid">
+                <div class="target-card">
+                    <div class="target-number">1.1</div>
+                    <p>
+                        By 2030, eradicate extreme poverty everywhere, ensuring that no one lives on less than $1.25 per day.
+                    </p>
+                </div>
+
+                <div class="target-card">
+                    <div class="target-number">1.2</div>
+                    <p>
+                        Reduce by at least half the proportion of men, women, and children of all ages living in poverty, according to national definitions.
+                    </p>
+                </div>
+
+                <div class="target-card">
+                    <div class="target-number">1.3</div>
+                    <p>
+                        Implement appropriate social protection systems and measures for all, and by 2030 achieve substantial coverage of the poor and the vulnerable.
+                    </p>
+                </div>
+
+                <div class="target-card">
+                    <div class="target-number">1.4</div>
+                    <p>
+                        Ensure that all people, especially the poor and vulnerable, have equal rights to economic resources, access to basic services, and ownership and control over land and other forms of property, inheritance, natural resources, new technology, and financial services, including microfinance.
+                    </p>
+                </div>
+
+                <div class="target-card">
+                    <div class="target-number">1.5</div>
+                    <p>
+                        Build the resilience of the poor and those in vulnerable situations, reducing their exposure and vulnerability to climate-related extreme events and other economic, social, and environmental shocks and disasters.
+                    </p>
+                </div>
+
+                <div class="target-card">
+                    <div class="target-number">1.A</div>
+                    <p>
+                        Mobilize significant resources from a variety of sources, including enhanced development cooperation, in order to provide adequate and predictable means for developing countries, particularly the least developed countries, to implement programs and policies to end poverty.
+                    </p>
+                </div>
+
+                <div class="target-card">
+                    <div class="target-number">1.B</div>
+                    <p>
+                        Create sound policy frameworks at the national, regional, and international levels, based on pro-poor and gender-sensitive development strategies, to support accelerated investment in poverty eradication actions.
+                    </p>
+                </div>
+            </div>
+
+            <div class="overlay-button-row">
+                <button id="learnBackBtn" class="overlay-btn back-btn">BACK</button>
+
+                <div class="overlay-right-buttons">
+                    <button id="actionBtn" class="overlay-btn action-btn">TAKE ACTION</button>
+                    <button id="learnHomeBtn" class="overlay-btn home-btn">HOME</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ======================================================================
+         Take Action Page
+         ----------------------------------------------------------------------
+         這一頁會覆蓋原本畫面；HOME / BACK 按鈕也在內容最後。
+    ====================================================================== -->
+    <section id="actionPage" class="full-page hidden">
+        <div class="full-page-content">
+            <div class="action-title-area">
+                <img
+                    src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png"
+                    class="page-sdg-icon"
+                    alt="No Poverty"
+                >
+                <h1 class="overlay-title">What Can We Do</h1>
+            </div>
+
+            <div class="action-grid">
+                <div class="action-card">
+                    Donate unused clothes and items to people in need.
+                </div>
+
+                <div class="action-card">
+                    Choose products that support fair practices.
+                </div>
+
+                <div class="action-card">
+                    Avoid wasting food in daily meals.
+                </div>
+
+                <div class="action-card">
+                    Offer help to people in need when you encounter them.
+                </div>
+
+                <div class="action-card">
+                    Contribute small, regular donations if possible.
+                </div>
+
+                <div class="action-card">
+                    Learn about poverty issues and share them with others.
+                </div>
+            </div>
+
+            <div class="overlay-button-row">
+                <button id="actionBackBtn" class="overlay-btn back-btn">BACK</button>
+
+                <div class="overlay-right-buttons">
+                    <button id="actionHomeBtn" class="overlay-btn home-btn">HOME</button>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <script>
         /* ======================================================================
@@ -733,8 +1100,8 @@
                 correctFeedback: "Strong collaboration requires alignment. Communication is key to shared success.",
                 wrongFeedback: "Working separately may avoid conflict, but does it solve the collaboration problem?"                
             }
-
             };
+
             function loadQuestion(goal) {
                 const q = questions[goal];
 
@@ -763,6 +1130,14 @@
             const nextBtn = document.getElementById("nextBtn");
             const sdgCards = document.querySelectorAll(".sdg-card");
             const optionCards = document.querySelectorAll(".option-card");
+
+            const learnPage = document.getElementById("learnPage");
+            const actionPage = document.getElementById("actionPage");
+            const learnBackBtn = document.getElementById("learnBackBtn");
+            const actionBtn = document.getElementById("actionBtn");
+            const learnHomeBtn = document.getElementById("learnHomeBtn");
+            const actionBackBtn = document.getElementById("actionBackBtn");
+            const actionHomeBtn = document.getElementById("actionHomeBtn");
 
             /**
              * 開啟 SDG 互動視窗。
@@ -804,14 +1179,28 @@
                 }
 
                 if (selectedOption === questions[currentGoal].answer) {
+                    const learnMoreButton = currentGoal === "1"
+                        ? `<button id="learnMoreBtn" class="learn-more-btn">Learn More</button>`
+                        : "";
+
                     resultBox.innerHTML = `
-                        <div class="p-6 rounded-xl bg-[#A3B18A]/20 text-[#A3B18A] border-2 border-[#A3B18A] shadow-lg animate-pulse">
+                        <div class="p-6 rounded-xl bg-[#A3B18A]/20 text-[#A3B18A] border-2 border-[#A3B18A] shadow-lg">
                             <h4 class="font-bold text-xl mb-1">✅ Excellent choice!</h4>
                             <p class="text-white/90">
                                 ${questions[currentGoal].correctFeedback}
                             </p>
+                            ${learnMoreButton}
                         </div>
                     `;
+
+                    if (currentGoal === "1") {
+                        document.getElementById("learnMoreBtn").addEventListener("click", () => {
+                            modal.style.display = "none";
+                            learnPage.classList.remove("hidden");
+                            actionPage.classList.add("hidden");
+                            learnPage.scrollTop = 0;
+                        });
+                    }
                 } else {
                     resultBox.innerHTML = `
                         <div class="p-6 rounded-xl bg-[#D68C7A]/20 text-[#D68C7A] border-2 border-[#D68C7A] shadow-lg">
@@ -839,6 +1228,35 @@
                     modal.style.display = "none";
                 }
             });
+
+            learnBackBtn.addEventListener("click", () => {
+                learnPage.classList.add("hidden");
+                actionPage.classList.add("hidden");
+                modal.style.display = "flex";
+                learnPage.scrollTop = 0;
+            });
+
+            actionBtn.addEventListener("click", () => {
+                learnPage.classList.add("hidden");
+                actionPage.classList.remove("hidden");
+                actionPage.scrollTop = 0;
+            });
+
+            actionBackBtn.addEventListener("click", () => {
+                actionPage.classList.add("hidden");
+                learnPage.classList.remove("hidden");
+                learnPage.scrollTop = 0;
+            });
+
+            learnHomeBtn.addEventListener("click", goHome);
+            actionHomeBtn.addEventListener("click", goHome);
+
+            function goHome() {
+                modal.style.display = "none";
+                learnPage.classList.add("hidden");
+                actionPage.classList.add("hidden");
+                window.scrollTo(0, 0);
+            }
 
             /**
              * 重置 Modal 狀態。
