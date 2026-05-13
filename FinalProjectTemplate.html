@@ -617,6 +617,20 @@
             transform: scale(1.04);
         }
 
+        /* SDGs介紹卡片改成只有圖片 */
+
+        .intro-sdg-card {
+            min-height: auto;
+            padding: 20px;
+            justify-content: center;
+        }
+
+        .intro-sdg-card img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+        }
+
         @media (min-width: 640px) {
             .intro-sdg-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
@@ -710,6 +724,163 @@
             .overlay-right-buttons { flex-direction: column; }
             .about-grid { grid-template-columns: 1fr; }
         }
+        /* 預設（英文可換行） */
+        .hero-title-zh,
+        #interact .section-title {
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        /* 只有中文模式不換行 */
+        html[lang="zh-TW"] .hero-title-zh,
+        html[lang="zh-TW"] #interact .section-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 英文模式允許正常換行 */
+        html[lang="en"] .hero-title-zh,
+        html[lang="en"] #interact .section-title {
+            white-space: normal;
+            line-height: 1.25;
+        }
+
+        /* 手機版 */
+        @media (max-width: 768px) {
+
+            html[lang="zh-TW"] .hero-title-zh {
+                font-size: 30px !important;
+            }
+
+            html[lang="zh-TW"] #interact .section-title {
+                font-size: 28px !important;
+            }
+
+            html[lang="en"] .hero-title-zh {
+                font-size: 28px !important;
+            }
+
+            html[lang="en"] #interact .section-title {
+                font-size: 24px !important;
+            }
+        }
+        /* 中文模式：情境互動說明文字不換行 */
+        html[lang="zh-TW"] #interact [data-i18n="interactText"] {
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: unset;
+            max-width: none;
+        }
+
+        /* 英文模式：允許換行，避免超出範圍 */
+        html[lang="en"] #interact [data-i18n="interactText"] {
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: normal;
+        }
+
+        /* 讓情境互動上方區塊有足夠寬度 */
+        #interact > .flex {
+            align-items: center;
+        }
+
+        #interact [data-i18n="interactText"] {
+            width: auto;
+        }
+
+        /* 小螢幕中文可縮小字體但仍不換行 */
+        @media (max-width: 900px) {
+            html[lang="zh-TW"] #interact [data-i18n="interactText"] {
+                font-size: 16px;
+                white-space: nowrap;
+            }
+        }
+
+        /* 情境互動說明文字 */
+        html[lang="zh-TW"] .interact-desc {
+            white-space: nowrap;
+            max-width: none;
+        }
+
+        html[lang="en"] .interact-desc {
+            white-space: normal;
+            max-width: 36rem;
+        }
+
+        /* 情境互動說明文字 */
+
+        .interact-desc {
+
+            margin-top: 6px;
+
+            color: rgba(255,255,255,0.85);
+
+            font-size: 1.25rem;
+
+            line-height: 1.75;
+
+            max-width: 1000px;
+        }
+
+        /* 中文不換行 */
+
+        html[lang="zh-TW"] .interact-desc {
+            white-space: nowrap;
+        }
+
+        /* 英文可換行 */
+
+        html[lang="en"] .interact-desc {
+            white-space: normal;
+        }
+
+        /* 手機版 */
+
+        @media (max-width: 768px) {
+
+            .interact-desc {
+
+                font-size: 14px;
+
+                line-height: 1.8;
+
+                white-space: normal;
+            }
+        }
+
+        /* 首頁右側資訊方框加長 */
+        .hero-stat {
+            min-width: 145px;
+            min-height: 110px;
+            padding: 24px 26px;
+        }
+
+        .hero-stat.col-span-2 {
+            min-width: 310px;
+            min-height: 120px;
+        }
+
+        /* Grid 微調 */
+        .hero-panel .grid.grid-cols-2.gap-4 {
+            grid-template-columns: repeat(2, minmax(145px, 1fr));
+            gap: 18px;
+        }
+
+        /* 手機版 */
+        @media (max-width: 768px) {
+
+            .hero-stat,
+            .hero-stat.col-span-2 {
+                width: 100%;
+                min-width: 0;
+            }
+
+            .hero-panel .grid.grid-cols-2.gap-4 {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -773,34 +944,45 @@
             <h2 class="section-title text-3xl md:text-4xl font-bold mb-5" data-i18n="introTitle">SDGs 介紹</h2>
             <p class="text-xl leading-relaxed mb-8 text-white/85" data-i18n="introText">SDGs 涵蓋社會、經濟與環境三大面向，強調發展不應以犧牲弱勢群體或自然資源為代價。請選擇下方任一目標，進一步了解其背景、關鍵議題與實踐方向。</p>
             <div id="introSdgGrid" class="intro-sdg-grid">
-                <button class="intro-sdg-card" data-learn-goal="1"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="Goal 1"><span data-i18n="goal1">消除貧窮</span></button>
-                <button class="intro-sdg-card" data-learn-goal="2"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png" alt="Goal 2"><span data-i18n="goal2">消除飢餓</span></button>
-                <button class="intro-sdg-card" data-learn-goal="3"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-3.png" alt="Goal 3"><span data-i18n="goal3">良好健康與福祉</span></button>
-                <button class="intro-sdg-card" data-learn-goal="4"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-4.png" alt="Goal 4"><span data-i18n="goal4">優質教育</span></button>
-                <button class="intro-sdg-card" data-learn-goal="5"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-5.png" alt="Goal 5"><span data-i18n="goal5">性別平等</span></button>
-                <button class="intro-sdg-card" data-learn-goal="6"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-6.png" alt="Goal 6"><span data-i18n="goal6">潔淨水與衛生</span></button>
-                <button class="intro-sdg-card" data-learn-goal="7"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-7.png" alt="Goal 7"><span data-i18n="goal7">可負擔的潔淨能源</span></button>
-                <button class="intro-sdg-card" data-learn-goal="8"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-8.png" alt="Goal 8"><span data-i18n="goal8">合適工作與經濟成長</span></button>
-                <button class="intro-sdg-card" data-learn-goal="9"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-9.png" alt="Goal 9"><span data-i18n="goal9">產業、創新與基礎建設</span></button>
-                <button class="intro-sdg-card" data-learn-goal="10"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-10.png" alt="Goal 10"><span data-i18n="goal10">減少不平等</span></button>
-                <button class="intro-sdg-card" data-learn-goal="11"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-11.png" alt="Goal 11"><span data-i18n="goal11">永續城市與社區</span></button>
-                <button class="intro-sdg-card" data-learn-goal="12"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-12.png" alt="Goal 12"><span data-i18n="goal12">負責任消費與生產</span></button>
-                <button class="intro-sdg-card" data-learn-goal="13"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-13.png" alt="Goal 13"><span data-i18n="goal13">氣候行動</span></button>
-                <button class="intro-sdg-card" data-learn-goal="14"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-14.png" alt="Goal 14"><span data-i18n="goal14">水下生命</span></button>
-                <button class="intro-sdg-card" data-learn-goal="15"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-15.png" alt="Goal 15"><span data-i18n="goal15">陸域生命</span></button>
-                <button class="intro-sdg-card" data-learn-goal="16"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-16.png" alt="Goal 16"><span data-i18n="goal16">和平、正義與健全制度</span></button>
-                <button class="intro-sdg-card" data-learn-goal="17"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-17.png" alt="Goal 17"><span data-i18n="goal17">夥伴關係</span></button>
+                <button class="intro-sdg-card" data-learn-goal="1"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="Goal 1"></button>
+                <button class="intro-sdg-card" data-learn-goal="2"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png" alt="Goal 2"></button>
+                <button class="intro-sdg-card" data-learn-goal="3"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-3.png" alt="Goal 3"></button>
+                <button class="intro-sdg-card" data-learn-goal="4"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-4.png" alt="Goal 4"></button>
+                <button class="intro-sdg-card" data-learn-goal="5"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-5.png" alt="Goal 5"></button>
+                <button class="intro-sdg-card" data-learn-goal="6"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-6.png" alt="Goal 6"></button>
+                <button class="intro-sdg-card" data-learn-goal="7"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-7.png" alt="Goal 7"></button>
+                <button class="intro-sdg-card" data-learn-goal="8"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-8.png" alt="Goal 8"></button>
+                <button class="intro-sdg-card" data-learn-goal="9"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-9.png" alt="Goal 9"></button>
+                <button class="intro-sdg-card" data-learn-goal="10"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-10.png" alt="Goal 10"></button>
+                <button class="intro-sdg-card" data-learn-goal="11"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-11.png" alt="Goal 11"></button>
+                <button class="intro-sdg-card" data-learn-goal="12"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-12.png" alt="Goal 12"></button>
+                <button class="intro-sdg-card" data-learn-goal="13"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-13.png" alt="Goal 13"></button>
+                <button class="intro-sdg-card" data-learn-goal="14"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-14.png" alt="Goal 14"></button>
+                <button class="intro-sdg-card" data-learn-goal="15"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-15.png" alt="Goal 15"></button>
+                <button class="intro-sdg-card" data-learn-goal="16"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-16.png" alt="Goal 16"></button>
+                <button class="intro-sdg-card" data-learn-goal="17"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-17.png" alt="Goal 17"></button>
             </div>
         </section>
 
         <section id="interact" class="mb-16">
-            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-                <div>
-                    <div class="section-kicker" data-i18n="interactKicker">Scenario Practice</div>
-                    <h2 class="section-title text-3xl md:text-4xl font-bold" data-i18n="interactTitle">情境互動</h2>
-                </div>
-                <p class="text-lg text-white/70 max-w-xl" data-i18n="interactText">透過貼近日常生活的案例，理解永續議題在真實情境中的判斷重點與行動選擇。</p>
+        <div class="mb-8">
+
+            <div class="section-kicker"
+                data-i18n="interactKicker">
+                Scenario Practice
             </div>
+
+            <h2 class="section-title text-3xl md:text-4xl font-bold mb-4"
+                data-i18n="interactTitle">
+                情境互動
+            </h2>
+
+            <p class="interact-desc"
+            data-i18n="interactText">
+                透過貼近日常生活的案例，理解永續議題在真實情境中的判斷重點與行動選擇。
+            </p>
+
+        </div>
             <div class="sdg-grid-shell grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-white/10">
                 <div class="sdg-card border-r border-b" data-goal="1"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="Goal 1"></div></div>
                 <div class="sdg-card border-r border-b" data-goal="2"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png" alt="Goal 2"></div></div>
