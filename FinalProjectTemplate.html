@@ -372,9 +372,10 @@
             top: 0;
             z-index: 40;
 
-            background: rgba(20, 24, 23, 0.35);
+            background: rgba(20, 24, 23, 0.72);
 
-            backdrop-filter: blur(14px);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
 
             border-bottom: 1px solid rgba(255,255,255,0.03);
         }
@@ -444,7 +445,7 @@
             position: relative;
             overflow: hidden;
             border-radius: 34px;
-            padding: 42px;
+            padding: 36px 42px;
             background: linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
             border: 1px solid rgba(197, 179, 150, 0.24);
             box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
@@ -478,7 +479,7 @@
 
         .hero-title-zh {
             font-family: 'Libre Baskerville', serif;
-            color: #EDF1E7;
+            color: #B8C19A;
             letter-spacing: 0.03em;
             line-height: 1.12;
         }
@@ -608,8 +609,8 @@
         .intro-sdg-card:hover {
             transform: translateY(-5px);
             border-color: rgba(163, 177, 138, 0.65);
-            background: rgba(163, 177, 138, 0.13);
-            box-shadow: 0 16px 32px rgba(0,0,0,.32);
+            background: rgba(163, 177, 138, 0.08);
+            box-shadow: 0 16px 32px rgba(0,0,0,.28);
         }
 
         .intro-sdg-card:hover img {
@@ -881,6 +882,109 @@
                 grid-template-columns: 1fr;
             }
         }
+
+
+        /* =========================================================
+           Final polish adjustments
+           ---------------------------------------------------------
+           統一互動速度、柔化 hover、修正手機版與首頁比例。
+        ========================================================= */
+
+        .sdg-card,
+        .intro-sdg-card,
+        .hero-actions a,
+        .nav-link,
+        .nav-language-select,
+        .hero-stat,
+        .target-card,
+        .action-card,
+        .overlay-btn,
+        .learn-more-btn {
+            transition: all 0.3s ease;
+        }
+
+        .sdg-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 14px 26px rgba(0, 0, 0, 0.42);
+        }
+
+        .hero-panel::after {
+            animation: floatGlow 8s ease-in-out infinite;
+        }
+
+        @keyframes floatGlow {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(12px); }
+            100% { transform: translateY(0); }
+        }
+
+        .hero-title-zh {
+            line-height: 1.16;
+        }
+
+        .intro-sdg-card:hover {
+            background: rgba(163, 177, 138, 0.08);
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.28);
+        }
+
+        @media (max-width: 480px) {
+            html[lang="zh-TW"] .hero-title-zh {
+                white-space: normal;
+                overflow: visible;
+                text-overflow: unset;
+                font-size: 28px !important;
+                line-height: 1.25;
+            }
+
+            .hero-panel {
+                padding: 28px 22px;
+            }
+        }
+        /* 首頁 Hero 兩個 CTA 按鈕統一樣式 */
+
+        .hero-actions a {
+            min-width: 150px;
+            height: 52px;
+            padding: 0 26px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 999px;
+
+            font-size: 17px;
+            font-weight: 800;
+            line-height: 1;
+
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+
+        .primary-cta,
+        .secondary-cta {
+
+            background: rgba(197, 179, 150, 0.08);
+
+            color: #E5D7BC;
+
+            border: 1px solid rgba(197, 179, 150, 0.45);
+
+            backdrop-filter: blur(8px);
+        }
+
+        /* Hover */
+        .primary-cta:hover,
+        .secondary-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0,0,0,.24);
+        }
+
+        /* 次按鈕 hover */
+        .secondary-cta:hover {
+            background: rgba(197, 179, 150, 0.16);
+            border-color: rgba(197, 179, 150, 0.6);
+        }
     </style>
 </head>
 
@@ -914,7 +1018,7 @@
             <div class="grid lg:grid-cols-[1.25fr_.75fr] gap-9 items-center relative z-10">
                 <div>
                     <div class="eyebrow mb-5" data-i18n="heroEyebrow">SDGs Learning Platform</div>
-                    <h1 class="hero-title-zh text-4xl md:text-6xl font-bold mb-6" data-i18n="heroTitle">認識 17 項<span>永續發展目標</span></h1>
+                    <h1 class="hero-title-zh text-4xl md:text-5xl font-bold mb-6" data-i18n="heroTitle">認識 17 項<span>永續發展目標</span></h1>
                     <p class="hero-copy text-xl mb-4" data-i18n="heroP1">永續發展目標（SDGs）是國際社會面對貧窮、不平等、氣候變遷與資源治理等挑戰所提出的共同框架。</p>
                     <p class="hero-copy text-lg mb-8" data-i18n="heroP2">本網站以系統化介紹、目標細項與情境案例，協助使用者理解每項目標的核心議題，並思考可落實於校園、社區與日常生活的行動方向。</p>
                     <div class="hero-actions flex flex-wrap gap-4">
