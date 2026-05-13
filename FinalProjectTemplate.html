@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <!--
+        基礎文件設定
+    -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>17 Sustainable Development Goals - Morandi Edition</title>
+
+    <!--
+        外部資源載入
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ======================================================================
+           Global Styles
+           ----------------------------------------------------------------------
+           定義全站基礎視覺：字型、背景色、文字色與過場效果。
+        ====================================================================== */
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background:
+                radial-gradient(circle at top left,
+                    rgba(163,177,138,0.10),
+                    transparent 30%),
+                radial-gradient(circle at top right,
+                    rgba(197,179,150,0.08),
+                    transparent 25%),
+                #1F2423;
+            color: #D1CDC0;
+            transition: background-color 0.5s ease;
+        }
+
+        .title-font {
+            font-family: 'Libre Baskerville', serif;
+            color: #A3B18A;
+            letter-spacing: 0.05em;
+        }
+
+        .modal-title-font {
+            font-family: 'Libre Baskerville', serif;
+            color: #E0E0E0;
+            letter-spacing: 0.05em;
+        }
+
+        .subtitle-accent {
+            color: #A3B18A;
+        }
+
+        .logo-filter {
+            filter: brightness(0.75) saturate(0.5) sepia(0.1) contrast(1.1);
+            opacity: 0.9;
+        }
+
+        .sdg-card {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .sdg-card:hover {
+            transform: scale(1.02);
+            z-index: 10;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            background-color: rgba(163, 177, 138, 0.12);
+            border-color: rgba(163, 177, 138, 0.5);
+        }
+
+        .sdg-image-container img {
+            width: 85%;
+            height: 85%;
+            object-fit: cover;
+            filter: brightness(0.8) saturate(0.85);
+            transition: filter 0.4s ease;
+        }
+
+        .sdg-card:hover .sdg-image-container img {
+            filter: brightness(1) saturate(1);
+        }
+
+        .story-box {
+            background: #252B2A;
+            padding: 32px;
+            border-radius: 20px;
+            border: 1px solid rgba(197, 179, 150, 0.2);
+            color: #E2E2E2;
+        }
+
+        .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #525B59, #838B6D);
+            border: 2px solid #C5B396;
+        }
+
+        .story-note {
+            background: rgba(163, 177, 138, 0.15);
+            border-left: 4px solid #A3B18A;
+            color: #A3B18A;
+            font-weight: 500;
+        }
+
+        .option-circle {
+            background: #363B3A;
+            color: #C5B396;
+            border: 1px solid rgba(197, 179, 150, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .option-text {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #D1D1D1;
+            transition: all 0.2s ease;
+        }
+
+        .option-card.active .option-circle {
+            background: #C5B396;
+            color: #1F2423;
+            transform: scale(1.1);
+        }
+
+        .option-card.active .option-text {
+            border-color: #C5B396;
+            background: rgba(197, 179, 150, 0.1);
+            color: #F0E6D2;
+            font-weight: 500;
+        }
+
+        .modal-bg {
+            background-color: #1A1E1D;
+            border: 1px solid rgba(197, 179, 150, 0.3);
+        }
+
+        .btn-next {
+            background-color: #C5B396;
+            color: #1F2423;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+        }
+
+        .btn-next:hover {
+            background-color: #E9C46A;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(233, 196, 106, 0.2);
+        }
+
+        .close-btn {
+            color: #A8A394;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #E2E2E2;
+            transform: rotate(90deg);
+        }
+
+        .option-card {
+            transition: all 0.25s ease;
+        }
+
+        .option-card:hover .option-circle {
+            background: rgba(197, 179, 150, 0.2);
+            transform: scale(1.08);
+        }
+
+        .option-card:hover .option-text {
+            border-color: rgba(197, 179, 150, 0.5);
+            background: rgba(197, 179, 150, 0.08);
+            transform: translateX(4px);
+        }
+
+        .full-page {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            background-color: #111514;
+            color: #FFFFFF;
+            overflow-y: auto;
+            padding: 52px 64px;
+            box-sizing: border-box;
+        }
+
+        .full-page-content {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .full-page-header,
+        .action-title-area {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            margin-bottom: 42px;
+        }
+
+        .page-sdg-icon {
+            width: 85px;
+            height: 85px;
+            object-fit: contain;
+            filter: brightness(0.95) saturate(0.95);
+            border-radius: 10px;
+        }
+
+        .overlay-title {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: #A3B18A;
+            letter-spacing: 0.03em;
+        }
+
+        .learn-intro {
+            font-size: 20px;
+            line-height: 1.8;
+            color: #F1F1F1;
+            margin-bottom: 44px;
+            max-width: 1180px;
+        }
+
+        .target-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 26px;
+        }
+
+        .target-card {
+            background-color: #1F2423;
+            border: 1px solid rgba(197, 179, 150, 0.25);
+            border-radius: 22px;
+            padding: 20px 24px;
+            transition: all 0.3s ease;
+        }
+
+        .target-card:hover {
+            border-color: rgba(197, 179, 150, 0.55);
+            background-color: rgba(197, 179, 150, 0.06);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+        }
+
+        .target-number {
+            font-family: 'Libre Baskerville', serif;
+            font-size: 34px;
+            font-weight: 700;
+            color: #C5B396;
+            margin-bottom: 14px;
+        }
+
+        .target-card p {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.65;
+            color: #FFFFFF;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px 22px;
+        }
+
+        .action-card {
+            background-color: #1F2423;
+            border: 2px dashed rgba(197, 179, 150, 0.7);
+            border-radius: 22px;
+            padding: 18px 24px;
+            min-height: 76px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #FFFFFF;
+            font-size: 18px;
+            line-height: 1.35;
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover {
+            background-color: rgba(197, 179, 150, 0.08);
+            border-color: #E9C46A;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35);
+        }
+
+        .overlay-button-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-top: 56px;
+            padding-bottom: 20px;
+        }
+
+        .overlay-right-buttons {
+            display: flex;
+            gap: 14px;
+        }
+
+        .overlay-btn,
+        .learn-more-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            letter-spacing: 0.06em;
+            transition: all 0.3s ease;
+        }
+
+        .learn-more-btn {
+            margin-top: 18px;
+            background-color: #C5B396;
+            color: #1F2423;
+            padding: 12px 28px;
+            font-size: 17px;
+        }
+
+        .home-btn {
+            background-color: #C5B396;
+            color: #1F2423;
+        }
+
+        .back-btn {
+            background-color: #363B3A;
+            color: #C5B396;
+            border: 1px solid rgba(197, 179, 150, 0.45);
+        }
+
+        .action-btn {
+            background-color: #E9C46A;
+            color: #1F2423;
+        }
+
+        .overlay-btn:hover,
+        .learn-more-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+            opacity: 0.92;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at 12% 18%, rgba(163, 177, 138, 0.16), transparent 32%),
+                radial-gradient(circle at 88% 8%, rgba(197, 179, 150, 0.12), transparent 28%),
+                radial-gradient(circle at 78% 78%, rgba(82, 91, 89, 0.28), transparent 34%);
+            z-index: -1;
+        }
+
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+
+            background: rgba(20, 24, 23, 0.35);
+
+            backdrop-filter: blur(14px);
+
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .nav-link {
+            color: #D1CDC0;
+            font-size: 17px;
+            padding: 9px 15px;
+            border-radius: 999px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            color: #1F2423;
+            background: #C5B396;
+        }
+
+        .nav-language-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .nav-language-select {
+            appearance: none;
+            background: transparent;
+            color: #D1CDC0;
+            font-size: 17px;
+            padding: 9px 38px 9px 15px;
+            border-radius: 999px;
+            border: 1px solid rgba(197, 179, 150, 0.28);
+            transition: all 0.25s ease;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .nav-language-select:hover,
+        .nav-language-select:focus {
+            color: #1F2423;
+            background: #C5B396;
+        }
+
+        .nav-language-select option {
+            background: #252B2A;
+            color: #F0E6D2;
+        }
+
+        .nav-language-wrap::after {
+            content: "⌄";
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-56%);
+            color: #C5B396;
+            font-size: 20px;
+            pointer-events: none;
+        }
+
+        .nav-language-wrap:hover::after,
+        .nav-language-wrap:focus-within::after {
+            color: #1F2423;
+        }
+
+        .hero-panel {
+            position: relative;
+            overflow: hidden;
+            border-radius: 34px;
+            padding: 42px;
+            background: linear-gradient(135deg, rgba(255,255,255,.075), rgba(255,255,255,.025));
+            border: 1px solid rgba(197, 179, 150, 0.24);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+        }
+
+        .hero-panel::after {
+            content: "";
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            right: -90px;
+            top: -110px;
+            border-radius: 50%;
+            background: rgba(163, 177, 138, 0.13);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            color: #C5B396;
+            border: 1px solid rgba(197, 179, 150, 0.28);
+            background: rgba(197, 179, 150, 0.08);
+            border-radius: 999px;
+            padding: 7px 14px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .hero-title-zh {
+            font-family: 'Libre Baskerville', serif;
+            color: #EDF1E7;
+            letter-spacing: 0.03em;
+            line-height: 1.12;
+        }
+
+        .hero-title-zh span {
+            color: #A3B18A;
+        }
+
+        .hero-copy {
+            color: rgba(238, 238, 232, 0.82);
+            line-height: 1.85;
+        }
+
+        .hero-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 13px 24px;
+            font-weight: 800;
+            transition: all .25s ease;
+        }
+
+        .primary-cta { background: #C5B396; color: #1F2423; }
+        .secondary-cta { border: 1px solid rgba(197,179,150,.38); color: #C5B396; }
+        .hero-actions a:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(0,0,0,.24); }
+
+        .hero-stat {
+            background: rgba(17,21,20,.55);
+            border: 1px solid rgba(197, 179, 150, 0.18);
+            border-radius: 22px;
+            padding: 20px;
+        }
+
+        .hero-stat-number {
+            font-family: 'Libre Baskerville', serif;
+            color: #E9C46A;
+            font-size: 46px;
+            line-height: 1;
+        }
+
+        .section-card {
+            background: rgba(255, 255, 255, 0.045);
+            border: 1px solid rgba(197, 179, 150, 0.22);
+            border-radius: 30px;
+            padding: 34px;
+            box-shadow: 0 18px 40px rgba(0,0,0,.16);
+        }
+
+        .section-kicker {
+            color: #C5B396;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-family: 'Libre Baskerville', serif;
+            color: #A3B18A;
+            letter-spacing: 0.04em;
+        }
+
+        .intro-feature {
+            background: #252B2A;
+            border: 1px solid rgba(197, 179, 150, 0.24);
+            border-radius: 24px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .intro-feature:hover {
+            transform: translateY(-4px);
+            border-color: rgba(197, 179, 150, 0.56);
+            box-shadow: 0 16px 30px rgba(0,0,0,.28);
+        }
+
+        .feature-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(163, 177, 138, 0.18);
+            color: #E9C46A;
+            font-weight: 900;
+            margin-bottom: 16px;
+        }
+
+
+        .intro-sdg-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .intro-sdg-card {
+            min-height: 164px;
+            border: 1px solid rgba(197, 179, 150, 0.22);
+            border-radius: 24px;
+            background: rgba(37, 43, 42, 0.82);
+            color: #F0E6D2;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            text-align: center;
+            font-size: 19px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .intro-sdg-card img {
+            width: 82px;
+            height: 82px;
+            object-fit: contain;
+            border-radius: 12px;
+            filter: brightness(0.88) saturate(0.88);
+            transition: all 0.3s ease;
+        }
+
+        .intro-sdg-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(163, 177, 138, 0.65);
+            background: rgba(163, 177, 138, 0.13);
+            box-shadow: 0 16px 32px rgba(0,0,0,.32);
+        }
+
+        .intro-sdg-card:hover img {
+            filter: brightness(1) saturate(1);
+            transform: scale(1.04);
+        }
+
+        @media (min-width: 640px) {
+            .intro-sdg-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        }
+
+        @media (min-width: 1024px) {
+            .intro-sdg-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+
+        .language-select-wrap {
+            position: relative;
+            max-width: 360px;
+        }
+
+        .language-select {
+            width: 100%;
+            appearance: none;
+            background: #252B2A;
+            color: #F0E6D2;
+            border: 1px solid rgba(197, 179, 150, 0.45);
+            border-radius: 18px;
+            padding: 15px 48px 15px 18px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .language-select-wrap::after {
+            content: "⌄";
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-56%);
+            color: #C5B396;
+            font-size: 24px;
+            pointer-events: none;
+        }
+
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1.05fr .95fr;
+            gap: 28px;
+            align-items: stretch;
+        }
+
+        .about-card {
+            background: rgba(31, 36, 35, .72);
+            border: 1px solid rgba(197, 179, 150, 0.2);
+            border-radius: 24px;
+            padding: 26px;
+        }
+
+        .about-list li {
+            display: flex;
+            gap: 12px;
+            margin-top: 14px;
+            color: rgba(238,238,232,.84);
+            line-height: 1.65;
+            font-size: 18px;
+        }
+
+        .about-list li::before {
+            content: "✦";
+            color: #E9C46A;
+            flex: 0 0 auto;
+        }
+
+        .sdg-grid-shell {
+            border-radius: 28px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,.1);
+            box-shadow: 0 20px 45px rgba(0,0,0,.22);
+        }
+
+        main > section.page-view {
+            display: none;
+        }
+
+        main > section.page-view.active-page {
+            display: block;
+        }
+
+        @media (max-width: 900px) {
+            .full-page { padding: 36px 24px; }
+            .target-grid,
+            .action-grid { grid-template-columns: 1fr; }
+            .overlay-title { font-size: 40px; }
+            .learn-intro { font-size: 22px; }
+            .page-sdg-icon { width: 86px; height: 86px; }
+            .overlay-button-row { flex-direction: column; align-items: stretch; }
+            .overlay-right-buttons { flex-direction: column; }
+            .about-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body class="px-6 md:px-16 lg:px-28 py-0">
+    <header class="site-header -mx-6 md:-mx-16 lg:-mx-28 px-6 md:px-16 lg:px-28 py-4 mb-12">
+        <div class="max-w-[1100px] mx-auto flex flex-col md:flex-row gap-4 justify-between items-center">
+            <a href="#home" class="flex items-center gap-3" aria-label="Back to home">
+                <img
+                    src="https://taiwanlii.ccu.edu.tw/var/file/153/1153/img/968/SDGsLOGO.png"
+                    class="h-12 md:h-14 object-contain logo-filter"
+                    alt="SDGs Logo"
+                >
+            </a>
+            <nav class="flex flex-wrap justify-center gap-2" aria-label="Main navigation">
+                <a class="nav-link" href="#home" data-i18n="navHome">首頁</a>
+                <a class="nav-link" href="#intro" data-i18n="navIntro">SDGs介紹</a>
+                <a class="nav-link" href="#interact" data-i18n="navInteract">情境互動</a>
+                <a class="nav-link" href="#about" data-i18n="navAbout">關於我們</a>
+                <div class="nav-language-wrap">
+                    <select id="langSelect" class="nav-language-select" aria-label="Language selector">
+                        <option value="zh">繁體中文</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main id="home" class="max-w-[1120px] mx-auto pb-40">
+        <section class="hero-panel mb-14">
+            <div class="grid lg:grid-cols-[1.25fr_.75fr] gap-9 items-center relative z-10">
+                <div>
+                    <div class="eyebrow mb-5" data-i18n="heroEyebrow">SDGs Learning Platform</div>
+                    <h1 class="hero-title-zh text-4xl md:text-6xl font-bold mb-6" data-i18n="heroTitle">認識 17 項<span>永續發展目標</span></h1>
+                    <p class="hero-copy text-xl mb-4" data-i18n="heroP1">永續發展目標（SDGs）是國際社會面對貧窮、不平等、氣候變遷與資源治理等挑戰所提出的共同框架。</p>
+                    <p class="hero-copy text-lg mb-8" data-i18n="heroP2">本網站以系統化介紹、目標細項與情境案例，協助使用者理解每項目標的核心議題，並思考可落實於校園、社區與日常生活的行動方向。</p>
+                    <div class="hero-actions flex flex-wrap gap-4">
+                        <a href="#interact" class="primary-cta" data-i18n="heroCta1">開始情境挑戰</a>
+                        <a href="#intro" class="secondary-cta" data-i18n="heroCta2">先了解 SDGs</a>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="hero-stat col-span-2">
+                        <div class="hero-stat-number">17</div>
+                        <p class="text-lg mt-2" data-i18n="heroStat1">項全球共同目標</p>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number text-3xl">2030</div>
+                        <p class="text-base mt-2" data-i18n="heroStat2">永續發展議程</p>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number text-3xl">2</div>
+                        <p class="text-base mt-2" data-i18n="heroStat3">種學習模式</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="intro" class="section-card mb-12">
+            <div class="section-kicker" data-i18n="introKicker">About the Goals</div>
+            <h2 class="section-title text-3xl md:text-4xl font-bold mb-5" data-i18n="introTitle">SDGs 介紹</h2>
+            <p class="text-xl leading-relaxed mb-8 text-white/85" data-i18n="introText">SDGs 涵蓋社會、經濟與環境三大面向，強調發展不應以犧牲弱勢群體或自然資源為代價。請選擇下方任一目標，進一步了解其背景、關鍵議題與實踐方向。</p>
+            <div id="introSdgGrid" class="intro-sdg-grid">
+                <button class="intro-sdg-card" data-learn-goal="1"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="Goal 1"><span data-i18n="goal1">消除貧窮</span></button>
+                <button class="intro-sdg-card" data-learn-goal="2"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png" alt="Goal 2"><span data-i18n="goal2">消除飢餓</span></button>
+                <button class="intro-sdg-card" data-learn-goal="3"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-3.png" alt="Goal 3"><span data-i18n="goal3">良好健康與福祉</span></button>
+                <button class="intro-sdg-card" data-learn-goal="4"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-4.png" alt="Goal 4"><span data-i18n="goal4">優質教育</span></button>
+                <button class="intro-sdg-card" data-learn-goal="5"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-5.png" alt="Goal 5"><span data-i18n="goal5">性別平等</span></button>
+                <button class="intro-sdg-card" data-learn-goal="6"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-6.png" alt="Goal 6"><span data-i18n="goal6">潔淨水與衛生</span></button>
+                <button class="intro-sdg-card" data-learn-goal="7"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-7.png" alt="Goal 7"><span data-i18n="goal7">可負擔的潔淨能源</span></button>
+                <button class="intro-sdg-card" data-learn-goal="8"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-8.png" alt="Goal 8"><span data-i18n="goal8">合適工作與經濟成長</span></button>
+                <button class="intro-sdg-card" data-learn-goal="9"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-9.png" alt="Goal 9"><span data-i18n="goal9">產業、創新與基礎建設</span></button>
+                <button class="intro-sdg-card" data-learn-goal="10"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-10.png" alt="Goal 10"><span data-i18n="goal10">減少不平等</span></button>
+                <button class="intro-sdg-card" data-learn-goal="11"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-11.png" alt="Goal 11"><span data-i18n="goal11">永續城市與社區</span></button>
+                <button class="intro-sdg-card" data-learn-goal="12"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-12.png" alt="Goal 12"><span data-i18n="goal12">負責任消費與生產</span></button>
+                <button class="intro-sdg-card" data-learn-goal="13"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-13.png" alt="Goal 13"><span data-i18n="goal13">氣候行動</span></button>
+                <button class="intro-sdg-card" data-learn-goal="14"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-14.png" alt="Goal 14"><span data-i18n="goal14">水下生命</span></button>
+                <button class="intro-sdg-card" data-learn-goal="15"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-15.png" alt="Goal 15"><span data-i18n="goal15">陸域生命</span></button>
+                <button class="intro-sdg-card" data-learn-goal="16"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-16.png" alt="Goal 16"><span data-i18n="goal16">和平、正義與健全制度</span></button>
+                <button class="intro-sdg-card" data-learn-goal="17"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-17.png" alt="Goal 17"><span data-i18n="goal17">夥伴關係</span></button>
+            </div>
+        </section>
+
+        <section id="interact" class="mb-16">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
+                <div>
+                    <div class="section-kicker" data-i18n="interactKicker">Scenario Practice</div>
+                    <h2 class="section-title text-3xl md:text-4xl font-bold" data-i18n="interactTitle">情境互動</h2>
+                </div>
+                <p class="text-lg text-white/70 max-w-xl" data-i18n="interactText">透過貼近日常生活的案例，理解永續議題在真實情境中的判斷重點與行動選擇。</p>
+            </div>
+            <div class="sdg-grid-shell grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-white/10">
+                <div class="sdg-card border-r border-b" data-goal="1"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="Goal 1"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="2"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png" alt="Goal 2"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="3"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-3.png" alt="Goal 3"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="4"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-4.png" alt="Goal 4"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="5"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-5.png" alt="Goal 5"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="6"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-6.png" alt="Goal 6"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="7"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-7.png" alt="Goal 7"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="8"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-8.png" alt="Goal 8"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="9"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-9.png" alt="Goal 9"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="10"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-10.png" alt="Goal 10"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="11"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-11.png" alt="Goal 11"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="12"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-12.png" alt="Goal 12"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="13"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-13.png" alt="Goal 13"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="14"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-14.png" alt="Goal 14"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="15"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-15.png" alt="Goal 15"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="16"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-16.png" alt="Goal 16"></div></div>
+                <div class="sdg-card border-r border-b" data-goal="17"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-17.png" alt="Goal 17"></div></div>
+            </div>
+        </section>
+
+
+        <section id="about" class="section-card mb-24">
+            <div class="section-kicker" data-i18n="aboutKicker">Project Concept</div>
+            <h2 class="section-title text-3xl md:text-4xl font-bold mb-6" data-i18n="aboutTitle">關於我們</h2>
+            <div class="about-grid">
+                <div class="about-card">
+                    <h3 class="text-2xl font-bold subtitle-accent mb-4" data-i18n="aboutMissionTitle">網站定位</h3>
+                    <p class="text-xl leading-relaxed text-white/85" data-i18n="aboutText">本網站定位為 SDGs 教育與議題導覽平台，旨在以清楚、可信且具脈絡的方式介紹 17 項永續發展目標。內容設計強調議題理解、案例判斷與行動轉化，協助使用者從知識認識進一步連結到實際參與。</p>
+                </div>
+                <div class="about-card">
+                    <h3 class="text-2xl font-bold subtitle-accent mb-4" data-i18n="aboutHighlightsTitle">內容特色</h3>
+                    <ul class="about-list">
+                        <li data-i18n="aboutPoint1">以 17 項 SDGs 建立完整架構，便於使用者依主題探索與比較。</li>
+                        <li data-i18n="aboutPoint2">每項目標皆提供背景說明、關鍵方向與可實踐的行動建議。</li>
+                        <li data-i18n="aboutPoint3">情境互動以案例式學習呈現，提升使用者對議題複雜性的理解。</li>
+                        <li data-i18n="aboutPoint4">支援繁體中文與英文介面，適合教學、展示與自主學習使用。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+        <div class="modal-bg rounded-3xl max-w-5xl w-full shadow-2xl overflow-y-auto max-h-[95vh] p-8 md:p-12 relative">
+            <button id="closeModal" class="absolute top-6 right-8 text-4xl close-btn" aria-label="Close modal">&times;</button>
+            <div class="flex items-center gap-6 mb-10">
+                <img id="modalImg" src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" class="w-24" alt="SDG Icon">
+                <div>
+                    <h2 id="modalTitle" class="text-5xl font-bold modal-title-font">No Poverty</h2>
+                    <p id="modalGoalLabel" class="subtitle-accent tracking-widest text-sm mt-1 uppercase font-bold">GOAL 01 / 17 Sustainable Development Goals</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="story-box shadow-inner">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="avatar shadow-lg"></div>
+                        <div id="storyNote" class="story-note px-5 py-2 rounded-lg text-base">A quiet change is noticed during lunch time.</div>
+                    </div>
+                    <div class="space-y-6">
+                        <p id="storyMain" class="text-2xl font-medium leading-relaxed text-white">You notice that one of your classmates has recently stopped bringing lunch to school.</p>
+                        <p id="storyBridge" class="text-lg text-[#D1D1D1] leading-relaxed"></p>
+                        <p id="storySub" class="text-lg text-[#B0B0B0] leading-relaxed italic border-t border-white/5 pt-4">Over time, you realize that this is not a temporary situation — it may be due to financial difficulties at home.</p>
+                        <p id="questionText" class="text-xl font-semibold subtitle-accent bg-white/5 p-4 rounded-lg">What would be the most appropriate and respectful action?</p>
+                    </div>
+                </div>
+
+                <div class="space-y-5">
+                    <div class="option-card flex items-center gap-4 cursor-pointer group" data-option="A"><div class="option-circle h-14 w-14 min-w-[56px] rounded-full flex items-center justify-center font-bold text-xl">A</div><div id="optionTextA" class="option-text flex-grow p-5 rounded-xl text-lg"></div></div>
+                    <div class="option-card flex items-center gap-4 cursor-pointer group" data-option="B"><div class="option-circle h-14 w-14 min-w-[56px] rounded-full flex items-center justify-center font-bold text-xl">B</div><div id="optionTextB" class="option-text flex-grow p-5 rounded-xl text-lg"></div></div>
+                    <div class="option-card flex items-center gap-4 cursor-pointer group" data-option="C"><div class="option-circle h-14 w-14 min-w-[56px] rounded-full flex items-center justify-center font-bold text-xl">C</div><div id="optionTextC" class="option-text flex-grow p-5 rounded-xl text-lg"></div></div>
+                    <div class="option-card flex items-center gap-4 cursor-pointer group" data-option="D"><div class="option-circle h-14 w-14 min-w-[56px] rounded-full flex items-center justify-center font-bold text-xl">D</div><div id="optionTextD" class="option-text flex-grow p-5 rounded-xl text-lg"></div></div>
+                    <div class="flex justify-end pt-6"><button id="nextBtn" class="btn-next px-14 py-4 rounded-full font-bold text-xl shadow-xl active:scale-95">SUBMIT CHOICE</button></div>
+                    <div id="resultBox" class="mt-6 transition-all duration-500"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section id="learnPage" class="full-page hidden">
+        <div class="full-page-content">
+            <div class="full-page-header">
+                <img id="learnPageIcon" src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" class="page-sdg-icon" alt="SDG Icon">
+                <h1 id="learnPageTitle" class="overlay-title">消除貧窮</h1>
+            </div>
+            <div id="learnPageIntro" class="learn-intro"></div>
+            <div id="learnTargetGrid" class="target-grid"></div>
+            <div class="overlay-button-row">
+                <button id="learnBackBtn" class="overlay-btn back-btn">返回</button>
+                <div class="overlay-right-buttons"><button id="actionBtn" class="overlay-btn action-btn">採取行動</button><button id="learnHomeBtn" class="overlay-btn home-btn">首頁</button></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="actionPage" class="full-page hidden">
+        <div class="full-page-content">
+            <div class="action-title-area">
+                <img id="actionPageIcon" src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" class="page-sdg-icon" alt="SDG Icon">
+                <h1 class="overlay-title">我們可以怎麼做</h1>
+            </div>
+            <div id="actionGrid" class="action-grid"></div>
+            <div class="overlay-button-row">
+                <button id="actionBackBtn" class="overlay-btn back-btn">返回</button>
+                <div class="overlay-right-buttons"><button id="actionHomeBtn" class="overlay-btn home-btn">首頁</button></div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const translations = {
+                "zh": {
+                                "navHome": "首頁",
+                                "navIntro": "SDGs 介紹",
+                                "navInteract": "情境互動",
+                                "navLanguage": "語言",
+                                "navAbout": "關於我們",
+                                "heroEyebrow": "Sustainable Development Goals",
+                                "heroTitle": "認識 17 項永續發展目標",
+                                "heroP1": "永續發展目標（SDGs）是國際社會面對貧窮、不平等、氣候變遷與資源治理等挑戰所提出的共同框架。",
+                                "heroP2": "本網站以系統化介紹、目標細項與情境案例，協助使用者理解每項目標的核心議題，並思考可落實於校園、社區與日常生活的行動方向。",
+                                "heroCta1": "進入情境案例",
+                                "heroCta2": "瀏覽 SDGs 介紹",
+                                "heroStat1": "項全球永續目標",
+                                "heroStat2": "聯合國永續發展議程",
+                                "heroStat3": "種學習途徑",
+                                "introKicker": "Overview of the Goals",
+                                "introTitle": "SDGs 介紹",
+                                "introText": "SDGs 涵蓋社會、經濟與環境三大面向，強調發展不應以犧牲弱勢群體或自然資源為代價。請選擇下方任一目標，進一步了解其背景、關鍵議題與實踐方向。",
+                                "introCard1Title": "掌握核心議題",
+                                "introCard1Text": "以清楚、精準的文字說明每項目標所回應的全球挑戰與政策意涵。",
+                                "introCard2Title": "理解相互關聯",
+                                "introCard2Text": "呈現各目標之間在貧窮、教育、健康、環境與制度治理上的連動關係。",
+                                "introCard3Title": "連結行動實踐",
+                                "introCard3Text": "從個人選擇、校園倡議到社區參與，思考可持續推動的改善方式。",
+                                "interactKicker": "Scenario-Based Learning",
+                                "interactTitle": "情境互動",
+                                "interactText": "透過貼近日常生活的案例，理解永續議題在真實情境中的判斷重點與行動選擇。",
+                                "languageKicker": "Language Settings",
+                                "languageTitle": "語言選擇",
+                                "languageText": "請使用導覽列的下拉式選單切換介面語言。",
+                                "aboutKicker": "About This Platform",
+                                "aboutTitle": "關於我們",
+                                "aboutMissionTitle": "網站定位",
+                                "aboutText": "本網站定位為 SDGs 教育與議題導覽平台，旨在以清楚、可信且具脈絡的方式介紹 17 項永續發展目標。內容設計強調議題理解、案例判斷與行動轉化，協助使用者從知識認識進一步連結到實際參與。",
+                                "aboutHighlightsTitle": "內容特色",
+                                "aboutPoint1": "以 17 項 SDGs 建立完整架構，便於使用者依主題探索與比較。",
+                                "aboutPoint2": "每項目標皆提供背景說明、關鍵方向與可實踐的行動建議。",
+                                "aboutPoint3": "情境互動以案例式學習呈現，提升使用者對議題複雜性的理解。",
+                                "aboutPoint4": "支援繁體中文與英文介面，適合教學、展示與自主學習使用。",
+                                "submit": "送出選擇",
+                                "selectFirst": "請先選擇一個選項。",
+                                "storyBridge": "這個案例說明 SDGs 議題往往同時牽涉個人處境、制度資源與公共支持。",
+                                "excellent": "✅ 選擇正確",
+                                "thinkAgain": "⚠️ 請重新思考",
+                                "learnMore": "延伸學習",
+                                "back": "返回",
+                                "takeAction": "行動建議",
+                                "home": "首頁",
+                                "whatCanWeDo": "我們可以怎麼做"
+            },
+                "en": {
+                                "navHome": "Home",
+                                "navIntro": "SDGs Overview",
+                                "navInteract": "Scenarios",
+                                "navLanguage": "Language",
+                                "navAbout": "About",
+                                "heroEyebrow": "Sustainable Development Goals",
+                                "heroTitle": "Understanding the 17 Sustainable Development Goals",
+                                "heroP1": "The Sustainable Development Goals provide a shared global framework for addressing poverty, inequality, climate change, resource governance, and inclusive development.",
+                                "heroP2": "This platform presents structured introductions, key targets, and scenario-based cases to help users understand each goal and connect sustainability concepts to schools, communities, and daily decisions.",
+                                "heroCta1": "Explore Scenarios",
+                                "heroCta2": "View SDGs Overview",
+                                "heroStat1": "global sustainability goals",
+                                "heroStat2": "UN 2030 Agenda",
+                                "heroStat3": "learning pathways",
+                                "introKicker": "Overview of the Goals",
+                                "introTitle": "SDGs Overview",
+                                "introText": "The SDGs integrate social, economic, and environmental priorities, emphasizing that development should not come at the expense of vulnerable communities or natural systems. Select a goal below to review its context, key issues, and practical directions.",
+                                "introCard1Title": "Clarify Core Issues",
+                                "introCard1Text": "Concise explanations highlight the global challenges and policy relevance behind each goal.",
+                                "introCard2Title": "Understand Connections",
+                                "introCard2Text": "The content shows how poverty, education, health, environment, and governance issues are interlinked.",
+                                "introCard3Title": "Connect to Action",
+                                "introCard3Text": "Action guidance connects individual choices, campus initiatives, and community participation.",
+                                "interactKicker": "Scenario-Based Learning",
+                                "interactTitle": "Scenario Interaction",
+                                "interactText": "Case-based learning helps users evaluate sustainability issues and action choices in realistic everyday contexts.",
+                                "languageKicker": "Language Settings",
+                                "languageTitle": "Language",
+                                "languageText": "Use the language menu in the navigation bar to switch the interface language.",
+                                "aboutKicker": "About This Platform",
+                                "aboutTitle": "About Us",
+                                "aboutMissionTitle": "Platform Positioning",
+                                "aboutText": "This website is designed as an educational and issue-oriented guide to the 17 Sustainable Development Goals. It emphasizes clear context, credible explanations, scenario-based judgment, and the transition from knowledge to practical engagement.",
+                                "aboutHighlightsTitle": "Content Features",
+                                "aboutPoint1": "A complete structure organized around all 17 Sustainable Development Goals.",
+                                "aboutPoint2": "Each goal includes background context, key directions, and practical action suggestions.",
+                                "aboutPoint3": "Scenario-based learning supports deeper understanding of complex sustainability issues.",
+                                "aboutPoint4": "Traditional Chinese and English interfaces support teaching, presentation, and self-guided learning.",
+                                "submit": "SUBMIT",
+                                "selectFirst": "Please select an option first.",
+                                "storyBridge": "This case shows that SDG issues often involve personal circumstances, institutional resources, and public support at the same time.",
+                                "excellent": "✅ Correct choice",
+                                "thinkAgain": "⚠️ Review the situation",
+                                "learnMore": "Learn More",
+                                "back": "BACK",
+                                "takeAction": "Action Guide",
+                                "home": "HOME",
+                                "whatCanWeDo": "What Can We Do"
+                }
+};
+
+            const enQuestions = {
+                1:{title:"No Poverty",storyNote:"An overlooked need in daily life.",storyMain:"Over the past few weeks, you notice that a classmate often skips lunch and gradually avoids interacting with others. At first, you assume it is temporary, but the situation continues.",storySub:"You begin to realize that short-term help is not enough, and stable support through proper systems may be necessary.",question:"Which action would most effectively improve this student’s situation?",options:{A:"Provide food privately",B:"Start a fundraising activity in class",C:"Help report the situation through the school support system",D:"Do not get involved"},answer:"C",correctFeedback:"Sustainable support comes from stable systems. Accessing formal resources ensures long-term stability.",wrongFeedback:"Short-term help may not solve the real problem. Consider how to provide stable and long-term support through proper systems."},
+                2:{title:"Zero Hunger",storyNote:"Food waste and unequal distribution.",storyMain:"At your part-time job, a large amount of edible food is thrown away every night. At the same time, you learn that some families in your community struggle to access enough food.",storySub:"You begin to realize that the issue is not only waste, but also how food is distributed and managed.",question:"Which action best aligns with sustainable food use?",options:{A:"Dispose of the food according to policy",B:"Take the food and distribute it privately",C:"Suggest partnering with a food bank",D:"Criticize the waste online"},answer:"C",correctFeedback:"Reducing waste is only the first step. A structured system ensures food reaches those in need.",wrongFeedback:"Good intentions are not enough if the solution is not sustainable. How can food be redistributed safely and continuously?"},
+                3:{title:"Good Health and Well-being",storyNote:"The impact of long-term stress.",storyMain:"A friend has been under heavy academic pressure and shows signs of fatigue and emotional distress. Even when you check in, they insist it is only temporary.",storySub:"You begin to realize that early support and professional help may be important for long-term well-being.",question:"Which action best promotes well-being?",options:{A:"Respect their wishes and stop bringing it up",B:"Occasionally remind them to rest",C:"Encourage and accompany them to seek professional help",D:"Inform other friends"},answer:"C",correctFeedback:"True support includes access to proper care. Professional help is key to long-term well-being.",wrongFeedback:"Simply caring is not always enough. Effective support often requires professional help and proper guidance."},
+                4:{title:"Quality Education",storyNote:"An invisible learning gap.",storyMain:"A classmate struggles to complete assignments due to limited access to devices at home. Although they try their best, the gap continues to affect their learning.",storySub:"You begin to realize that equal access to resources is essential for real learning opportunities.",question:"Which action best promotes educational equality?",options:{A:"Complete the assignments for them",B:"Inform and help them access school resources",C:"Help them borrow equipment from classmates",D:"Do nothing"},answer:"B",correctFeedback:"Education is about equal access, not just outcomes. Providing resources creates real learning opportunities.",wrongFeedback:"Finishing tasks does not mean solving the problem. How can this student gain equal access to learning resources?"},
+                5:{title:"Gender Equality",storyNote:"A normalized division of roles.",storyMain:"In group projects, tasks are often divided based on gender without discussion. Over time, this pattern limits what each person can try or learn.",storySub:"You begin to realize that fairness should come from equal opportunity, not assumptions.",question:"Which action best promotes equality?",options:{A:"Maintain the current arrangement",B:"Discuss it privately with some classmates",C:"Suggest assigning tasks based on ability and interest",D:"Adjust your own role only"},answer:"C",correctFeedback:"Fairness comes from equal opportunity. Assigning roles by ability prevents bias and limitation.",wrongFeedback:"Unspoken habits can still create inequality. Are roles being assigned fairly based on ability, not assumptions?"},
+                6:{title:"Clean Water and Sanitation",storyNote:"A commonly overlooked issue.",storyMain:"You notice a water dispenser leaking continuously at school, and no one seems to pay attention. Over time, a significant amount of water is wasted.",storySub:"You begin to realize that proper maintenance is as important as individual conservation.",question:"Which action best solves the problem?",options:{A:"Ignore it",B:"Put up reminder signs",C:"Report it to the school for repair",D:"Share it on social media"},answer:"C",correctFeedback:"Effective solutions address the root cause. Proper management prevents ongoing resource loss.",wrongFeedback:"Reminding others does not fix the source of the problem. What action can stop the water waste completely?"},
+                7:{title:"Affordable and Clean Energy",storyNote:"Energy use habits.",storyMain:"Classrooms often leave lights and air conditioning on even when empty. Although policies exist, they are not consistently followed.",storySub:"You begin to realize that improving efficiency requires better systems, not just individual effort.",question:"What is the best solution?",options:{A:"Do nothing",B:"Turn off devices when leaving",C:"Suggest establishing better energy management systems",D:"Remind classmates"},answer:"C",correctFeedback:"Lasting impact requires system-level change. Efficient energy use depends on structured management.",wrongFeedback:"Individual actions help, but the issue continues. What solution can improve energy use for everyone consistently?"},
+                8:{title:"Decent Work and Economic Growth",storyNote:"Fair working conditions.",storyMain:"At your workplace, some employees are required to work overtime without proper compensation. Many remain silent because they fear losing their jobs.",storySub:"You begin to realize that fair systems are necessary to protect workers’ rights.",question:"What is the best action?",options:{A:"Ignore the situation",B:"Comfort your coworkers privately",C:"Suggest reporting the issue through formal channels",D:"Post about it online"},answer:"C",correctFeedback:"Fair conditions rely on accountability. Formal action helps protect workers’ rights.",wrongFeedback:"Ignoring unfair treatment allows it to continue. How can workers’ rights be protected in a proper and lasting way?"},
+                9:{title:"Industry, Innovation and Infrastructure",storyNote:"An opportunity for improvement.",storyMain:"Your school uses outdated systems that reduce efficiency and slow down learning processes. Some believe it is enough to just complete tasks.",storySub:"You begin to realize that innovation can improve long-term outcomes for everyone.",question:"What is the best action?",options:{A:"Continue using the existing equipment",B:"Propose improvements and evaluate feasibility",C:"Give up on the project",D:"Only complete minimum requirements"},answer:"B",correctFeedback:"Progress depends on continuous improvement. Innovation begins with challenging the current system.",wrongFeedback:"Doing the minimum may solve today’s task, but how can the system be improved for the future?"},
+                10:{title:"Reduced Inequalities",storyNote:"Differences in participation.",storyMain:"Some students participate less in discussions due to language or cultural barriers. Although unintentional, the environment limits their involvement.",storySub:"You begin to realize that inclusion must be actively created.",question:"What is the best action?",options:{A:"Do nothing",B:"Interact only with familiar classmates",C:"Adjust discussion methods to include more participants",D:"Leave it to the teacher"},answer:"C",correctFeedback:"Inclusion requires intentional design. Adapting the environment creates equal participation.",wrongFeedback:"Inclusion does not happen automatically. What can be changed so everyone has a fair chance to participate?"},
+                11:{title:"Sustainable Cities and Communities",storyNote:"Shared responsibility.",storyMain:"Recycling systems exist in your community, but many people do not follow them properly. As a result, waste management becomes ineffective.",storySub:"You begin to realize that community participation is key to sustainable change.",question:"What is the best solution?",options:{A:"Do nothing",B:"Only manage your own waste",C:"Participate in or promote community awareness activities",D:"Complain online"},answer:"C",correctFeedback:"Sustainable change requires collective action. Community engagement amplifies impact.",wrongFeedback:"Individual effort is important, but not enough. How can more people in the community be involved?"},
+                12:{title:"Responsible Consumption and Production",storyNote:"The impact of daily choices.",storyMain:"You are considering buying new items even though your current ones are still usable. At the same time, you learn about the environmental cost of overproduction.",storySub:"You begin to realize that reducing consumption can be more sustainable than changing products.",question:"What is the best action?",options:{A:"Buy the cheaper product",B:"Choose a more expensive but ethical brand",C:"Extend the use of current items and avoid purchasing",D:"Choose randomly"},answer:"C",correctFeedback:"The most sustainable choice may be restraint. Reducing demand lowers overall impact.",wrongFeedback:"Choosing differently is one option, but is consuming less a better solution?"},
+                13:{title:"Climate Action",storyNote:"Balancing convenience and impact.",storyMain:"Your class is planning an event and debates between using disposable items or more sustainable options. Convenience and cost become key concerns.",storySub:"You begin to realize that practical solutions can encourage wider participation.",question:"What is the best action?",options:{A:"Use disposable utensils",B:"Fully switch to reusable utensils",C:"Encourage participants to bring their own utensils",D:"Follow the majority decision"},answer:"C",correctFeedback:"Effective solutions balance impact and practicality. Wider participation leads to meaningful change.",wrongFeedback:"A solution must be practical for everyone. How can environmental impact be reduced while keeping participation high?"},
+                14:{title:"Life Below Water",storyNote:"Hidden environmental impact.",storyMain:"You regularly use single-use plastics without much thought. Later, you learn that these habits contribute to ocean pollution.",storySub:"You begin to realize that small daily actions can have large environmental consequences.",question:"What is the best action?",options:{A:"Maintain current habits",B:"Actively reduce single-use plastic use",C:"Occasionally reduce usage",D:"Wait for policy changes"},answer:"B",correctFeedback:"Prevention starts at the source. Reducing plastic use protects marine ecosystems.",wrongFeedback:"Ocean pollution often starts from everyday habits. What action directly reduces plastic entering the ocean?"},
+                15:{title:"Life on Land",storyNote:"Human impact on nature.",storyMain:"During outdoor activities, you see people leaving trash behind. Even with bins available, not everyone uses them properly.",storySub:"You begin to realize that protecting ecosystems requires both action and influence.",question:"What is the best action?",options:{A:"Do nothing",B:"Only clean up your own waste",C:"Help maintain the environment and remind others",D:"Only complain to friends"},answer:"C",correctFeedback:"Impact grows when actions influence others. Protecting ecosystems requires shared responsibility.",wrongFeedback:"Protecting the environment is not only personal. How can your actions influence others as well?"},
+                16:{title:"Peace, Justice and Strong Institutions",storyNote:"Fairness in systems.",storyMain:"A group member contributes little but receives equal credit in a project. This creates tension and a sense of unfairness.",storySub:"You begin to realize that fair systems require accountability.",question:"What is the best action?",options:{A:"Say nothing",B:"Complain privately",C:"Report the issue through proper channels",D:"Accept the situation"},answer:"C",correctFeedback:"Fair systems depend on accountability. Speaking up helps maintain justice.",wrongFeedback:"Silence may seem easier, but how can fairness be ensured for everyone?"},
+                17:{title:"Partnerships for the Goals",storyNote:"Collaboration challenges.",storyMain:"Different teams in a project struggle to agree on how to proceed. Miscommunication slows progress.",storySub:"You begin to realize that coordination is essential for successful collaboration.",question:"What is the best action?",options:{A:"Let each group work separately",B:"Give up on collaboration",C:"Facilitate communication and find common ground",D:"Focus only on your own part"},answer:"C",correctFeedback:"Strong collaboration requires alignment. Communication is key to shared success.",wrongFeedback:"Working separately may avoid conflict, but does it solve the collaboration problem?"}
+            };
+
+            const zhQuestions = {
+                1:{title:"消除貧窮",storyNote:"日常中被忽略的需要。",storyMain:"你發現一位同學連續幾週常常不吃午餐，也逐漸減少和大家互動。起初你以為只是暫時狀況，但情況一直持續。",storySub:"你開始意識到，短期幫助可能不夠，透過正式資源取得穩定支持更重要。",question:"哪一個行動最能有效改善這位同學的處境？",options:{A:"私下每天提供食物",B:"在班上發起募款",C:"協助透過學校支持系統通報與求助",D:"不要介入"},answer:"C",correctFeedback:"永續的支持來自穩定制度。正式資源能提供較長期且有保障的協助。",wrongFeedback:"短期幫助不一定能解決根本問題。想想如何透過適當制度提供穩定支持。"},
+                2:{title:"消除飢餓",storyNote:"食物浪費與分配不均。",storyMain:"你在打工場所看到每天都有大量仍可食用的食物被丟棄，同時也知道社區中有家庭難以取得足夠食物。",storySub:"你意識到問題不只是浪費，也包含食物如何被安全且有效分配。",question:"哪個行動最符合永續食物利用？",options:{A:"依規定直接丟棄",B:"私下拿去分送",C:"建議與食物銀行合作",D:"在網路上批評"},answer:"C",correctFeedback:"減少浪費只是第一步。結構化合作能讓食物安全且持續送到需要的人手中。",wrongFeedback:"善意若缺乏安全與制度，可能難以持續。想想如何穩定分配食物。"},
+                3:{title:"良好健康與福祉",storyNote:"長期壓力的影響。",storyMain:"你的朋友長期承受課業壓力，出現疲倦與情緒低落的情況。即使你關心他，他仍說只是暫時的。",storySub:"你開始意識到，及早支持與專業協助對長期身心健康很重要。",question:"哪個行動最能促進健康福祉？",options:{A:"尊重他的說法，不再提起",B:"偶爾提醒他休息",C:"鼓勵並陪伴他尋求專業協助",D:"告訴其他朋友"},answer:"C",correctFeedback:"真正的支持包含取得適當照護。專業協助是長期福祉的重要關鍵。",wrongFeedback:"關心不一定足夠。有效支持常需要專業資源與正確引導。"},
+                4:{title:"優質教育",storyNote:"看不見的學習落差。",storyMain:"一位同學因家中缺乏設備而難以完成作業。雖然他很努力，但資源差距持續影響學習。",storySub:"你開始理解，平等的學習機會需要資源可近性。",question:"哪個行動最能促進教育平等？",options:{A:"幫他完成作業",B:"協助他向學校取得學習資源",C:"幫他向同學借設備",D:"什麼都不做"},answer:"B",correctFeedback:"教育重點不只是結果，而是平等取得資源。穩定資源能創造真正學習機會。",wrongFeedback:"完成作業不代表解決問題。思考如何讓他獲得平等的學習資源。"},
+                5:{title:"性別平等",storyNote:"被習慣化的角色分工。",storyMain:"小組作業常依性別分配任務，久而久之限制了每個人嘗試與學習的機會。",storySub:"你意識到公平應來自平等機會，而不是刻板印象。",question:"哪個行動最能促進平等？",options:{A:"維持原本安排",B:"私下和部分同學討論",C:"建議依能力與興趣分配任務",D:"只調整自己的角色"},answer:"C",correctFeedback:"公平來自平等機會。依能力與興趣分工能減少偏見與限制。",wrongFeedback:"沒有明說的習慣也可能造成不平等。任務是否真的依能力而非刻板印象分配？"},
+                6:{title:"潔淨水與衛生",storyNote:"常被忽略的小問題。",storyMain:"你發現學校飲水機持續漏水，但幾乎沒有人注意。時間一久，浪費的水量變得可觀。",storySub:"你意識到維修管理和個人節水同樣重要。",question:"哪個行動最能解決問題？",options:{A:"忽略",B:"貼提醒標語",C:"通報學校維修",D:"上傳社群媒體"},answer:"C",correctFeedback:"有效解方要處理根本原因。適當管理能停止持續的資源流失。",wrongFeedback:"提醒不一定能修復問題來源。哪個行動能完全停止浪費？"},
+                7:{title:"可負擔的潔淨能源",storyNote:"能源使用習慣。",storyMain:"教室常在無人時仍開著燈與冷氣。雖然有規定，但並未穩定執行。",storySub:"你意識到提升效率需要更好的管理系統，而不只是個人努力。",question:"最佳解決方式是什麼？",options:{A:"不做任何事",B:"離開時順手關掉",C:"建議建立更完善的能源管理制度",D:"提醒同學"},answer:"C",correctFeedback:"長期影響需要制度層級的改變。有效能源使用仰賴結構化管理。",wrongFeedback:"個人行動有幫助，但問題仍會持續。什麼方法能讓大家穩定改善？"},
+                8:{title:"合適工作與經濟成長",storyNote:"公平工作條件。",storyMain:"你的工作場所中，有些員工被要求加班卻沒有合理補償。許多人因害怕失去工作而沉默。",storySub:"你意識到保障勞權需要公平制度。",question:"最適合的行動是什麼？",options:{A:"忽略",B:"私下安慰同事",C:"建議透過正式管道反映",D:"發文批評"},answer:"C",correctFeedback:"公平工作條件需要問責機制。正式行動有助於保障勞動權益。",wrongFeedback:"忽視不公平會讓問題持續。如何用正當且長期的方式保護勞權？"},
+                9:{title:"產業、創新與基礎建設",storyNote:"改善的機會。",storyMain:"學校使用老舊系統，使流程效率低落、學習受阻。有些人認為只要完成任務就好。",storySub:"你意識到創新能改善大家的長期成果。",question:"最佳行動是什麼？",options:{A:"繼續使用現有設備",B:"提出改善方案並評估可行性",C:"放棄計畫",D:"只完成最低要求"},answer:"B",correctFeedback:"進步來自持續改善。創新從挑戰現有系統開始。",wrongFeedback:"只完成最低要求或許能解決眼前任務，但如何改善未來的系統？"},
+                10:{title:"減少不平等",storyNote:"參與程度的差異。",storyMain:"有些同學因語言或文化差異較少參與討論。即使不是故意，環境仍限制了他們的投入。",storySub:"你意識到包容需要被主動創造。",question:"最佳行動是什麼？",options:{A:"不做任何事",B:"只和熟悉的同學互動",C:"調整討論方式，讓更多人能參與",D:"交給老師處理"},answer:"C",correctFeedback:"包容需要有意識的設計。調整環境能創造平等參與機會。",wrongFeedback:"包容不會自動發生。可以改變什麼讓每個人都有公平參與機會？"},
+                11:{title:"永續城市與社區",storyNote:"共同責任。",storyMain:"社區有回收制度，但許多人沒有正確執行，導致廢棄物管理成效不佳。",storySub:"你意識到社區參與是永續改變的關鍵。",question:"最佳解決方式是什麼？",options:{A:"不做任何事",B:"只管理自己的垃圾",C:"參與或推動社區宣導活動",D:"在網路抱怨"},answer:"C",correctFeedback:"永續改變需要集體行動。社區參與能放大影響力。",wrongFeedback:"個人努力重要，但仍不足夠。如何讓更多社區成員一起參與？"},
+                12:{title:"負責任的消費與生產",storyNote:"日常選擇的影響。",storyMain:"你想買新物品，但原本的東西仍可使用。同時你知道過度生產會帶來環境成本。",storySub:"你意識到減少消費可能比換一種商品更永續。",question:"最佳行動是什麼？",options:{A:"買較便宜的產品",B:"買較貴但標榜倫理的品牌",C:"延長現有物品使用，避免購買",D:"隨便選"},answer:"C",correctFeedback:"最永續的選擇有時是克制。降低需求能減少整體影響。",wrongFeedback:"選擇不同商品是一種方式，但減少消費是否更好？"},
+                13:{title:"氣候行動",storyNote:"便利與影響的平衡。",storyMain:"班上要辦活動，正在討論使用免洗用品或較永續的方式。便利性與成本成為主要考量。",storySub:"你意識到實際可行的方案能鼓勵更多人參與。",question:"最佳行動是什麼？",options:{A:"使用免洗餐具",B:"全部改用重複使用餐具",C:"鼓勵參與者自備餐具",D:"照多數決定"},answer:"C",correctFeedback:"有效方案需要兼顧影響與可行性。提高參與度才能帶來更大改變。",wrongFeedback:"方案必須對大家可行。如何降低環境影響又維持高參與度？"},
+                14:{title:"保育海洋生態",storyNote:"隱藏的環境影響。",storyMain:"你經常使用一次性塑膠，後來知道這些習慣會造成海洋污染。",storySub:"你開始理解，小小的日常行動也可能造成很大的環境後果。",question:"最佳行動是什麼？",options:{A:"維持原本習慣",B:"主動減少一次性塑膠使用",C:"偶爾減少使用",D:"等待政策改變"},answer:"B",correctFeedback:"預防要從源頭開始。減少塑膠使用能保護海洋生態。",wrongFeedback:"海洋污染常從日常習慣開始。哪個行動能直接減少塑膠進入海洋？"},
+                15:{title:"保育陸域生態",storyNote:"人類對自然的影響。",storyMain:"戶外活動時，你看到有人留下垃圾。即使附近有垃圾桶，也不是每個人都正確使用。",storySub:"你意識到保護生態需要行動，也需要影響他人。",question:"最佳行動是什麼？",options:{A:"不做任何事",B:"只清理自己的垃圾",C:"協助維護環境並提醒他人",D:"只向朋友抱怨"},answer:"C",correctFeedback:"當行動能影響他人，影響力會擴大。保護生態需要共同責任。",wrongFeedback:"保護環境不只是個人行為。你的行動如何影響其他人？"},
+                16:{title:"和平、正義與健全制度",storyNote:"制度中的公平。",storyMain:"小組成員貢獻很少，卻獲得相同分數，造成緊張與不公平感。",storySub:"你意識到公平制度需要責任與回饋機制。",question:"最佳行動是什麼？",options:{A:"什麼都不說",B:"私下抱怨",C:"透過適當管道反映",D:"接受現況"},answer:"C",correctFeedback:"公平制度依賴問責。適當表達有助於維持正義。",wrongFeedback:"沉默或許較容易，但如何確保對每個人都公平？"},
+                17:{title:"夥伴關係",storyNote:"合作中的挑戰。",storyMain:"不同小組在專案中難以達成共識，溝通不良讓進度變慢。",storySub:"你意識到協調是成功合作的重要關鍵。",question:"最佳行動是什麼？",options:{A:"讓各組各自工作",B:"放棄合作",C:"促進溝通並尋找共同目標",D:"只專注自己的部分"},answer:"C",correctFeedback:"強大的合作需要對齊目標。溝通是共享成果的關鍵。",wrongFeedback:"各自工作或許避免衝突，但是否解決了合作問題？"}
+            };
+
+            const questionBanks = { zh: zhQuestions, en: enQuestions };
+
+            const learnBanks = {
+                "zh": {
+                                "1": {
+                                                "title": "消除貧窮",
+                                                "intro": "SDG 1 旨在消除各地一切形式的貧窮。貧窮不僅是收入不足，也與基本服務、社會保障、財產與資源取得、災害風險及政策制度密切相關。此目標強調以制度性支持降低脆弱性，確保每個人都能維持基本且有尊嚴的生活。",
+                                                "targets": [
+                                                                { "code": "1.1", "text": "在 2030 年前，消除世界各地的極端貧窮，確保無人生活在每日低於國際貧窮線的條件之下。" },
+                                                                { "code": "1.2", "text": "依各國標準，至少將生活在各種形式貧窮中的男性、女性與兒童比例減半。" },
+                                                                { "code": "1.3", "text": "建立並落實適合各國情況的社會保障制度與措施，並大幅提高貧窮及弱勢族群的保障覆蓋率。" },
+                                                                { "code": "1.4", "text": "確保所有人，尤其是貧窮與弱勢群體，能平等取得經濟資源、基本服務、土地與財產權、自然資源、適當新技術及金融服務。" },
+                                                                { "code": "1.5", "text": "提升貧窮與脆弱處境者面對氣候相關災害、經濟衝擊、社會衝擊與環境衝擊的韌性，降低其暴露與脆弱程度。" },
+                                                                { "code": "1.a", "text": "動員來自多元來源的充足資源，支持開發中國家，特別是最低度開發國家，推動終結貧窮的政策與方案。" },
+                                                                { "code": "1.b", "text": "在國家、區域與國際層級建立以貧窮者為核心、具性別敏感度的政策架構，支持加速投資於消除貧窮行動。" }
+                                                ],
+                                                "actions": [
+                                                                "理解貧窮背後的制度因素，避免將問題簡化為個人選擇。",
+                                                                "發現身邊有人需要協助時，優先連結學校、社福或社區的正式支持資源。",
+                                                                "支持公平就業、社會保障、教育與基本服務等能長期降低貧窮風險的公共措施。"
+                                                ]
+                                },
+                                "2": {
+                                                "title": "消除飢餓",
+                                                "intro": "終結飢餓、達成糧食安全與改善營養，並推動永續農業，讓每個人都能穩定取得足夠且健康的食物。",
+                                                "targets": [
+                                                                "2.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "2.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "2.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "珍惜食物並支持安全的剩食分享制度。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "3": {
+                                                "title": "良好健康與福祉",
+                                                "intro": "確保健康生活並促進各年齡層福祉，包含疾病預防、心理健康、醫療可近性與健康生活方式。",
+                                                "targets": [
+                                                                "3.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "3.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "3.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "主動關心身心健康，必要時尋求專業協助。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "4": {
+                                                "title": "優質教育",
+                                                "intro": "確保包容且公平的優質教育，並促進終身學習機會，讓不同背景的人都能取得學習資源。",
+                                                "targets": [
+                                                                "4.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "4.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "4.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "分享學習資源，協助同學取得公平學習機會。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "5": {
+                                                "title": "性別平等",
+                                                "intro": "實現性別平等並賦權所有女性與女童，核心是打破歧視、暴力與刻板分工。",
+                                                "targets": [
+                                                                "5.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "5.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "5.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "分工時依能力與興趣，而非性別刻板印象。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "6": {
+                                                "title": "潔淨水與衛生",
+                                                "intro": "確保所有人都能取得潔淨飲水、衛生設施與永續水資源管理，減少浪費與污染。",
+                                                "targets": [
+                                                                "6.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "6.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "6.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "發現漏水或污染時主動通報並節約用水。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "7": {
+                                                "title": "可負擔的潔淨能源",
+                                                "intro": "確保人人取得可負擔、可靠、永續且現代的能源，並提高能源效率與再生能源使用。",
+                                                "targets": [
+                                                                "7.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "7.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "7.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "離開空間時關閉電源，支持節能管理。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "8": {
+                                                "title": "合適工作與經濟成長",
+                                                "intro": "促進包容且永續的經濟成長、充分就業與合適工作，讓勞動者受到公平保障。",
+                                                "targets": [
+                                                                "8.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "8.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "8.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "了解勞動權益，面對不公平待遇使用正式管道。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "9": {
+                                                "title": "產業、創新與基礎建設",
+                                                "intro": "建立有韌性的基礎建設，推動包容且永續的工業化，並鼓勵創新改善生活與學習。",
+                                                "targets": [
+                                                                "9.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "9.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "9.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "提出改善流程的想法，評估可行方案。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "10": {
+                                                "title": "減少不平等",
+                                                "intro": "減少國內與國家間的不平等，讓不同身分、文化、語言或資源條件的人都有公平參與機會。",
+                                                "targets": [
+                                                                "10.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "10.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "10.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "設計討論方式，讓不同背景的人都能發聲。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "11": {
+                                                "title": "永續城市與社區",
+                                                "intro": "讓城市與社區更包容、安全、有韌性且永續，重視居住、交通、公共空間與災害準備。",
+                                                "targets": [
+                                                                "11.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "11.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "11.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "參與社區整理、回收與公共議題討論。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "12": {
+                                                "title": "負責任消費與生產",
+                                                "intro": "確保永續消費與生產模式，減少浪費、延長物品使用壽命，並選擇負責任的供應鏈。",
+                                                "targets": [
+                                                                "12.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "12.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "12.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "先減少不必要購買，再選擇耐用或負責任產品。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "13": {
+                                                "title": "氣候行動",
+                                                "intro": "採取緊急行動因應氣候變遷及其影響，從減碳、調適到日常選擇都很重要。",
+                                                "targets": [
+                                                                "13.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "13.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "13.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "降低一次性用品與高碳排選擇，鼓勵共同參與。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "14": {
+                                                "title": "水下生命",
+                                                "intro": "保育並永續利用海洋與海洋資源，減少污染、保護海洋生態與漁業資源。",
+                                                "targets": [
+                                                                "14.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "14.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "14.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "減少塑膠使用，避免垃圾進入河川與海洋。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "15": {
+                                                "title": "陸域生命",
+                                                "intro": "保護、恢復並促進陸域生態系永續利用，包含森林、生物多樣性與土地保育。",
+                                                "targets": [
+                                                                "15.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "15.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "15.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "戶外活動不留下垃圾，尊重自然棲地。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "16": {
+                                                "title": "和平、正義與健全制度",
+                                                "intro": "促進和平與包容的社會，提供司法可近性，並建立有效、負責且包容的制度。",
+                                                "targets": [
+                                                                "16.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "16.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "16.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "用正當程序反映問題，維護公平與信任。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                },
+                                "17": {
+                                                "title": "夥伴關係",
+                                                "intro": "強化永續發展執行方法，活化全球夥伴關係，透過合作、資源與知識共享達成目標。",
+                                                "targets": [
+                                                                "17.1 理解此目標與日常生活的連結，辨識問題背後的制度與資源因素。",
+                                                                "17.2 思考個人、學校與社區可以採取的實際行動。",
+                                                                "17.3 透過合作與持續改善，讓行動不只停留在一次性的幫助。"
+                                                ],
+                                                "actions": [
+                                                                "練習溝通協調，尋找共同目標並分工合作。",
+                                                                "把學到的概念分享給同學、家人或社區成員。",
+                                                                "觀察生活中的相關問題，記錄並提出可執行的改善建議。"
+                                                ]
+                                }
+                },
+                "en": {
+                                "1": {
+                                                "title": "No Poverty",
+                                                "intro": "End poverty in all its forms everywhere, focusing not only on income but also basic services, social protection, and resilience.",
+                                                "targets": [
+                                                                "1.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "1.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "1.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Start with people nearby and connect them with formal support.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "2": {
+                                                "title": "Zero Hunger",
+                                                "intro": "End hunger, achieve food security, improve nutrition, and support sustainable agriculture so everyone can access healthy food.",
+                                                "targets": [
+                                                                "2.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "2.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "2.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Reduce food waste and support safe food-sharing systems.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "3": {
+                                                "title": "Good Health and Well-being",
+                                                "intro": "Ensure healthy lives and promote well-being for all ages through prevention, mental health, healthcare access, and healthy habits.",
+                                                "targets": [
+                                                                "3.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "3.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "3.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Care for mental and physical health and seek professional help when needed.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "4": {
+                                                "title": "Quality Education",
+                                                "intro": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for people from all backgrounds.",
+                                                "targets": [
+                                                                "4.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "4.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "4.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Share learning resources and help others access equal opportunities.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "5": {
+                                                "title": "Gender Equality",
+                                                "intro": "Achieve gender equality and empower all women and girls by challenging discrimination, violence, and limiting stereotypes.",
+                                                "targets": [
+                                                                "5.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "5.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "5.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Assign roles by ability and interest, not gender stereotypes.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "6": {
+                                                "title": "Clean Water and Sanitation",
+                                                "intro": "Ensure access to clean water, sanitation, and sustainable water management while reducing waste and pollution.",
+                                                "targets": [
+                                                                "6.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "6.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "6.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Report leaks or pollution and practice water conservation.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "7": {
+                                                "title": "Affordable and Clean Energy",
+                                                "intro": "Ensure access to affordable, reliable, sustainable, and modern energy while improving efficiency and renewable energy use.",
+                                                "targets": [
+                                                                "7.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "7.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "7.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Turn off unused power and support energy management.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "8": {
+                                                "title": "Decent Work and Economic Growth",
+                                                "intro": "Promote inclusive and sustainable economic growth, employment, and decent work with fair protection for workers.",
+                                                "targets": [
+                                                                "8.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "8.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "8.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Learn workers’ rights and use proper channels for unfair treatment.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "9": {
+                                                "title": "Industry, Innovation and Infrastructure",
+                                                "intro": "Build resilient infrastructure, promote inclusive and sustainable industrialization, and encourage innovation that improves life and learning.",
+                                                "targets": [
+                                                                "9.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "9.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "9.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Suggest process improvements and evaluate feasible solutions.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "10": {
+                                                "title": "Reduced Inequalities",
+                                                "intro": "Reduce inequalities within and among countries so people of different identities, cultures, languages, and resources can participate fairly.",
+                                                "targets": [
+                                                                "10.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "10.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "10.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Design discussions so people from different backgrounds can speak.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "11": {
+                                                "title": "Sustainable Cities and Communities",
+                                                "intro": "Make cities and communities inclusive, safe, resilient, and sustainable through housing, transport, public space, and disaster readiness.",
+                                                "targets": [
+                                                                "11.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "11.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "11.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Join community cleanup, recycling, and public issue discussions.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "12": {
+                                                "title": "Responsible Consumption and Production",
+                                                "intro": "Ensure sustainable consumption and production by reducing waste, using items longer, and choosing responsible supply chains.",
+                                                "targets": [
+                                                                "12.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "12.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "12.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Buy less first, then choose durable or responsible products.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "13": {
+                                                "title": "Climate Action",
+                                                "intro": "Take urgent action to combat climate change and its impacts through mitigation, adaptation, and everyday choices.",
+                                                "targets": [
+                                                                "13.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "13.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "13.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Reduce disposable and high-carbon choices while encouraging participation.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "14": {
+                                                "title": "Life Below Water",
+                                                "intro": "Conserve and sustainably use oceans and marine resources by reducing pollution and protecting marine ecosystems.",
+                                                "targets": [
+                                                                "14.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "14.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "14.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Use less plastic and prevent waste from entering rivers and oceans.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "15": {
+                                                "title": "Life on Land",
+                                                "intro": "Protect, restore, and sustainably use terrestrial ecosystems, including forests, biodiversity, and land conservation.",
+                                                "targets": [
+                                                                "15.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "15.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "15.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Leave no trash outdoors and respect natural habitats.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "16": {
+                                                "title": "Peace, Justice and Strong Institutions",
+                                                "intro": "Promote peaceful and inclusive societies, provide access to justice, and build effective, accountable institutions.",
+                                                "targets": [
+                                                                "16.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "16.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "16.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Use proper procedures to raise concerns and protect fairness.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                },
+                                "17": {
+                                                "title": "Partnerships for the Goals",
+                                                "intro": "Strengthen implementation and revitalize partnerships through cooperation, shared resources, and knowledge exchange.",
+                                                "targets": [
+                                                                "17.1 Understand how this goal connects to daily life and the systems behind the issue.",
+                                                                "17.2 Consider practical actions that individuals, schools, and communities can take.",
+                                                                "17.3 Use cooperation and continuous improvement so action goes beyond one-time help."
+                                                ],
+                                                "actions": [
+                                                                "Practice communication, find shared goals, and collaborate.",
+                                                                "Share what you learn with classmates, family, or community members.",
+                                                                "Observe related problems in daily life and propose practical improvements."
+                                                ]
+                                }
+                }
+};
+
+            let currentLang = "zh";
+            let selectedOption = null;
+            let currentGoal = "1";
+            let learnSource = "intro";
+
+            const modal = document.getElementById("modal");
+            const closeBtn = document.getElementById("closeModal");
+            const resultBox = document.getElementById("resultBox");
+            const nextBtn = document.getElementById("nextBtn");
+            const sdgCards = document.querySelectorAll(".sdg-card");
+            const introSdgCards = document.querySelectorAll(".intro-sdg-card");
+            const optionCards = document.querySelectorAll(".option-card");
+            const learnPage = document.getElementById("learnPage");
+            const actionPage = document.getElementById("actionPage");
+            const learnBackBtn = document.getElementById("learnBackBtn");
+            const actionBtn = document.getElementById("actionBtn");
+            const learnHomeBtn = document.getElementById("learnHomeBtn");
+            const actionBackBtn = document.getElementById("actionBackBtn");
+            const actionHomeBtn = document.getElementById("actionHomeBtn");
+
+            function loadQuestion(goal) {
+                const q = questionBanks[currentLang][goal];
+                document.getElementById("modalTitle").innerText = q.title;
+                document.getElementById("modalGoalLabel").innerText = `GOAL ${String(goal).padStart(2, "0")} / 17 Sustainable Development Goals`;
+                document.getElementById("modalImg").src = `https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-${goal}.png`;
+                document.getElementById("storyNote").innerText = q.storyNote;
+                document.getElementById("storyMain").innerText = q.storyMain;
+                document.getElementById("storyBridge").innerText = translations[currentLang].storyBridge;
+                document.getElementById("storySub").innerText = q.storySub;
+                document.getElementById("questionText").innerText = q.question;
+                document.getElementById("optionTextA").innerText = q.options.A;
+                document.getElementById("optionTextB").innerText = q.options.B;
+                document.getElementById("optionTextC").innerText = q.options.C;
+                document.getElementById("optionTextD").innerText = q.options.D;
+            }
+
+
+            function renderLearnPage(goal) {
+                const data = learnBanks[currentLang][String(goal)];
+                if (!data) return;
+                currentGoal = String(goal);
+                document.getElementById("learnPageIcon").src = `https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-${goal}.png`;
+                document.getElementById("learnPageIcon").alt = data.title;
+                document.getElementById("learnPageTitle").innerText = data.title;
+                document.getElementById("learnPageIntro").innerText = data.intro;
+                document.getElementById("learnTargetGrid").innerHTML = data.targets.map((target, index) => {
+                    const code = typeof target === "object" ? target.code : `${String(goal).padStart(2, "0")}.${index + 1}`;
+                    const text = typeof target === "object" ? target.text : target;
+                    return `<div class="target-card"><div class="target-number">${code}</div><p>${text}</p></div>`;
+                }).join("");
+            }
+
+            function renderActionPage(goal) {
+                const data = learnBanks[currentLang][String(goal)];
+                if (!data) return;
+                currentGoal = String(goal);
+                document.getElementById("actionPageIcon").src = `https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-${goal}.png`;
+                document.getElementById("actionPageIcon").alt = data.title;
+                document.querySelector("#actionPage .overlay-title").innerText = translations[currentLang].whatCanWeDo;
+                document.getElementById("actionGrid").innerHTML = data.actions.map((action) => `<div class="action-card">${action}</div>`).join("");
+            }
+
+            function openLearnPage(goal, source = "intro") {
+                learnSource = source;
+                renderLearnPage(goal);
+                modal.style.display = "none";
+                actionPage.classList.add("hidden");
+                learnPage.classList.remove("hidden");
+                learnPage.scrollTop = 0;
+            }
+
+            function applyLanguage(lang) {
+                currentLang = lang;
+                document.documentElement.lang = lang === "zh" ? "zh-TW" : "en";
+                document.querySelectorAll("[data-i18n]").forEach((el) => {
+                    const key = el.dataset.i18n;
+                    if (translations[lang][key]) el.innerText = translations[lang][key];
+                });
+                const langSelect = document.getElementById("langSelect");
+                if (langSelect) langSelect.value = lang;
+                nextBtn.innerText = translations[lang].submit;
+                learnBackBtn.innerText = translations[lang].back;
+                actionBtn.innerText = translations[lang].takeAction;
+                learnHomeBtn.innerText = translations[lang].home;
+                actionBackBtn.innerText = translations[lang].back;
+                actionHomeBtn.innerText = translations[lang].home;
+                document.querySelector("#actionPage .overlay-title").innerText = translations[lang].whatCanWeDo;
+                if (modal.style.display === "flex") {
+                    loadQuestion(currentGoal);
+                    resultBox.innerHTML = "";
+                    selectedOption = null;
+                    optionCards.forEach((card) => card.classList.remove("active"));
+                }
+                if (!learnPage.classList.contains("hidden")) renderLearnPage(currentGoal);
+                if (!actionPage.classList.contains("hidden")) renderActionPage(currentGoal);
+            }
+
+            const langSelect = document.getElementById("langSelect");
+            if (langSelect) langSelect.addEventListener("change", () => applyLanguage(langSelect.value));
+            applyLanguage("zh");
+
+            const pageSections = {
+                home: document.querySelector("main > section.hero-panel"),
+                intro: document.getElementById("intro"),
+                interact: document.getElementById("interact"),
+                about: document.getElementById("about")
+            };
+
+            Object.values(pageSections).forEach((section) => {
+                if (section) section.classList.add("page-view");
+            });
+
+            const navLinks = document.querySelectorAll(".nav-link");
+            const pageTriggers = document.querySelectorAll('a[href^="#"]');
+
+            function showPage(pageName) {
+                Object.entries(pageSections).forEach(([name, section]) => {
+                    if (!section) return;
+                    section.classList.toggle("active-page", name === pageName);
+                });
+
+                navLinks.forEach((link) => {
+                    const href = link.getAttribute("href");
+                    if (!href) return;
+                    const linkTarget = href.replace("#", "");
+                    link.classList.toggle("active", linkTarget === pageName);
+                });
+
+                modal.style.display = "none";
+                learnPage.classList.add("hidden");
+                actionPage.classList.add("hidden");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+
+            pageTriggers.forEach((link) => {
+                const target = link.getAttribute("href").replace("#", "");
+                if (pageSections[target]) {
+                    link.addEventListener("click", (event) => {
+                        event.preventDefault();
+                        showPage(target);
+                    });
+                }
+            });
+
+            showPage("home");
+
+            introSdgCards.forEach((card) => {
+                card.addEventListener("click", () => {
+                    openLearnPage(card.dataset.learnGoal, "intro");
+                });
+            });
+
+            sdgCards.forEach((card) => {
+                card.addEventListener("click", () => {
+                    currentGoal = card.dataset.goal;
+                    loadQuestion(currentGoal);
+                    modal.style.display = "flex";
+                    resetModal();
+                });
+            });
+
+            optionCards.forEach((card) => {
+                card.addEventListener("click", () => {
+                    optionCards.forEach((item) => item.classList.remove("active"));
+                    card.classList.add("active");
+                    selectedOption = card.dataset.option;
+                    resultBox.innerHTML = "";
+                });
+            });
+
+            nextBtn.addEventListener("click", () => {
+                if (!selectedOption) {
+                    resultBox.innerHTML = `<div class="text-[#FF8A8A] text-center font-bold bg-[#FF8A8A]/10 p-3 rounded-lg border border-[#FF8A8A]/30">${translations[currentLang].selectFirst}</div>`;
+                    return;
+                }
+
+                const q = questionBanks[currentLang][currentGoal];
+                if (selectedOption === q.answer) {
+                    const learnMoreButton = `<button id="learnMoreBtn" class="learn-more-btn">${translations[currentLang].learnMore}</button>`;
+                    resultBox.innerHTML = `<div class="p-6 rounded-xl bg-[#A3B18A]/20 text-[#A3B18A] border-2 border-[#A3B18A] shadow-lg"><h4 class="font-bold text-xl mb-1">${translations[currentLang].excellent}</h4><p class="text-white/90">${q.correctFeedback}</p>${learnMoreButton}</div>`;
+                    document.getElementById("learnMoreBtn").addEventListener("click", () => openLearnPage(currentGoal, "modal"));
+                } else {
+                    resultBox.innerHTML = `<div class="p-6 rounded-xl bg-[#D68C7A]/20 text-[#D68C7A] border-2 border-[#D68C7A] shadow-lg"><h4 class="font-bold text-xl mb-1">${translations[currentLang].thinkAgain}</h4><p class="text-white/90">${q.wrongFeedback}</p></div>`;
+                }
+            });
+
+            closeBtn.addEventListener("click", () => { modal.style.display = "none"; });
+            modal.addEventListener("click", (event) => { if (event.target.id === "modal") modal.style.display = "none"; });
+
+            learnBackBtn.addEventListener("click", () => {
+                learnPage.classList.add("hidden");
+                actionPage.classList.add("hidden");
+                learnPage.scrollTop = 0;
+                if (learnSource === "modal") {
+                    modal.style.display = "flex";
+                } else {
+                    showPage("intro");
+                }
+            });
+
+            actionBtn.addEventListener("click", () => {
+                renderActionPage(currentGoal);
+                learnPage.classList.add("hidden");
+                actionPage.classList.remove("hidden");
+                actionPage.scrollTop = 0;
+            });
+
+            actionBackBtn.addEventListener("click", () => {
+                actionPage.classList.add("hidden");
+                learnPage.classList.remove("hidden");
+                learnPage.scrollTop = 0;
+            });
+
+            learnHomeBtn.addEventListener("click", goHome);
+            actionHomeBtn.addEventListener("click", goHome);
+
+            function goHome() {
+                modal.style.display = "none";
+                learnPage.classList.add("hidden");
+                actionPage.classList.add("hidden");
+                showPage("home");
+            }
+
+            function resetModal() {
+                selectedOption = null;
+                optionCards.forEach((card) => card.classList.remove("active"));
+                resultBox.innerHTML = "";
+            }
+        });
+    </script>
+</body>
+</html>
