@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Person Object Properties</title>
+</head>
+<body>
+  <h2>Person Object Properties</h2>
+
+  <p id="properties"></p>
+  <p id="afterDelete"></p>
+
+  <script>
+    var Person = {
+      firstName: "Tony",
+      lastName: "Lee",
+      age: 50,
+      eyeColor: "Blue"
+    };
+
+    var propertyList = "";
+    for (var key in Person) {
+      propertyList += key + ": " + Person[key] + "<br>";
+    }
+
+    document.getElementById("properties").innerHTML =
+      "<strong>All properties:</strong><br>" + propertyList;
+
+    delete Person.age;
+
+    var afterDeleteList = "";
+    for (var key in Person) {
+      afterDeleteList += key + ": " + Person[key] + "<br>";
+    }
+
+    document.getElementById("afterDelete").innerHTML =
+      "<strong>After deleting age:</strong><br>" + afterDeleteList;
+  </script>
+</body>
+</html>
