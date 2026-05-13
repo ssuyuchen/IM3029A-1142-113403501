@@ -1,4 +1,20 @@
 <!DOCTYPE html>
+<!--
+    ======================================================================
+    SDGs 情境學習平台｜Single Page Website
+    ----------------------------------------------------------------------
+    功能摘要：
+    1. 首頁介紹 17 項永續發展目標。
+    2. SDGs 介紹區可進入各目標的延伸學習頁。
+    3. 情境互動區可開啟案例題目、選擇答案並查看回饋。
+    4. 支援繁體中文與英文介面切換。
+
+    技術說明：
+    - 使用 Tailwind CSS CDN 作為基礎排版工具。
+    - 主要視覺與互動效果以自訂 CSS 控制。
+    - 所有資料與互動邏輯集中於同一份 HTML，方便展示與繳交。
+    ======================================================================
+-->
 <html lang="zh-TW">
 <head>
     <!--
@@ -57,6 +73,14 @@
             opacity: 0.9;
         }
 
+        /* ======================================================================
+           SDGs Card Grid
+           ----------------------------------------------------------------------
+           共用於首頁情境互動與 SDGs 圖示卡片：
+           - 維持正方形比例。
+           - hover 時提供浮起、陰影與亮度變化。
+        ====================================================================== */
+
         .sdg-card {
             aspect-ratio: 1 / 1;
             display: flex;
@@ -90,6 +114,12 @@
             filter: brightness(1) saturate(1);
         }
 
+        /* ======================================================================
+           Scenario Story Area
+           ----------------------------------------------------------------------
+           彈窗左側故事區：用卡片式視覺呈現情境脈絡、補充說明與問題。
+        ====================================================================== */
+
         .story-box {
             background: #252B2A;
             padding: 32px;
@@ -112,6 +142,15 @@
             color: #A3B18A;
             font-weight: 500;
         }
+
+        /* ======================================================================
+           Answer Options
+           ----------------------------------------------------------------------
+           彈窗右側選項區：
+           - option-circle 顯示 A/B/C/D。
+           - option-text 顯示選項內容。
+           - active 狀態代表使用者目前選取的答案。
+        ====================================================================== */
 
         .option-circle {
             background: #363B3A;
@@ -139,6 +178,12 @@
             color: #F0E6D2;
             font-weight: 500;
         }
+
+        /* ======================================================================
+           Modal and Basic Buttons
+           ----------------------------------------------------------------------
+           情境彈窗外觀、送出按鈕與關閉按鈕互動效果。
+        ====================================================================== */
 
         .modal-bg {
             background-color: #1A1E1D;
@@ -182,6 +227,12 @@
             background: rgba(197, 179, 150, 0.08);
             transform: translateX(4px);
         }
+
+        /* ======================================================================
+           Full Page Overlays
+           ----------------------------------------------------------------------
+           延伸學習與行動建議使用 fixed 全頁覆蓋層，避免使用者離開主流程。
+        ====================================================================== */
 
         .full-page {
             position: fixed;
@@ -367,6 +418,12 @@
             z-index: -1;
         }
 
+        /* ======================================================================
+           Navigation Bar
+           ----------------------------------------------------------------------
+           頁首導覽列採用 sticky 與玻璃擬態背景，讓內容滑動時仍保有可讀性。
+        ====================================================================== */
+
         .site-header {
             position: sticky;
             top: 0;
@@ -440,6 +497,12 @@
         .nav-language-wrap:focus-within::after {
             color: #1F2423;
         }
+
+        /* ======================================================================
+           Hero Section
+           ----------------------------------------------------------------------
+           首頁主視覺區：包含平台標題、簡介文字、CTA 按鈕與統計卡片。
+        ====================================================================== */
 
         .hero-panel {
             position: relative;
@@ -521,6 +584,12 @@
             line-height: 1;
         }
 
+        /* ======================================================================
+           Content Sections
+           ----------------------------------------------------------------------
+           SDGs 介紹與關於我們共用的內容卡片樣式。
+        ====================================================================== */
+
         .section-card {
             background: rgba(255, 255, 255, 0.045);
             border: 1px solid rgba(197, 179, 150, 0.22);
@@ -572,6 +641,12 @@
         }
 
 
+        /* ======================================================================
+           SDGs Overview Grid
+           ----------------------------------------------------------------------
+           SDGs 介紹頁的 17 個圖示按鈕，用於進入各目標延伸學習。
+        ====================================================================== */
+
         .intro-sdg-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -617,8 +692,6 @@
             filter: brightness(1) saturate(1);
             transform: scale(1.04);
         }
-
-        /* SDGs介紹卡片改成只有圖片 */
 
         .intro-sdg-card {
             min-height: auto;
@@ -670,6 +743,12 @@
             pointer-events: none;
         }
 
+        /* ======================================================================
+           About Section Layout
+           ----------------------------------------------------------------------
+           關於我們區塊採雙欄資訊卡，桌機版並排、手機版改為單欄。
+        ====================================================================== */
+
         .about-grid {
             display: grid;
             grid-template-columns: 1.05fr .95fr;
@@ -714,6 +793,15 @@
             display: block;
         }
 
+        /* ======================================================================
+           Responsive Design｜Tablet and Mobile
+           ----------------------------------------------------------------------
+           中小尺寸螢幕調整：
+           - 全頁覆蓋層縮小 padding。
+           - Grid 改為單欄。
+           - 標題與按鈕避免溢出。
+        ====================================================================== */
+
         @media (max-width: 900px) {
             .full-page { padding: 36px 24px; }
             .target-grid,
@@ -725,7 +813,7 @@
             .overlay-right-buttons { flex-direction: column; }
             .about-grid { grid-template-columns: 1fr; }
         }
-        /* 預設（英文可換行） */
+
         .hero-title-zh,
         #interact .section-title {
             white-space: normal;
@@ -733,7 +821,6 @@
             overflow-wrap: break-word;
         }
 
-        /* 只有中文模式不換行 */
         html[lang="zh-TW"] .hero-title-zh,
         html[lang="zh-TW"] #interact .section-title {
             white-space: nowrap;
@@ -741,14 +828,12 @@
             text-overflow: ellipsis;
         }
 
-        /* 英文模式允許正常換行 */
         html[lang="en"] .hero-title-zh,
         html[lang="en"] #interact .section-title {
             white-space: normal;
             line-height: 1.25;
         }
 
-        /* 手機版 */
         @media (max-width: 768px) {
 
             html[lang="zh-TW"] .hero-title-zh {
@@ -767,7 +852,6 @@
                 font-size: 24px !important;
             }
         }
-        /* 中文模式：情境互動說明文字不換行 */
         html[lang="zh-TW"] #interact [data-i18n="interactText"] {
             white-space: nowrap;
             overflow: visible;
@@ -775,14 +859,12 @@
             max-width: none;
         }
 
-        /* 英文模式：允許換行，避免超出範圍 */
         html[lang="en"] #interact [data-i18n="interactText"] {
             white-space: normal;
             overflow-wrap: break-word;
             word-break: normal;
         }
 
-        /* 讓情境互動上方區塊有足夠寬度 */
         #interact > .flex {
             align-items: center;
         }
@@ -791,7 +873,6 @@
             width: auto;
         }
 
-        /* 小螢幕中文可縮小字體但仍不換行 */
         @media (max-width: 900px) {
             html[lang="zh-TW"] #interact [data-i18n="interactText"] {
                 font-size: 16px;
@@ -799,7 +880,6 @@
             }
         }
 
-        /* 情境互動說明文字 */
         html[lang="zh-TW"] .interact-desc {
             white-space: nowrap;
             max-width: none;
@@ -810,48 +890,31 @@
             max-width: 36rem;
         }
 
-        /* 情境互動說明文字 */
-
         .interact-desc {
-
             margin-top: 6px;
-
             color: rgba(255,255,255,0.85);
-
             font-size: 1.25rem;
-
             line-height: 1.75;
-
             max-width: 1000px;
         }
-
-        /* 中文不換行 */
 
         html[lang="zh-TW"] .interact-desc {
             white-space: nowrap;
         }
 
-        /* 英文可換行 */
-
         html[lang="en"] .interact-desc {
             white-space: normal;
         }
 
-        /* 手機版 */
-
         @media (max-width: 768px) {
 
             .interact-desc {
-
                 font-size: 14px;
-
                 line-height: 1.8;
-
                 white-space: normal;
             }
         }
 
-        /* 首頁右側資訊方框加長 */
         .hero-stat {
             min-width: 145px;
             min-height: 110px;
@@ -863,13 +926,11 @@
             min-height: 120px;
         }
 
-        /* Grid 微調 */
         .hero-panel .grid.grid-cols-2.gap-4 {
             grid-template-columns: repeat(2, minmax(145px, 1fr));
             gap: 18px;
         }
 
-        /* 手機版 */
         @media (max-width: 768px) {
 
             .hero-stat,
@@ -885,7 +946,7 @@
 
 
         /* =========================================================
-           Final polish adjustments
+           Final Polish Adjustments
            ---------------------------------------------------------
            統一互動速度、柔化 hover、修正手機版與首頁比例。
         ========================================================= */
@@ -940,7 +1001,6 @@
                 padding: 28px 22px;
             }
         }
-        /* 首頁 Hero 兩個 CTA 按鈕統一樣式 */
 
         .hero-actions a {
             min-width: 150px;
@@ -963,32 +1023,47 @@
 
         .primary-cta,
         .secondary-cta {
-
             background: rgba(197, 179, 150, 0.08);
-
             color: #E5D7BC;
-
             border: 1px solid rgba(197, 179, 150, 0.45);
-
             backdrop-filter: blur(8px);
         }
 
-        /* Hover */
         .primary-cta:hover,
         .secondary-cta:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 24px rgba(0,0,0,.24);
         }
 
-        /* 次按鈕 hover */
         .secondary-cta:hover {
             background: rgba(197, 179, 150, 0.16);
             border-color: rgba(197, 179, 150, 0.6);
         }
+
+        @media (max-width: 768px) {
+
+            html[lang="zh-TW"] .interact-desc {
+
+                white-space: normal !important;
+
+                line-height: 1.8;
+
+                word-break: break-word;
+
+                overflow-wrap: break-word;
+            }
+        }
+        
     </style>
 </head>
 
 <body class="px-6 md:px-16 lg:px-28 py-0">
+    <!-- ======================================================================
+         Header / Navigation
+         ----------------------------------------------------------------------
+         頁首導覽列：提供首頁、SDGs 介紹、情境互動、關於我們與語言切換。
+         使用 sticky 定位，讓使用者在頁面切換時仍能快速操作。
+    ====================================================================== -->
     <header class="site-header -mx-6 md:-mx-16 lg:-mx-28 px-6 md:px-16 lg:px-28 py-4 mb-12">
         <div class="max-w-[1100px] mx-auto flex flex-col md:flex-row gap-4 justify-between items-center">
             <a href="#home" class="flex items-center gap-3" aria-label="Back to home">
@@ -1013,7 +1088,13 @@
         </div>
     </header>
 
+    <!-- ======================================================================
+         Main Content
+         ----------------------------------------------------------------------
+         單頁式網站主內容。實際顯示的頁面由 JavaScript 的 showPage() 控制。
+    ====================================================================== -->
     <main id="home" class="max-w-[1120px] mx-auto pb-40">
+        <!-- Hero Section：首頁主視覺與 CTA 按鈕 -->
         <section class="hero-panel mb-14">
             <div class="grid lg:grid-cols-[1.25fr_.75fr] gap-9 items-center relative z-10">
                 <div>
@@ -1021,11 +1102,13 @@
                     <h1 class="hero-title-zh text-4xl md:text-5xl font-bold mb-6" data-i18n="heroTitle">認識 17 項<span>永續發展目標</span></h1>
                     <p class="hero-copy text-xl mb-4" data-i18n="heroP1">永續發展目標（SDGs）是國際社會面對貧窮、不平等、氣候變遷與資源治理等挑戰所提出的共同框架。</p>
                     <p class="hero-copy text-lg mb-8" data-i18n="heroP2">本網站以系統化介紹、目標細項與情境案例，協助使用者理解每項目標的核心議題，並思考可落實於校園、社區與日常生活的行動方向。</p>
+                    <!-- CTA 按鈕：導向情境互動與 SDGs 介紹 -->
                     <div class="hero-actions flex flex-wrap gap-4">
                         <a href="#interact" class="primary-cta" data-i18n="heroCta1">開始情境挑戰</a>
                         <a href="#intro" class="secondary-cta" data-i18n="heroCta2">先了解 SDGs</a>
                     </div>
                 </div>
+                <!-- 首頁統計卡片：以數字強化 SDGs 架構與學習模式 -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="hero-stat col-span-2">
                         <div class="hero-stat-number">17</div>
@@ -1043,10 +1126,12 @@
             </div>
         </section>
 
+        <!-- SDGs Overview：使用者可點選任一 SDG 圖示進入延伸學習 -->
         <section id="intro" class="section-card mb-12">
             <div class="section-kicker" data-i18n="introKicker">About the Goals</div>
             <h2 class="section-title text-3xl md:text-4xl font-bold mb-5" data-i18n="introTitle">SDGs 介紹</h2>
             <p class="text-xl leading-relaxed mb-8 text-white/85" data-i18n="introText">SDGs 涵蓋社會、經濟與環境三大面向，強調發展不應以犧牲弱勢群體或自然資源為代價。請選擇下方任一目標，進一步了解其背景、關鍵議題與實踐方向。</p>
+            <!-- 17 個 SDG 圖示按鈕：data-learn-goal 用於 JS 識別目標編號 -->
             <div id="introSdgGrid" class="intro-sdg-grid">
                 <button class="intro-sdg-card" data-learn-goal="1"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="Goal 1"></button>
                 <button class="intro-sdg-card" data-learn-goal="2"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png" alt="Goal 2"></button>
@@ -1068,6 +1153,7 @@
             </div>
         </section>
 
+        <!-- Scenario Interaction：使用者可選擇 SDG 圖示進行情境題目互動 -->
         <section id="interact" class="mb-16">
         <div class="mb-8">
 
@@ -1087,6 +1173,7 @@
             </p>
 
         </div>
+            <!-- 17 個情境互動入口：data-goal 用於載入對應情境題 -->
             <div class="sdg-grid-shell grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-white/10">
                 <div class="sdg-card border-r border-b" data-goal="1"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="Goal 1"></div></div>
                 <div class="sdg-card border-r border-b" data-goal="2"><div class="sdg-image-container flex items-center justify-center w-full h-full"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png" alt="Goal 2"></div></div>
@@ -1109,6 +1196,7 @@
         </section>
 
 
+        <!-- About Section：說明網站定位與內容特色 -->
         <section id="about" class="section-card mb-24">
             <div class="section-kicker" data-i18n="aboutKicker">Project Concept</div>
             <h2 class="section-title text-3xl md:text-4xl font-bold mb-6" data-i18n="aboutTitle">關於我們</h2>
@@ -1130,6 +1218,14 @@
         </section>
     </main>
 
+    <!-- ======================================================================
+         Scenario Modal
+         ----------------------------------------------------------------------
+         情境互動彈窗：
+         - 顯示 SDG 情境故事與問題。
+         - 提供四個選項讓使用者作答。
+         - 根據答案顯示即時回饋與延伸學習入口。
+    ====================================================================== -->
     <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
         <div class="modal-bg rounded-3xl max-w-5xl w-full shadow-2xl overflow-y-auto max-h-[95vh] p-8 md:p-12 relative">
             <button id="closeModal" class="absolute top-6 right-8 text-4xl close-btn" aria-label="Close modal">&times;</button>
@@ -1167,6 +1263,11 @@
         </div>
     </div>
 
+    <!-- ======================================================================
+         Learn More Overlay
+         ----------------------------------------------------------------------
+         延伸學習頁：顯示 SDG 目標介紹與細項目標，並可前往行動建議頁。
+    ====================================================================== -->
     <section id="learnPage" class="full-page hidden">
         <div class="full-page-content">
             <div class="full-page-header">
@@ -1182,6 +1283,11 @@
         </div>
     </section>
 
+    <!-- ======================================================================
+         Action Suggestions Overlay
+         ----------------------------------------------------------------------
+         行動建議頁：將 SDGs 概念轉化為可在生活、校園或社區執行的行動。
+    ====================================================================== -->
     <section id="actionPage" class="full-page hidden">
         <div class="full-page-content">
             <div class="action-title-area">
@@ -1196,8 +1302,19 @@
         </div>
     </section>
 
+    <!-- ======================================================================
+         JavaScript Interaction Logic
+         ----------------------------------------------------------------------
+         互動邏輯集中於 DOMContentLoaded 內，確保 HTML 元素載入後再綁定事件。
+    ====================================================================== -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            /* =========================================================
+               Translation Dictionary
+               ---------------------------------------------------------
+               存放所有靜態介面文字。
+               applyLanguage() 會依照目前語言，尋找所有 data-i18n 元素並替換文字。
+            ========================================================= */
             const translations = {
                 "zh": {
                                 "navHome": "首頁",
@@ -1301,6 +1418,12 @@
                 }
 };
 
+            /* =========================================================
+               Scenario Question Bank｜English
+               ---------------------------------------------------------
+               每個 SDG 對應一組情境題：
+               title / storyNote / storyMain / storySub / question / options / answer / feedback。
+            ========================================================= */
             const enQuestions = {
                 1:{title:"No Poverty",storyNote:"An overlooked need in daily life.",storyMain:"Over the past few weeks, you notice that a classmate often skips lunch and gradually avoids interacting with others. At first, you assume it is temporary, but the situation continues.",storySub:"You begin to realize that short-term help is not enough, and stable support through proper systems may be necessary.",question:"Which action would most effectively improve this student’s situation?",options:{A:"Provide food privately",B:"Start a fundraising activity in class",C:"Help report the situation through the school support system",D:"Do not get involved"},answer:"C",correctFeedback:"Sustainable support comes from stable systems. Accessing formal resources ensures long-term stability.",wrongFeedback:"Short-term help may not solve the real problem. Consider how to provide stable and long-term support through proper systems."},
                 2:{title:"Zero Hunger",storyNote:"Food waste and unequal distribution.",storyMain:"At your part-time job, a large amount of edible food is thrown away every night. At the same time, you learn that some families in your community struggle to access enough food.",storySub:"You begin to realize that the issue is not only waste, but also how food is distributed and managed.",question:"Which action best aligns with sustainable food use?",options:{A:"Dispose of the food according to policy",B:"Take the food and distribute it privately",C:"Suggest partnering with a food bank",D:"Criticize the waste online"},answer:"C",correctFeedback:"Reducing waste is only the first step. A structured system ensures food reaches those in need.",wrongFeedback:"Good intentions are not enough if the solution is not sustainable. How can food be redistributed safely and continuously?"},
@@ -1321,6 +1444,11 @@
                 17:{title:"Partnerships for the Goals",storyNote:"Collaboration challenges.",storyMain:"Different teams in a project struggle to agree on how to proceed. Miscommunication slows progress.",storySub:"You begin to realize that coordination is essential for successful collaboration.",question:"What is the best action?",options:{A:"Let each group work separately",B:"Give up on collaboration",C:"Facilitate communication and find common ground",D:"Focus only on your own part"},answer:"C",correctFeedback:"Strong collaboration requires alignment. Communication is key to shared success.",wrongFeedback:"Working separately may avoid conflict, but does it solve the collaboration problem?"}
             };
 
+            /* =========================================================
+               Scenario Question Bank｜Traditional Chinese
+               ---------------------------------------------------------
+               繁體中文題庫，結構與英文題庫一致，方便語言切換時同步載入。
+            ========================================================= */
             const zhQuestions = {
                 1:{title:"消除貧窮",storyNote:"日常中被忽略的需要。",storyMain:"你發現一位同學連續幾週常常不吃午餐，也逐漸減少和大家互動。起初你以為只是暫時狀況，但情況一直持續。",storySub:"你開始意識到，短期幫助可能不夠，透過正式資源取得穩定支持更重要。",question:"哪一個行動最能有效改善這位同學的處境？",options:{A:"私下每天提供食物",B:"在班上發起募款",C:"協助透過學校支持系統通報與求助",D:"不要介入"},answer:"C",correctFeedback:"永續的支持來自穩定制度。正式資源能提供較長期且有保障的協助。",wrongFeedback:"短期幫助不一定能解決根本問題。想想如何透過適當制度提供穩定支持。"},
                 2:{title:"消除飢餓",storyNote:"食物浪費與分配不均。",storyMain:"你在打工場所看到每天都有大量仍可食用的食物被丟棄，同時也知道社區中有家庭難以取得足夠食物。",storySub:"你意識到問題不只是浪費，也包含食物如何被安全且有效分配。",question:"哪個行動最符合永續食物利用？",options:{A:"依規定直接丟棄",B:"私下拿去分送",C:"建議與食物銀行合作",D:"在網路上批評"},answer:"C",correctFeedback:"減少浪費只是第一步。結構化合作能讓食物安全且持續送到需要的人手中。",wrongFeedback:"善意若缺乏安全與制度，可能難以持續。想想如何穩定分配食物。"},
@@ -1341,8 +1469,17 @@
                 17:{title:"夥伴關係",storyNote:"合作中的挑戰。",storyMain:"不同小組在專案中難以達成共識，溝通不良讓進度變慢。",storySub:"你意識到協調是成功合作的重要關鍵。",question:"最佳行動是什麼？",options:{A:"讓各組各自工作",B:"放棄合作",C:"促進溝通並尋找共同目標",D:"只專注自己的部分"},answer:"C",correctFeedback:"強大的合作需要對齊目標。溝通是共享成果的關鍵。",wrongFeedback:"各自工作或許避免衝突，但是否解決了合作問題？"}
             };
 
+            // 依語言集中管理題庫，loadQuestion() 會根據 currentLang 取用對應資料。
             const questionBanks = { zh: zhQuestions, en: enQuestions };
 
+            /* =========================================================
+               Learn More and Action Content
+               ---------------------------------------------------------
+               延伸學習資料庫：
+               - intro：目標背景說明。
+               - targets：SDG 細項目標。
+               - actions：可執行的行動建議。
+            ========================================================= */
             const learnBanks = {
                 "zh": {
                                 "1": {
@@ -1835,6 +1972,11 @@
             let currentGoal = "1";
             let learnSource = "intro";
 
+            /* =========================================================
+               DOM References
+               ---------------------------------------------------------
+               集中取得後續互動會用到的 HTML 元素，避免重複查找 DOM。
+            ========================================================= */
             const modal = document.getElementById("modal");
             const closeBtn = document.getElementById("closeModal");
             const resultBox = document.getElementById("resultBox");
@@ -1850,6 +1992,14 @@
             const actionBackBtn = document.getElementById("actionBackBtn");
             const actionHomeBtn = document.getElementById("actionHomeBtn");
 
+            /* =========================================================
+               loadQuestion(goal)
+               ---------------------------------------------------------
+               根據 SDG 編號載入對應情境題：
+               1. 更新彈窗標題與 SDG 圖示。
+               2. 填入故事、問題與四個選項。
+               3. 支援中英文題庫切換。
+            ========================================================= */
             function loadQuestion(goal) {
                 const q = questionBanks[currentLang][goal];
                 document.getElementById("modalTitle").innerText = q.title;
@@ -1867,6 +2017,14 @@
             }
 
 
+            /* =========================================================
+               renderLearnPage(goal)
+               ---------------------------------------------------------
+               生成延伸學習頁內容：
+               - SDG 圖示與標題。
+               - 目標背景介紹。
+               - 細項目標卡片。
+            ========================================================= */
             function renderLearnPage(goal) {
                 const data = learnBanks[currentLang][String(goal)];
                 if (!data) return;
@@ -1882,6 +2040,11 @@
                 }).join("");
             }
 
+            /* =========================================================
+               renderActionPage(goal)
+               ---------------------------------------------------------
+               生成行動建議頁內容，將 learnBanks 中的 actions 陣列轉為卡片。
+            ========================================================= */
             function renderActionPage(goal) {
                 const data = learnBanks[currentLang][String(goal)];
                 if (!data) return;
@@ -1892,6 +2055,12 @@
                 document.getElementById("actionGrid").innerHTML = data.actions.map((action) => `<div class="action-card">${action}</div>`).join("");
             }
 
+            /* =========================================================
+               openLearnPage(goal, source)
+               ---------------------------------------------------------
+               開啟延伸學習頁。
+               source 用於判斷返回時要回到情境彈窗或 SDGs 介紹頁。
+            ========================================================= */
             function openLearnPage(goal, source = "intro") {
                 learnSource = source;
                 renderLearnPage(goal);
@@ -1901,6 +2070,14 @@
                 learnPage.scrollTop = 0;
             }
 
+            /* =========================================================
+               applyLanguage(lang)
+               ---------------------------------------------------------
+               語言切換核心函式：
+               1. 更新目前語言與 html lang 屬性。
+               2. 替換所有 data-i18n 文字。
+               3. 同步 Modal、Learn Page、Action Page 的即時內容。
+            ========================================================= */
             function applyLanguage(lang) {
                 currentLang = lang;
                 document.documentElement.lang = lang === "zh" ? "zh-TW" : "en";
@@ -1931,6 +2108,11 @@
             if (langSelect) langSelect.addEventListener("change", () => applyLanguage(langSelect.value));
             applyLanguage("zh");
 
+            /* =========================================================
+               Page View Control
+               ---------------------------------------------------------
+               將主要區塊視為單頁網站的不同「頁面」，由 showPage() 控制顯示。
+            ========================================================= */
             const pageSections = {
                 home: document.querySelector("main > section.hero-panel"),
                 intro: document.getElementById("intro"),
@@ -1945,6 +2127,11 @@
             const navLinks = document.querySelectorAll(".nav-link");
             const pageTriggers = document.querySelectorAll('a[href^="#"]');
 
+            /* =========================================================
+               showPage(pageName)
+               ---------------------------------------------------------
+               顯示指定頁面並隱藏其他主要區塊，同時更新導覽列 active 狀態。
+            ========================================================= */
             function showPage(pageName) {
                 Object.entries(pageSections).forEach(([name, section]) => {
                     if (!section) return;
@@ -1976,12 +2163,22 @@
 
             showPage("home");
 
+            /* =========================================================
+               Event Binding｜SDGs Overview Cards
+               ---------------------------------------------------------
+               點選 SDGs 介紹區圖示時，直接開啟該目標的延伸學習頁。
+            ========================================================= */
             introSdgCards.forEach((card) => {
                 card.addEventListener("click", () => {
                     openLearnPage(card.dataset.learnGoal, "intro");
                 });
             });
 
+            /* =========================================================
+               Event Binding｜Scenario Cards
+               ---------------------------------------------------------
+               點選情境互動區圖示時，開啟對應 SDG 的情境題彈窗。
+            ========================================================= */
             sdgCards.forEach((card) => {
                 card.addEventListener("click", () => {
                     currentGoal = card.dataset.goal;
@@ -1991,6 +2188,11 @@
                 });
             });
 
+            /* =========================================================
+               Event Binding｜Answer Options
+               ---------------------------------------------------------
+               控制選項的 active 樣式與目前選擇答案 selectedOption。
+            ========================================================= */
             optionCards.forEach((card) => {
                 card.addEventListener("click", () => {
                     optionCards.forEach((item) => item.classList.remove("active"));
@@ -2000,6 +2202,14 @@
                 });
             });
 
+            /* =========================================================
+               Answer Validation
+               ---------------------------------------------------------
+               使用者按下送出後：
+               - 未選答案：提示先選擇。
+               - 正確答案：顯示正確回饋與延伸學習按鈕。
+               - 錯誤答案：顯示引導式回饋。
+            ========================================================= */
             nextBtn.addEventListener("click", () => {
                 if (!selectedOption) {
                     resultBox.innerHTML = `<div class="text-[#FF8A8A] text-center font-bold bg-[#FF8A8A]/10 p-3 rounded-lg border border-[#FF8A8A]/30">${translations[currentLang].selectFirst}</div>`;
@@ -2016,9 +2226,15 @@
                 }
             });
 
+            // 關閉情境彈窗：支援右上角關閉按鈕與點擊背景關閉。
             closeBtn.addEventListener("click", () => { modal.style.display = "none"; });
             modal.addEventListener("click", (event) => { if (event.target.id === "modal") modal.style.display = "none"; });
 
+            /* =========================================================
+               Overlay Navigation
+               ---------------------------------------------------------
+               控制延伸學習頁、行動建議頁、首頁之間的返回與切換。
+            ========================================================= */
             learnBackBtn.addEventListener("click", () => {
                 learnPage.classList.add("hidden");
                 actionPage.classList.add("hidden");
@@ -2046,6 +2262,7 @@
             learnHomeBtn.addEventListener("click", goHome);
             actionHomeBtn.addEventListener("click", goHome);
 
+            /* 回到首頁：關閉所有覆蓋層與彈窗，並切換主頁面為 home。 */
             function goHome() {
                 modal.style.display = "none";
                 learnPage.classList.add("hidden");
@@ -2053,6 +2270,7 @@
                 showPage("home");
             }
 
+            /* 重置彈窗狀態：清空選擇與回饋，避免下一題保留上一題狀態。 */
             function resetModal() {
                 selectedOption = null;
                 optionCards.forEach((card) => card.classList.remove("active"));
