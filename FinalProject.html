@@ -1,0 +1,2206 @@
+<!DOCTYPE html>
+<!--
+    ======================================================================
+    SDGs 情境學習平台｜Morandi Dark Edition（美化重製版）
+    ----------------------------------------------------------------------
+    功能摘要：
+    1. 首頁介紹 17 項永續發展目標，含視覺化統計卡。
+    2. SDGs 介紹區可點選各目標圖示，進入延伸學習頁。
+    3. 情境互動區可開啟案例題目、選擇答案並查看即時回饋。
+    4. 延伸學習頁展示細項目標，並可前往行動建議頁。
+    5. 支援繁體中文與英文介面即時切換。
+ 
+    技術說明：
+    - Tailwind CSS CDN：基礎排版工具。
+    - Google Fonts：Cormorant Garamond（正文）+ Libre Baskerville（標題）。
+    - 自訂 CSS：視覺、動畫與互動效果全部以原生 CSS/JS 控制。
+    - 所有資料與互動邏輯集中於同一份 HTML，方便展示與繳交。
+ 
+    美化說明（v2.0）：
+    - 升級色彩系統：引入更豐富的漸層層次與光暈效果。
+    - 動畫系統：頁面載入淡入、卡片浮現、彈窗縮放動效。
+    - 玻璃擬態 2.0：backdrop-filter 搭配多層邊框漸層。
+    - 微互動：選項選擇、按鈕點擊、卡片 hover 全面升級。
+    - 視覺細節：noise 紋理、光點裝飾、進度標記樣式優化。
+    ======================================================================
+-->
+<html lang="zh-TW">
+<head>
+    <!-- ================================================================
+         基礎文件設定
+    ================================================================ -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>17 Sustainable Development Goals — Morandi Edition</title>
+ 
+    <!-- 外部資源：Tailwind CSS + Google Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+ 
+    <style>
+        /* ================================================================
+           CSS 變數系統（Design Token）
+           ----------------------------------------------------------------
+           統一管理全站色彩、字型、陰影與過場速度，
+           方便日後主題切換與維護。
+        ================================================================ */
+        :root {
+            /* --- 背景色階 --- */
+            --bg-base:     #191D1C;   /* 最深底色 */
+            --bg-surface:  #1F2423;   /* 卡片底色 */
+            --bg-raised:   #252B2A;   /* 浮起元素 */
+            --bg-overlay:  #111514;   /* 全頁覆蓋層 */
+ 
+            /* --- 主色調（Morandi 橄欖綠系列）--- */
+            --accent-green: #A3B18A;  /* 主強調綠 */
+            --accent-gold:  #C5B396;  /* 金駝色 */
+            --accent-warm:  #E9C46A;  /* 暖黃色（CTA / 數字）*/
+            --accent-red:   #D68C7A;  /* 錯誤提示 */
+ 
+            /* --- 文字色階 --- */
+            --text-primary:   #E8E4DC; /* 主要文字 */
+            --text-secondary: #B8B4AC; /* 次要文字 */
+            --text-muted:     #808078; /* 淡化文字 */
+ 
+            /* --- 邊框 --- */
+            --border-subtle:  rgba(197,179,150,0.15);
+            --border-default: rgba(197,179,150,0.28);
+            --border-active:  rgba(197,179,150,0.65);
+ 
+            /* --- 字型 --- */
+            --font-body:    'Cormorant Garamond', serif;
+            --font-display: 'Libre Baskerville', serif;
+ 
+            /* --- 過場速度 --- */
+            --ease-fast:   0.18s cubic-bezier(0.25,1,0.5,1);
+            --ease-normal: 0.3s  cubic-bezier(0.25,1,0.5,1);
+            --ease-slow:   0.55s cubic-bezier(0.16,1,0.3,1);
+        }
+ 
+        /* ================================================================
+           全域基礎樣式
+        ================================================================ */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+ 
+        html {
+            scroll-behavior: smooth;
+        }
+ 
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            /* 背景層次：三個光暈 + noise 紋理 */
+            background-image:
+                radial-gradient(ellipse 60% 40% at 5%  10%,  rgba(163,177,138,0.09) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 35% at 95% 5%,   rgba(197,179,150,0.07) 0%, transparent 55%),
+                radial-gradient(ellipse 70% 50% at 80% 90%,  rgba(82,91,89,0.18)   0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+            min-height: 100vh;
+        }
+ 
+        /* 固定在背景的裝飾光暈（pointer-events 關閉，不影響互動）*/
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background:
+                radial-gradient(circle 800px at 10% 20%,  rgba(163,177,138,0.055) 0%, transparent 70%),
+                radial-gradient(circle 600px at 90% 10%,  rgba(197,179,150,0.045) 0%, transparent 65%),
+                radial-gradient(circle 700px at 75% 80%,  rgba(82,91,89,0.12)    0%, transparent 60%);
+            z-index: -1;
+        }
+ 
+        /* ================================================================
+           字型輔助類別
+        ================================================================ */
+        .font-display { font-family: var(--font-display); }
+        .text-accent-green { color: var(--accent-green); }
+        .text-accent-gold  { color: var(--accent-gold); }
+        .text-accent-warm  { color: var(--accent-warm); }
+ 
+        /* ================================================================
+           頁面進場動畫（Fade + Slide Up）
+           ----------------------------------------------------------------
+           .animate-in 類別可套用在任何需要進場效果的元素上，
+           搭配 animation-delay 可做出交錯出現的視覺效果。
+        ================================================================ */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(22px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+ 
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+ 
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.94); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+ 
+        @keyframes floatGlow {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.13; }
+            50%       { transform: translateY(14px) scale(1.05); opacity: 0.18; }
+        }
+ 
+        @keyframes shimmer {
+            0%   { background-position: -200% center; }
+            100% { background-position:  200% center; }
+        }
+ 
+        /* ================================================================
+           導覽列（Navigation Bar）
+           ----------------------------------------------------------------
+           sticky 定位 + 玻璃擬態背景，
+           讓使用者在頁面捲動時仍能快速切換頁面。
+        ================================================================ */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: linear-gradient(180deg,
+                rgba(25,29,28,0.96) 0%,
+                rgba(25,29,28,0.88) 100%);
+            backdrop-filter: blur(24px) saturate(1.4);
+            -webkit-backdrop-filter: blur(24px) saturate(1.4);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            /* 底部微光邊框 */
+            box-shadow:
+                0 1px 0 rgba(163,177,138,0.06),
+                0 4px 24px rgba(0,0,0,0.2);
+        }
+ 
+        /* 導覽列連結 */
+        .nav-link {
+            background: transparent;
+            color: #B8B4AC;        
+            padding: 8px 16px;
+            border: 1px solid transparent;
+            border-radius: 999px;   
+            transition: all 0.3s ease;
+        }
+ 
+        .nav-link:hover {
+            background: rgba(74, 59, 50, 0.12); 
+            border-color: #706259;             
+            color: #A3958C;                    
+            transform: translateY(-2px);
+        }
+ 
+        /* 1. 作用中的按鈕（例如：首頁）—— 改為透明灰色系 */
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.03); 
+            color: #B8B4AC;                        
+            border: 1px solid rgba(255, 255, 255, 0.15); /* 輕微白透邊框 */
+        }
+        
+        .nav-link.active:hover {
+            background: rgba(74, 59, 50, 0.15);
+            border-color: #706259;
+            color: #A3958C;
+            transform: translateY(-3px);
+        }
+ 
+        /* 語言選擇器包裝 */
+        .nav-language-wrap {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+ 
+        /* 2. 語言下拉選單常態狀態 */
+        .nav-language-select {
+            appearance: none;
+            background: rgba(255, 255, 255, 0.03);
+            color: #B8B4AC;                       
+            font-family: var(--font-body);
+            font-size: 16px;
+            padding: 8px 38px 8px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.15); /* 改為輕微白透邊框 */
+            transition: all var(--ease-normal);
+            cursor: pointer;
+            outline: none;
+        }
+ 
+        /* 3. 語言下拉選單懸停狀態 */
+        .nav-language-select:hover,
+        .nav-language-select:focus {
+            background: rgba(74, 59, 50, 0.15);    
+            border-color: #706259;                 
+            color: #A3958C;                        
+        }
+ 
+        .nav-language-select option {
+            background: var(--bg-raised);
+            color: var(--text-primary);
+        }
+ 
+        /* 4. 右側箭頭圖示顏色修正 */
+        .nav-language-wrap::after {
+            content: "⌄";
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-58%);
+            color: #B8B4AC;                        
+            font-size: 18px;
+            pointer-events: none;
+            transition: color var(--ease-fast);
+        }
+ 
+        /* 5. 語言選單包裝懸停時，箭頭變色同步 */
+        .nav-language-wrap:hover::after {
+            color: #A3958C;                        /* 箭頭同步轉為灰啡色 */
+        }
+ 
+        /* ================================================================
+           Hero 主視覺區段
+           ----------------------------------------------------------------
+           首頁的第一眼印象，包含標語、說明文字、CTA 按鈕、統計卡片。
+        ================================================================ */
+        .hero-panel {
+            position: relative;
+            overflow: hidden;
+            border-radius: 32px;
+            padding: 48px 52px;
+            /* 玻璃擬態背景：多層漸層 */
+            background:
+                linear-gradient(135deg,
+                    rgba(255,255,255,0.068) 0%,
+                    rgba(255,255,255,0.022) 60%,
+                    rgba(163,177,138,0.04) 100%);
+            border: 1px solid rgba(255,255,255,0.07);
+            box-shadow:
+                0 0 0 1px rgba(163,177,138,0.08) inset,
+                0 32px 80px rgba(0,0,0,0.28),
+                0 8px 32px  rgba(0,0,0,0.18);
+            animation: fadeSlideUp var(--ease-slow) 0.1s both;
+        }
+ 
+        /* Hero 右上角裝飾光暈 */
+        .hero-panel::before {
+            content: "";
+            position: absolute;
+            width: 420px;
+            height: 420px;
+            right: -130px;
+            top:  -150px;
+            border-radius: 50%;
+            background: radial-gradient(circle,
+                rgba(163,177,138,0.16) 0%,
+                rgba(163,177,138,0.04) 50%,
+                transparent 70%);
+            animation: floatGlow 10s ease-in-out infinite;
+            pointer-events: none;
+        }
+ 
+        /* Hero 左下角裝飾光暈 */
+        .hero-panel::after {
+            content: "";
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            left: -80px;
+            bottom: -100px;
+            border-radius: 50%;
+            background: radial-gradient(circle,
+                rgba(197,179,150,0.10) 0%,
+                transparent 65%);
+            animation: floatGlow 13s ease-in-out 2s infinite reverse;
+            pointer-events: none;
+        }
+ 
+        /* 標籤膠囊（eyebrow label）*/
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--accent-warm);
+            background: rgba(233,196,106,0.1);
+            border: 1px solid rgba(233,196,106,0.28);
+            border-radius: 999px;
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+ 
+        /* Hero 主標題 */
+        .hero-title {
+            font-family: var(--font-display);
+            color: var(--accent-green);
+            letter-spacing: 0.02em;
+            line-height: 1.14;
+        }
+ 
+        /* Hero 正文段落 */
+        .hero-copy {
+            color: rgba(232,228,220,0.78);
+            line-height: 1.88;
+        }
+ 
+        /* CTA 按鈕群組 */
+        .hero-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+ 
+        .hero-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 0 28px;
+            height: 52px;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: var(--font-body);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            transition: all var(--ease-normal);
+            cursor: pointer;
+        }
+ 
+        /* 主要 CTA*/
+        .primary-cta {
+            background: rgba(74, 59, 50, 0.35); 
+            color: #B8B4AC;     
+            border: 1px solid rgba(117, 99, 87, 0.4);
+        }
+ 
+        /* 次要 CTA */
+        .secondary-cta {
+            background: rgba(74, 59, 50, 0.35); 
+            color: #B8B4AC;     
+            border: 1px solid rgba(117, 99, 87, 0.4);
+        }
+ 
+        .hero-actions a:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 36px rgba(0,0,0,0.28);
+        }
+ 
+        .primary-cta:hover {
+            background: rgba(74, 59, 50, 0.6); 
+            border-color: #706259;
+        }
+        
+        .secondary-cta:hover {
+            background: rgba(74, 59, 50, 0.6); 
+            border-color: #706259;
+        }
+ 
+        /* 統計卡片 */
+        .hero-stat {
+            background: rgba(17,21,20,0.62);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 22px 24px;
+            transition: all var(--ease-normal);
+        }
+ 
+        .hero-stat:hover {
+            border-color: var(--border-default);
+            background: rgba(25,29,28,0.72);
+            transform: translateY(-2px);
+        }
+ 
+        .hero-stat-number {
+            font-family: var(--font-display);
+            color: var(--accent-warm);
+            font-size: 48px;
+            line-height: 1;
+            /* 光澤效果 */
+            background: linear-gradient(90deg, #E9C46A, #F0D080, #E9C46A);
+            background-size: 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+ 
+        /* ================================================================
+           通用 Section 卡片
+        ================================================================ */
+        .section-card {
+            background: rgba(255,255,255,0.035);
+            border: 1px solid var(--border-subtle);
+            border-radius: 32px;
+            padding: 38px 42px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.14);
+            position: relative;
+            overflow: hidden;
+        }
+ 
+        /* 卡片左上角裝飾光斑 */
+        .section-card::before {
+            content: "";
+            position: absolute;
+            top: -1px; left: -1px;
+            width: 240px; height: 240px;
+            border-radius: 0 0 50% 0;
+            background: radial-gradient(circle at top left,
+                rgba(163,177,138,0.07) 0%,
+                transparent 70%);
+            pointer-events: none;
+        }
+ 
+        .section-kicker {
+            color: var(--accent-gold);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+ 
+        .section-title {
+            font-family: var(--font-display);
+            color: var(--accent-green);
+            letter-spacing: 0.04em;
+        }
+ 
+        /* ================================================================
+           SDGs 介紹網格（17 個目標圖示按鈕）
+        ================================================================ */
+        .intro-sdg-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+ 
+        @media (min-width: 640px) {
+            .intro-sdg-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+ 
+        @media (min-width: 1024px) {
+            .intro-sdg-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+ 
+        /* 單個 SDG 介紹卡 */
+        .intro-sdg-card {
+            border: 1px solid var(--border-subtle);
+            border-radius: 22px;
+            background: rgba(37,43,42,0.72);
+            color: var(--text-primary);
+            padding: 22px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--ease-normal);
+            position: relative;
+            overflow: hidden;
+        }
+ 
+        /* 卡片 hover 光暈 */
+        .intro-sdg-card::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 22px;
+            background: radial-gradient(circle at 50% 50%,
+                rgba(163,177,138,0.12) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity var(--ease-normal);
+        }
+ 
+        .intro-sdg-card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(163,177,138,0.5);
+            background: rgba(163,177,138,0.07);
+            box-shadow:
+                0 18px 36px rgba(0,0,0,0.32),
+                0 0 0 1px rgba(163,177,138,0.12) inset;
+        }
+ 
+        .intro-sdg-card:hover::after {
+            opacity: 1;
+        }
+ 
+        .intro-sdg-card img {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+            border-radius: 12px;
+            filter: brightness(0.85) saturate(0.82);
+            transition: all var(--ease-normal);
+        }
+ 
+        .intro-sdg-card:hover img {
+            filter: brightness(1) saturate(1);
+            transform: scale(1.06);
+        }
+ 
+        /* ================================================================
+           情境互動區段
+        ================================================================ */
+        .interact-desc {
+            color: rgba(255,255,255,0.82);
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-top: 6px;
+            width: 100%;
+            max-width: 1050px; 
+            text-align: justify;
+            word-break: break-all;
+            text-justify: inter-ideograph;
+        }
+ 
+        /* SDG 情境卡片網格外框 */
+        .sdg-grid-shell {
+            border-radius: 28px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow:
+                0 24px 56px rgba(0,0,0,0.24),
+                0 0 0 1px rgba(163,177,138,0.06) inset;
+        }
+ 
+        /* 單個情境卡片 */
+        .sdg-card {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            background-color: rgba(255,255,255,0.012);
+            border: 1px solid rgba(255,255,255,0.03);
+            transition: all var(--ease-normal);
+        }
+ 
+        /* 號碼標籤（右下角）*/
+        .sdg-card::before {
+            content: attr(data-goal);
+            position: absolute;
+            bottom: 6px; right: 8px;
+            font-family: var(--font-display);
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.22);
+            line-height: 1;
+            pointer-events: none;
+            transition: color var(--ease-fast);
+        }
+ 
+        .sdg-card:hover {
+            background: rgba(163,177,138,0.10);
+            border-color: rgba(163,177,138,0.38);
+            transform: scale(1.03);
+            z-index: 2;
+            box-shadow:
+                0 16px 32px rgba(0,0,0,0.4),
+                0 0 0 1px rgba(163,177,138,0.14) inset;
+        }
+ 
+        .sdg-card:hover::before {
+            color: rgba(163,177,138,0.55);
+        }
+ 
+        .sdg-card:active {
+            transform: scale(0.98);
+        }
+ 
+        .sdg-card img {
+            width: 82%;
+            height: 82%;
+            object-fit: cover;
+            filter: brightness(0.78) saturate(0.78);
+            transition: all var(--ease-normal);
+        }
+ 
+        .sdg-card:hover img {
+            filter: brightness(1.02) saturate(1.05);
+        }
+ 
+        /* ================================================================
+           關於我們區段
+        ================================================================ */
+        .about-grid {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 24px;
+        }
+ 
+        @media (max-width: 900px) {
+            .about-grid { grid-template-columns: 1fr; }
+        }
+ 
+        .about-card {
+            background: rgba(25,29,28,0.65);
+            border: 1px solid var(--border-subtle);
+            border-radius: 22px;
+            padding: 28px 30px;
+        }
+ 
+        .about-list li {
+            display: flex;
+            gap: 14px;
+            margin-top: 16px;
+            color: rgba(232,228,220,0.82);
+            line-height: 1.7;
+            font-size: 18px;
+        }
+ 
+        .about-list li::before {
+            content: "✦";
+            color: var(--accent-warm);
+            flex: 0 0 auto;
+            margin-top: 2px;
+        }
+ 
+        /* ================================================================
+           情境互動彈窗（Modal）
+           ----------------------------------------------------------------
+           覆蓋整個視口，包含左側故事區與右側選項區。
+        ================================================================ */
+        #modal {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+ 
+        /* 彈窗容器動畫 */
+        .modal-inner {
+            background: linear-gradient(145deg,
+                rgba(30,35,34,0.98) 0%,
+                rgba(22,26,25,0.98) 100%);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 30px;
+            box-shadow:
+                0 0 0 1px rgba(197,179,150,0.12) inset,
+                0 48px 96px rgba(0,0,0,0.55),
+                0 16px 48px rgba(0,0,0,0.35);
+            animation: scaleIn 0.36s cubic-bezier(0.16,1,0.3,1) both;
+            position: relative;
+            overflow: hidden;
+        }
+ 
+        /* 彈窗頂部裝飾漸層 */
+        .modal-inner::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                var(--accent-green) 30%,
+                var(--accent-gold) 60%,
+                transparent 100%);
+        }
+ 
+        /* 彈窗關閉按鈕 */
+        .close-btn {
+            color: var(--text-muted);
+            transition: all var(--ease-normal);
+            line-height: 1;
+        }
+ 
+        .close-btn:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+ 
+        /* 故事區卡片 */
+        .story-box {
+            background: rgba(37,43,42,0.7);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: var(--text-primary);
+            position: relative;
+            overflow: hidden;
+        }
+ 
+        /* 故事卡片右下角裝飾 */
+        .story-box::after {
+            content: "";
+            position: absolute;
+            bottom: -40px; right: -40px;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle,
+                rgba(163,177,138,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+ 
+        /* 對話者頭像 */
+        .avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4A5450, #7A8468);
+            border: 2px solid rgba(197,179,150,0.5);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.28);
+            flex-shrink: 0;
+        }
+ 
+        /* 提示條 */
+        .story-note {
+            background: rgba(163,177,138,0.12);
+            border-left: 3px solid var(--accent-green);
+            color: var(--accent-green);
+            font-size: 15px;
+            padding: 8px 14px;
+            border-radius: 0 10px 10px 0;
+        }
+ 
+        /* ================================================================
+           選項卡片（Answer Options）
+           ----------------------------------------------------------------
+           右側四個可點選的答案選項。
+           active 狀態代表使用者選取的答案。
+        ================================================================ */
+        .option-card {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: all var(--ease-fast);
+        }
+ 
+        .option-card:hover {
+            transform: translateX(4px);
+        }
+ 
+        /* 選項字母圓圈 */
+        .option-circle {
+            width: 52px;
+            height: 52px;
+            min-width: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            background: rgba(54,59,58,0.9);
+            color: var(--accent-gold);
+            border: 1px solid rgba(197,179,150,0.22);
+            transition: all var(--ease-fast);
+        }
+ 
+        .option-card:hover .option-circle {
+            background: rgba(197,179,150,0.18);
+            border-color: rgba(197,179,150,0.5);
+            transform: scale(1.08);
+        }
+ 
+        /* 選項文字區塊 */
+        .option-text {
+            flex: 1;
+            background: rgba(255,255,255,0.042);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 17px;
+            color: rgba(209,205,192,0.9);
+            line-height: 1.45;
+            transition: all var(--ease-fast);
+        }
+ 
+        .option-card:hover .option-text {
+            background: rgba(197,179,150,0.07);
+            border-color: rgba(197,179,150,0.38);
+        }
+ 
+        /* 選取狀態（active）*/
+        .option-card.active .option-circle {
+            background: var(--accent-gold);
+            color: var(--bg-base);
+            border-color: var(--accent-gold);
+            transform: scale(1.12);
+            box-shadow: 0 6px 18px rgba(197,179,150,0.35);
+        }
+ 
+        .option-card.active .option-text {
+            background: rgba(197,179,150,0.12);
+            border-color: rgba(197,179,150,0.55);
+            color: #F0E6D2;
+            font-weight: 500;
+        }
+ 
+        /* ================================================================
+           送出按鈕
+        ================================================================ */
+        .btn-submit {
+            background: var(--accent-gold);
+            color: var(--bg-base);
+            border: none;
+            border-radius: 999px;
+            padding: 14px 42px;
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            transition: all var(--ease-normal);
+            box-shadow: 0 8px 24px rgba(197,179,150,0.22);
+        }
+ 
+        .btn-submit:hover {
+            background: var(--accent-warm);
+            transform: translateY(-3px);
+            box-shadow: 0 14px 32px rgba(233,196,106,0.28);
+        }
+ 
+        .btn-submit:active {
+            transform: translateY(0) scale(0.97);
+        }
+ 
+        /* ================================================================
+           回饋區塊（正確 / 錯誤）
+        ================================================================ */
+        .result-correct {
+            background: rgba(163,177,138,0.14);
+            border: 2px solid rgba(163,177,138,0.5);
+            border-radius: 18px;
+            padding: 22px 24px;
+            animation: fadeSlideUp 0.35s ease both;
+        }
+ 
+        .result-wrong {
+            background: rgba(214,140,122,0.12);
+            border: 2px solid rgba(214,140,122,0.45);
+            border-radius: 18px;
+            padding: 22px 24px;
+            animation: fadeSlideUp 0.35s ease both;
+        }
+ 
+        .result-error {
+            background: rgba(255,138,138,0.1);
+            border: 1px solid rgba(255,138,138,0.28);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #FF8A8A;
+            text-align: center;
+            font-weight: 700;
+            animation: fadeSlideUp 0.25s ease both;
+        }
+ 
+        /* 延伸學習按鈕 */
+        .btn-learn-more {
+            display: inline-block;
+            margin-top: 16px;
+            background: var(--accent-gold);
+            color: var(--bg-base);
+            border: none;
+            border-radius: 999px;
+            padding: 11px 26px;
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all var(--ease-normal);
+        }
+ 
+        .btn-learn-more:hover {
+            background: var(--accent-warm);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(197,179,150,0.3);
+        }
+ 
+        /* ================================================================
+           全頁覆蓋層（延伸學習 / 行動建議）
+           ----------------------------------------------------------------
+           fixed 定位覆蓋整個視口，使用者可在此頁面
+           閱讀細項目標與可執行的行動建議。
+        ================================================================ */
+        .full-page {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            background:
+                linear-gradient(160deg,
+                    rgba(17,21,20,0.99) 0%,
+                    rgba(22,27,26,0.99) 100%);
+            color: #FFFFFF;
+            overflow-y: auto;
+            padding: 56px 70px;
+            box-sizing: border-box;
+        }
+ 
+        /* 覆蓋層頂部光條 */
+        .full-page::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg,
+                var(--accent-green) 0%,
+                var(--accent-gold) 50%,
+                var(--accent-warm) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+ 
+        .full-page-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            animation: fadeSlideUp 0.4s ease both;
+        }
+ 
+        .full-page-header {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            margin-bottom: 44px;
+        }
+ 
+        /* 覆蓋層 SDG 圖示 */
+        .page-sdg-icon {
+            width: 88px;
+            height: 88px;
+            object-fit: contain;
+            border-radius: 16px;
+            filter: brightness(0.95) saturate(0.95);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+ 
+        /* 覆蓋層大標題 */
+        .overlay-title {
+            font-family: var(--font-display);
+            font-size: 46px;
+            font-weight: 700;
+            color: var(--accent-green);
+            letter-spacing: 0.03em;
+        }
+ 
+        /* 目標介紹文字 */
+        .learn-intro {
+            font-size: 20px;
+            line-height: 1.85;
+            color: #F0F0F0;
+            margin-bottom: 46px;
+            max-width: 960px;
+            border-left: 3px solid rgba(163,177,138,0.4);
+            padding-left: 24px;
+        }
+ 
+        /* 細項目標列表 */
+        .target-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+ 
+        .target-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.09);
+            border-radius: 20px;
+            padding: 26px 30px;
+            transition: all var(--ease-normal);
+        }
+ 
+        .target-card:hover {
+            background: rgba(255,255,255,0.085);
+            border-color: rgba(197,179,150,0.28);
+            transform: translateX(4px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.2);
+        }
+ 
+        .target-number {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 12px;
+        }
+ 
+        .target-card p {
+            margin: 0;
+            font-size: 18px;
+            line-height: 1.75;
+            color: #F5F5F5;
+        }
+ 
+        /* 行動建議卡片 */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+ 
+        .action-card {
+            background: rgba(25,29,28,0.75);
+            border: 2px dashed rgba(197,179,150,0.55);
+            border-radius: 20px;
+            padding: 22px 28px;
+            min-height: 72px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            color: #F0F0F0;
+            font-size: 18px;
+            line-height: 1.55;
+            transition: all var(--ease-normal);
+        }
+ 
+        /* 行動卡片左側序號裝飾 */
+        .action-card::before {
+            content: counter(action-counter);
+            counter-increment: action-counter;
+            font-family: var(--font-display);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent-warm);
+            background: rgba(233,196,106,0.12);
+            border: 1px solid rgba(233,196,106,0.28);
+            border-radius: 50%;
+            min-width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1px;
+            flex-shrink: 0;
+        }
+ 
+        .action-grid { counter-reset: action-counter; }
+ 
+        .action-card:hover {
+            background: rgba(197,179,150,0.07);
+            border-color: var(--accent-warm);
+            transform: translateX(5px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+        }
+ 
+        /* 覆蓋層按鈕列 */
+        .overlay-button-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-top: 58px;
+            padding-bottom: 24px;
+        }
+ 
+        .overlay-right-buttons {
+            display: flex;
+            gap: 12px;
+        }
+ 
+        /* 通用覆蓋層按鈕 */
+        .overlay-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 14px 32px;
+            font-family: var(--font-display);
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.06em;
+            transition: all var(--ease-normal);
+        }
+ 
+        .overlay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.32);
+        }
+ 
+        .home-btn {
+            background: var(--accent-gold);
+            color: var(--bg-base);
+        }
+ 
+        .home-btn:hover { background: var(--accent-warm); }
+ 
+        .back-btn {
+            background: rgba(54,59,58,0.9);
+            color: var(--accent-gold);
+            border: 1px solid rgba(197,179,150,0.38);
+        }
+ 
+        .back-btn:hover {
+            background: rgba(70,76,74,0.9);
+            border-color: var(--accent-gold);
+        }
+ 
+        .action-btn {
+            background: var(--accent-warm);
+            color: var(--bg-base);
+        }
+ 
+        .action-btn:hover {
+            box-shadow: 0 12px 28px rgba(233,196,106,0.3);
+        }
+ 
+        /* ================================================================
+           Logo 濾鏡（降低彩度配合整體色調）
+        ================================================================ */
+        .logo-filter {
+            filter: brightness(0.72) saturate(0.45) sepia(0.08) contrast(1.1);
+            opacity: 0.9;
+        }
+ 
+        /* ================================================================
+           響應式設計 — 平板 / 手機
+        ================================================================ */
+        @media (max-width: 900px) {
+            .full-page { padding: 36px 24px; }
+            .overlay-title { font-size: 36px; }
+            .learn-intro { font-size: 18px; }
+            .page-sdg-icon { width: 72px; height: 72px; }
+            .overlay-button-row { flex-direction: column; align-items: stretch; }
+            .overlay-right-buttons { flex-direction: column; }
+            .hero-panel { padding: 32px 28px; }
+            .section-card { padding: 28px 24px; }
+        }
+ 
+        @media (max-width: 768px) {
+            .hero-title { font-size: 30px !important; }
+            .section-title { font-size: 26px !important; }
+            .interact-desc { font-size: 14px; white-space: normal; }
+        }
+ 
+        @media (max-width: 480px) {
+            .hero-panel { padding: 24px 18px; }
+            .hero-stat-number { font-size: 38px; }
+            .overlay-title { font-size: 28px; }
+        }
+ 
+        /* ================================================================
+           英文模式文字換行修正
+        ================================================================ */
+        html[lang="en"] .hero-title,
+        html[lang="en"] .section-title {
+            white-space: normal;
+            line-height: 1.2;
+        }
+ 
+        /* ================================================================
+           頁面進場動畫：依序延遲
+        ================================================================ */
+        .hero-panel   { animation-delay: 0.05s; }
+        .section-card { animation: fadeSlideUp var(--ease-slow) 0.15s both; }
+        #interact     { animation: fadeSlideUp var(--ease-slow) 0.22s both; }
+        #about        { animation: fadeSlideUp var(--ease-slow) 0.28s both; }
+ 
+    </style>
+</head>
+ 
+<body class="px-6 md:px-16 lg:px-28 py-0">
+ 
+    <!-- ================================================================
+         Header / Navigation
+         ----------------------------------------------------------------
+         頁首導覽列：sticky 定位 + 玻璃擬態效果。
+         包含：logo、頁面連結、語言切換下拉選單。
+    ================================================================ -->
+    <header class="site-header -mx-6 md:-mx-16 lg:-mx-28 px-6 md:px-16 lg:px-28 py-4 mb-12">
+        <div class="max-w-[1100px] mx-auto flex flex-col md:flex-row gap-4 justify-between items-center">
+ 
+            <!-- Logo -->
+            <a href="#home" class="flex items-center gap-3" aria-label="Back to home">
+                <img
+                    src="https://taiwanlii.ccu.edu.tw/var/file/153/1153/img/968/SDGsLOGO.png"
+                    class="h-12 md:h-14 object-contain logo-filter"
+                    alt="SDGs Logo"
+                >
+            </a>
+ 
+            <!-- 導覽連結 + 語言選擇器 -->
+            <nav class="flex flex-wrap justify-center gap-2" aria-label="Main navigation">
+                <a class="nav-link" href="#home"     data-i18n="navHome">首頁</a>
+                <a class="nav-link" href="#intro"    data-i18n="navIntro">SDGs 介紹</a>
+                <a class="nav-link" href="#interact" data-i18n="navInteract">情境互動</a>
+                <a class="nav-link" href="#about"    data-i18n="navAbout">關於我們</a>
+ 
+                <!-- 語言切換 -->
+                <div class="nav-language-wrap">
+                    <select id="langSelect" class="nav-language-select" aria-label="Language selector">
+                        <option value="zh">繁體中文</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </nav>
+        </div>
+    </header>
+ 
+ 
+    <!-- ================================================================
+         Main Content
+         ----------------------------------------------------------------
+         所有頁面區塊都放在此 main 內。
+         顯示邏輯由 JS 的 showPage() 控制——每次只顯示一個區塊。
+    ================================================================ -->
+    <main id="home" class="max-w-[1120px] mx-auto pb-40">
+ 
+        <!-- ============================================================
+             Hero Section — 首頁主視覺
+             ------------------------------------------------------------
+             第一眼印象：平台標語、說明文字、CTA 按鈕、數字統計卡片。
+        ============================================================ -->
+        <section class="hero-panel mb-14">
+            <div class="grid lg:grid-cols-[1.3fr_0.7fr] gap-10 items-center relative z-10">
+ 
+                <!-- 左側文字區 -->
+                <div>
+                    <!-- 標籤膠囊 -->
+                    <div class="eyebrow mb-5" data-i18n="heroEyebrow">SDGs Learning Platform</div>
+ 
+                    <!-- 主標題 -->
+                    <h1 class="hero-title text-4xl md:text-5xl font-bold mb-6" data-i18n="heroTitle">
+                        17 項永續發展目標
+                    </h1>
+ 
+                    <!-- 三段說明文字 -->
+                    <p class="hero-copy text-xl mb-4" data-i18n="heroP1">
+                        SDGs（Sustainable Development Goals）為聯合國於 2015 年提出之全球永續發展藍圖，涵蓋社會公平、環境保護與經濟發展三大核心面向。
+                    </p>
+                    <p class="hero-copy text-lg mb-4" data-i18n="heroP2">
+                        本網站以數位化資訊整合、視覺化內容設計與情境互動學習模式，打造兼具知識性與使用體驗的永續教育平台，協助使用者系統化理解全球永續發展趨勢。
+                    </p>
+                    <p class="hero-copy text-lg mb-8" data-i18n="heroP3">
+                        期望提升大眾對永續議題之理解能力、議題敏感度與跨領域思考能力，進一步將永續理念落實於日常生活之中。
+                    </p>
+ 
+                    <!-- CTA 按鈕群 -->
+                    <div class="hero-actions">
+                        <a href="#interact" class="primary-cta"   data-i18n="heroCta1">進入情境互動</a>
+                        <a href="#intro"    class="secondary-cta" data-i18n="heroCta2">瀏覽 SDGs 介紹</a>
+                    </div>
+                </div>
+ 
+                <!-- 右側統計卡片 -->
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- 17 項目標（橫跨兩欄）-->
+                    <div class="hero-stat col-span-2">
+                        <div class="hero-stat-number">17</div>
+                        <p class="text-lg mt-2 text-white/75" data-i18n="heroStat1">項全球共同目標</p>
+                    </div>
+                    <!-- 2030 議程 -->
+                    <div class="hero-stat">
+                        <div class="hero-stat-number text-3xl">2030</div>
+                        <p class="text-sm mt-2 text-white/65" data-i18n="heroStat2">永續發展議程</p>
+                    </div>
+                    <!-- 學習模式數量 -->
+                    <div class="hero-stat">
+                        <div class="hero-stat-number text-3xl">2</div>
+                        <p class="text-sm mt-2 text-white/65" data-i18n="heroStat3">種學習模式</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+ 
+ 
+        <!-- ============================================================
+             SDGs Overview — SDGs 介紹區段
+             ------------------------------------------------------------
+             展示 17 個 SDG 目標的圖示按鈕。
+             點擊後呼叫 openLearnPage() 開啟延伸學習全頁覆蓋層。
+        ============================================================ -->
+        <section id="intro" class="section-card mb-12">
+            <div class="section-kicker" data-i18n="introKicker">About the Goals</div>
+            <h2 class="section-title text-3xl md:text-4xl font-bold mb-4" data-i18n="introTitle">SDGs 介紹</h2>
+            <p class="text-xl leading-relaxed mb-8 text-white/80" data-i18n="introText">
+                SDGs 涵蓋社會、經濟與環境三大面向。請選擇下方任一目標，進一步了解其背景、關鍵議題與實踐方向。
+            </p>
+ 
+            <!-- 17 個 SDG 圖示按鈕
+                 data-learn-goal：JS 用於識別目標編號 -->
+            <div id="introSdgGrid" class="intro-sdg-grid">
+                <button class="intro-sdg-card" data-learn-goal="1" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png"  alt="Goal 1"></button>
+                <button class="intro-sdg-card" data-learn-goal="2" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png"  alt="Goal 2"></button>
+                <button class="intro-sdg-card" data-learn-goal="3" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-3.png"  alt="Goal 3"></button>
+                <button class="intro-sdg-card" data-learn-goal="4" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-4.png"  alt="Goal 4"></button>
+                <button class="intro-sdg-card" data-learn-goal="5" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-5.png"  alt="Goal 5"></button>
+                <button class="intro-sdg-card" data-learn-goal="6" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-6.png"  alt="Goal 6"></button>
+                <button class="intro-sdg-card" data-learn-goal="7" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-7.png"  alt="Goal 7"></button>
+                <button class="intro-sdg-card" data-learn-goal="8" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-8.png"  alt="Goal 8"></button>
+                <button class="intro-sdg-card" data-learn-goal="9" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-9.png"  alt="Goal 9"></button>
+                <button class="intro-sdg-card" data-learn-goal="10"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-10.png" alt="Goal 10"></button>
+                <button class="intro-sdg-card" data-learn-goal="11"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-11.png" alt="Goal 11"></button>
+                <button class="intro-sdg-card" data-learn-goal="12"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-12.png" alt="Goal 12"></button>
+                <button class="intro-sdg-card" data-learn-goal="13"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-13.png" alt="Goal 13"></button>
+                <button class="intro-sdg-card" data-learn-goal="14"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-14.png" alt="Goal 14"></button>
+                <button class="intro-sdg-card" data-learn-goal="15"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-15.png" alt="Goal 15"></button>
+                <button class="intro-sdg-card" data-learn-goal="16"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-16.png" alt="Goal 16"></button>
+                <button class="intro-sdg-card" data-learn-goal="17"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-17.png" alt="Goal 17"></button>
+            </div>
+        </section>
+ 
+ 
+        <!-- ============================================================
+             Scenario Interaction — 情境互動區段
+             ------------------------------------------------------------
+             17 個 SDG 情境互動入口，以緊湊的方格網格呈現。
+             點擊後呼叫 openModal() 開啟情境題彈窗。
+        ============================================================ -->
+        <section id="interact" class="mb-16">
+            <div class="mb-8">
+                <div class="section-kicker" data-i18n="interactKicker">Scenario Practice</div>
+                <h2 class="section-title text-3xl md:text-4xl font-bold mb-3" data-i18n="interactTitle">情境互動</h2>
+                <p class="interact-desc" data-i18n="interactText">
+                    透過貼近日常生活的案例，理解永續議題在真實情境中的判斷重點與行動選擇。
+                </p>
+            </div>
+ 
+            <!-- 情境卡片網格
+                 data-goal：JS 用於載入對應情境題 -->
+            <div class="sdg-grid-shell grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-l border-white/[0.06]">
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="1" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png"  alt="Goal 1"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="2" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-2.png"  alt="Goal 2"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="3" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-3.png"  alt="Goal 3"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="4" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-4.png"  alt="Goal 4"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="5" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-5.png"  alt="Goal 5"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="6" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-6.png"  alt="Goal 6"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="7" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-7.png"  alt="Goal 7"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="8" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-8.png"  alt="Goal 8"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="9" ><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-9.png"  alt="Goal 9"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="10"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-10.png" alt="Goal 10"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="11"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-11.png" alt="Goal 11"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="12"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-12.png" alt="Goal 12"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="13"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-13.png" alt="Goal 13"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="14"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-14.png" alt="Goal 14"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="15"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-15.png" alt="Goal 15"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="16"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-16.png" alt="Goal 16"></div>
+                <div class="sdg-card border-r border-b border-white/[0.06]" data-goal="17"><img src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-17.png" alt="Goal 17"></div>
+            </div>
+        </section>
+ 
+ 
+        <!-- ============================================================
+             About Section — 關於我們
+             ------------------------------------------------------------
+             說明網站定位與內容特色，採雙欄卡片版型。
+        ============================================================ -->
+        <section id="about" class="section-card mb-24">
+            <div class="section-kicker" data-i18n="aboutKicker">Project Concept</div>
+            <h2 class="section-title text-3xl md:text-4xl font-bold mb-6" data-i18n="aboutTitle">關於我們</h2>
+ 
+            <div class="about-grid">
+                <!-- 左欄：網站定位 -->
+                <div class="about-card">
+                    <h3 class="text-2xl font-bold text-accent-gold mb-4" data-i18n="aboutMissionTitle">網站定位</h3>
+                    <p class="text-xl leading-relaxed text-white/82" data-i18n="aboutText">
+                        本網站定位為 SDGs 教育與議題導覽平台，旨在以清楚、可信且具脈絡的方式介紹 17 項永續發展目標。內容設計強調議題理解、案例判斷與行動轉化。
+                    </p>
+                </div>
+ 
+                <!-- 右欄：內容特色 -->
+                <div class="about-card">
+                    <h3 class="text-2xl font-bold text-accent-gold mb-4" data-i18n="aboutHighlightsTitle">內容特色</h3>
+                    <ul class="about-list">
+                        <li data-i18n="aboutPoint1">以 17 項 SDGs 建立完整架構，便於使用者依主題探索與比較。</li>
+                        <li data-i18n="aboutPoint2">每項目標皆提供背景說明、關鍵方向與可實踐的行動建議。</li>
+                        <li data-i18n="aboutPoint3">情境互動以案例式學習呈現，提升議題複雜性的理解深度。</li>
+                        <li data-i18n="aboutPoint4">支援繁體中文與英文介面，適合教學、展示與自主學習使用。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+ 
+ 
+    <!-- ================================================================
+         情境互動彈窗（Modal）
+         ----------------------------------------------------------------
+         包含：
+         - 頂部：SDG 圖示 + 標題 + 關閉按鈕
+         - 左側：情境故事卡（storyBox）
+         - 右側：四個選項 + 送出按鈕 + 回饋區
+    ================================================================ -->
+    <div id="modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="modal-inner max-w-5xl w-full overflow-y-auto max-h-[95vh] p-8 md:p-12">
+ 
+            <!-- 關閉按鈕 -->
+            <button id="closeModal" class="absolute top-6 right-8 text-4xl close-btn" aria-label="Close modal">&times;</button>
+ 
+            <!-- 彈窗頂部：圖示 + 標題 -->
+            <div class="flex items-center gap-6 mb-10">
+                <img id="modalImg" src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" class="w-20 rounded-xl shadow-lg" alt="SDG Icon">
+                <div>
+                    <h2 id="modalTitle" class="text-4xl font-bold" style="font-family:var(--font-display);color:#E0E0E0;letter-spacing:0.04em;">No Poverty</h2>
+                    <p id="modalGoalLabel" class="text-sm mt-1 font-bold tracking-widest uppercase" style="color:var(--accent-green);">GOAL 01 / 17 Sustainable Development Goals</p>
+                </div>
+            </div>
+ 
+            <!-- 雙欄：故事區 + 選項區 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+ 
+                <!-- 左側：情境故事 -->
+                <div class="story-box">
+                    <div class="flex items-center gap-4 mb-6">
+                        <div class="avatar"></div>
+                        <div id="storyNote" class="story-note flex-1">A quiet change is noticed during lunch time.</div>
+                    </div>
+                    <div class="space-y-5">
+                        <p id="storyMain"   class="text-xl font-medium leading-relaxed text-white"></p>
+                        <p id="storyBridge" class="text-base leading-relaxed" style="color:rgba(209,205,192,0.7);"></p>
+                        <p id="storySub"    class="text-base leading-relaxed italic border-t pt-4" style="color:rgba(180,176,168,0.8);border-color:rgba(255,255,255,0.07);"></p>
+                        <p id="questionText" class="text-lg font-semibold px-4 py-3 rounded-xl" style="color:var(--accent-green);background:rgba(163,177,138,0.09);border:1px solid rgba(163,177,138,0.22);"></p>
+                    </div>
+                </div>
+ 
+                <!-- 右側：選項 + 送出 + 回饋 -->
+                <div class="space-y-4">
+                    <!-- 四個選項卡（A/B/C/D）-->
+                    <div class="option-card" data-option="A">
+                        <div class="option-circle">A</div>
+                        <div id="optionTextA" class="option-text"></div>
+                    </div>
+                    <div class="option-card" data-option="B">
+                        <div class="option-circle">B</div>
+                        <div id="optionTextB" class="option-text"></div>
+                    </div>
+                    <div class="option-card" data-option="C">
+                        <div class="option-circle">C</div>
+                        <div id="optionTextC" class="option-text"></div>
+                    </div>
+                    <div class="option-card" data-option="D">
+                        <div class="option-circle">D</div>
+                        <div id="optionTextD" class="option-text"></div>
+                    </div>
+ 
+                    <!-- 送出按鈕 -->
+                    <div class="flex justify-between items-center pt-4 gap-4">
+    <button id="backStepBtn" class="overlay-btn back-btn">
+        返回
+    </button>
+
+    <button id="nextBtn" class="btn-submit">
+        送出選擇
+    </button>
+</div>
+ 
+                    <!-- 回饋訊息區（由 JS 動態注入）-->
+                    <div id="resultBox" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+ 
+    <!-- ================================================================
+         延伸學習全頁覆蓋層（Learn More Overlay）
+         ----------------------------------------------------------------
+         顯示：SDG 目標介紹 + 細項目標卡片列表。
+         可從此頁跳轉至行動建議頁（actionPage）。
+    ================================================================ -->
+    <section id="learnPage" class="full-page hidden">
+        <div class="full-page-content">
+            <!-- 頁首：SDG 圖示 + 目標標題 -->
+            <div class="full-page-header">
+                <img id="learnPageIcon"  class="page-sdg-icon" src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="SDG Icon">
+                <h1 id="learnPageTitle" class="overlay-title">消除貧窮</h1>
+            </div>
+ 
+            <!-- 目標背景介紹 -->
+            <div id="learnPageIntro" class="learn-intro"></div>
+ 
+            <!-- 細項目標列表（由 JS 動態生成）-->
+            <div id="learnTargetGrid" class="target-grid"></div>
+ 
+            <!-- 底部按鈕列 -->
+            <div class="overlay-button-row">
+                <button id="learnBackBtn" class="overlay-btn back-btn">返回</button>
+                <div class="overlay-right-buttons">
+                    <button id="actionBtn"    class="overlay-btn action-btn">採取行動</button>
+                    <button id="learnHomeBtn" class="overlay-btn home-btn">首頁</button>
+                </div>
+            </div>
+        </div>
+    </section>
+ 
+ 
+    <!-- ================================================================
+         行動建議全頁覆蓋層（Action Suggestions Overlay）
+         ----------------------------------------------------------------
+         展示針對該 SDG 目標的五項可執行行動建議。
+    ================================================================ -->
+    <section id="actionPage" class="full-page hidden">
+        <div class="full-page-content">
+            <!-- 頁首：SDG 圖示 + 標題 -->
+            <div class="full-page-header">
+                <img id="actionPageIcon" class="page-sdg-icon" src="https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-1.png" alt="SDG Icon">
+                <h1 class="overlay-title">我們可以怎麼做</h1>
+            </div>
+ 
+            <!-- 行動建議卡片列表（由 JS 動態生成）-->
+            <div id="actionGrid" class="action-grid"></div>
+ 
+            <!-- 底部按鈕列 -->
+            <div class="overlay-button-row">
+                <button id="actionBackBtn" class="overlay-btn back-btn">返回</button>
+                <div class="overlay-right-buttons">
+                    <button id="actionHomeBtn" class="overlay-btn home-btn">首頁</button>
+                </div>
+            </div>
+        </div>
+    </section>
+ 
+ 
+    <!-- ================================================================
+         JavaScript — 互動邏輯
+         ----------------------------------------------------------------
+         全部邏輯包在 DOMContentLoaded 內，
+         確保 HTML 元素完全載入後再綁定事件監聽器。
+    ================================================================ -->
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+ 
+        /* ============================================================
+           一、翻譯字典（Translation Dictionary）
+           ------------------------------------------------------------
+           存放所有靜態介面文字的中英文版本。
+           applyLanguage() 會依照 currentLang，
+           尋找所有帶有 data-i18n 屬性的元素並替換文字內容。
+        ============================================================ */
+        const translations = {
+            "zh": {
+                "navHome": "首頁",
+                "navIntro": "SDGs 介紹",
+                "navInteract": "情境互動",
+                "navAbout": "關於我們",
+                "heroEyebrow": "Sustainable Development Goals",
+                "heroTitle": "17 項永續發展目標",
+                "heroP1": "SDGs（Sustainable Development Goals）為聯合國於 2015 年提出之全球永續發展藍圖，涵蓋社會公平、環境保護與經濟發展三大核心面向。",
+                "heroP2": "本網站整合數位化資訊、視覺化內容與情境互動學習模式，建構兼具知識性與優質體驗之永續教育平台，協助使用者系統化理解全球永續發展趨勢。",
+                "heroP3": "旨在提升大眾對永續議題之理解力、敏感度與跨領域思考力，進而將永續理念轉化為日常實踐。",
+                "heroCta1": "進入情境互動",
+                "heroCta2": "瀏覽 SDGs 介紹",
+                "heroStat1": "項全球永續目標",
+                "heroStat2": "聯合國永續發展議程",
+                "heroStat3": "種學習途徑",
+                "introKicker": "Overview of the Goals",
+                "introTitle": "SDGs 介紹",
+                "introText": "本單元收錄 17 項永續發展目標之核心資訊。區分為社會公平、經濟發展與環境生態三大面向，提供完整之背景說明、關鍵發展方向與實踐建議。使用者可點擊下方特定目標，進一步了解全球永續議題之關鍵挑戰與因果網絡。",
+                "interactKicker": "Scenario-Based Learning",
+                "interactTitle": "情境互動",
+                "interactText": "本單元採案例式學習模式（Scenario-Based Learning）。系統將抽象永續指標融入真實之經濟、法規與生態衝突案例中，由使用者扮演關鍵決策者，於資源受限與利益關係人對立之情境下進行方案評估。",
+                "aboutKicker": "About This Platform",
+                "aboutTitle": "關於我們",
+                "aboutMissionTitle": "網站定位",
+                "aboutText": "本網站定位為 SDGs 教育與議題導覽平台，旨在透過清晰、具公信力與脈絡化之內容，介紹 17 項永續發展目標。核心設計著重於議題理解、案例判斷與行動轉化。",
+                "aboutHighlightsTitle": "內容特色",
+                "aboutPoint1": "依循 17 項 SDGs 建立完整架構，便利使用者進行主題探索與橫向比較。",
+                "aboutPoint2": "每項目標均提供背景概述、關鍵指標與具體行動建議。",
+                "aboutPoint3": "導入案例式情境互動學習，深化使用者對複雜議題的理解與辨析能力。",
+                "aboutPoint4": "支援繁體中文與英文介面，適合教學、展示與自主學習使用。",
+                "submit": "送出選擇",
+                "selectFirst": "請先選擇一個選項。",
+                "storyBridge": "這個案例說明 SDGs 議題往往同時牽涉個人處境、制度資源與公共支持。",
+                "excellent": "✅ 選擇正確",
+                "thinkAgain": "⚠️ 請重新思考",
+                "learnMore": "延伸學習",
+                "back": "返回",
+                "takeAction": "行動建議",
+                "home": "首頁",
+                "whatCanWeDo": "我們可以怎麼做"
+            },
+            "en": {
+                "navHome": "Home",
+                "navIntro": "SDGs Overview",
+                "navInteract": "Scenarios",
+                "navAbout": "About",
+                "heroEyebrow": "Sustainable Development Goals",
+                "heroTitle": "The 17 Sustainable Development Goals",
+                "heroP1": "The Sustainable Development Goals (SDGs), launched by the United Nations in 2015, serve as a global blueprint spanning social equity, environmental protection, and economic development.",
+                "heroP2": "This platform integrates digital data, visual storytelling, and situational interactive learning to provide a comprehensive educational experience, enabling users to systematically grasp global sustainability trends.",
+                "heroP3": "Our mission is to sharpen public understanding, awareness, and cross-disciplinary thinking regarding sustainable issues, facilitating the integration of sustainability into everyday life.",
+                "heroCta1": "Explore Scenarios",
+                "heroCta2": "View SDGs Overview",
+                "heroStat1": "global sustainability goals",
+                "heroStat2": "UN 2030 Agenda",
+                "heroStat3": "learning pathways",
+                "introKicker": "Overview of the Goals",
+                "introTitle": "SDGs Overview",
+                "introText": "This section details the core data of the 17 SDGs across three pillars: society, economy, and environment. Each entry provides comprehensive background analysis, key strategic directions, and practical guidelines. Click on any goal below to review its specific global challenges and structural interdependencies.",
+                "interactKicker": "Scenario-Based Learning",
+                "interactTitle": "Scenario Interaction",
+                "interactText": "This section utilizes Scenario-Based Learning by integrating sustainability indicators into simulated economic, legal, and ecological conflicts. Users assume the role of key decision-makers to evaluate solutions under resource constraints and conflicting stakeholder demands. The system provides immediate scenario feedback to verify cross-disciplinary and adaptive management skills.",
+                "aboutKicker": "About This Platform",
+                "aboutTitle": "About Us",
+                "aboutMissionTitle": "Platform Positioning",
+                "aboutText": "This platform serves as a dedicated SDGs educational and navigational guide. We provide clear, authoritative, and contextualized information on the 17 Sustainable Development Goals, with a core focus on issue comprehension, case analysis, and actionable implementation.",
+                "aboutHighlightsTitle": "Content Features",
+                "aboutPoint1": "Established on a structured framework of the 17 SDGs to facilitate thematic exploration and cross-comparative analysis.",
+                "aboutPoint2": "Provides concise background summaries, key indicators, and practical action guidelines for each goal.",
+                "aboutPoint3": "Features case-based interactive learning to deepen understanding and critical analysis of complex issues.",
+                "aboutPoint4": "Supports a bilingual interface (Traditional Chinese/English), optimized for teaching demonstrations, project showcases, and self-directed learning.",
+                "submit": "SUBMIT",
+                "selectFirst": "Please select an option first.",
+                "storyBridge": "This case shows that SDG issues often involve personal circumstances, institutional resources, and public support at the same time.",
+                "excellent": "✅ Correct choice",
+                "thinkAgain": "⚠️ Review the situation",
+                "learnMore": "Learn More",
+                "back": "BACK",
+                "takeAction": "Action Guide",
+                "home": "HOME",
+                "whatCanWeDo": "What Can We Do"
+            }
+        };
+ 
+        /* ============================================================
+           二、情境題庫（英文版）
+           ------------------------------------------------------------
+           每個 SDG 目標對應一組情境題，包含：
+           - title：目標標題
+           - storyNote：故事提示標籤
+           - storyMain：主要情境描述
+           - storySub：補充說明
+           - question：問題文字
+           - options：四個選項（A/B/C/D）
+           - answer：正確答案字母
+           - correctFeedback / wrongFeedback：回饋文字
+        ============================================================ */
+        const enQuestions = {
+            1:{title:"No Poverty",storyNote:"A quiet change is noticed during lunch time.",storyMain:"You notice that one of your classmates has recently stopped bringing lunch to school.",storySub:"Over time, you realize that this is not a temporary situation — it may be due to financial difficulties at home. You want to help, but at the same time, you do not want to embarrass them or make them feel different from others. You begin to think carefully about what the most appropriate and respectful action would be.",question:"What would you do?",options:{A:"Tell the whole class about the situation and suggest raising money together.",B:"Decide not to interfere because it is their personal matter.",C:"Quietly give them food every day without telling anyone.",D:"Talk to them privately and help them find support."},answer:"D",correctFeedback:"Excellent choice! Respect and proper support are important.",wrongFeedback:"Think again. Consider the person's dignity."},
+            2:{title:"Zero Hunger",storyNote:"Different solutions to hunger may lead to different results.",storyMain:"A city is planning a new food policy. Although the city has enough food overall, some low-income families still find it difficult to get stable and nutritious meals. During a public meeting, different groups suggest different solutions. Some companies suggest buying large amounts of cheap processed food because it can help more people quickly. Some local farmers suggest supporting local agriculture and fresh food supply chains, even though it may cost more. Others believe the market should adjust food prices and supply by itself.",storySub:"You are invited to join the discussion as a student representative. You need to choose the solution that best matches the idea of Zero Hunger.",question:"Which solution best reflects the core idea of SDG 2: Zero Hunger?",options:{A:"Provide large amounts of low-cost processed food so more people can quickly get enough calories.",B:"Support local agriculture and improve fresh food supply systems so people can have stable access to nutritious food.",C:"Reduce government involvement and let the market adjust food prices and food supply naturally.",D:"Divide the budget equally among all plans to avoid focusing too much on one solution."},answer:"B",correctFeedback:"Excellent choice! Zero Hunger is not only about providing enough calories, but also about stable access to safe, nutritious, and sustainable food.",wrongFeedback:"Think again. A solution may seem useful in the short term, but SDG 2 focuses on long-term food security, nutrition, and sustainable food systems."},
+            3:{title:"Good Health and Well-being",storyNote:"Sometimes, protecting public health and protecting personal freedom are not easy to balance.",storyMain:"A contagious disease has recently spread across a country. Although the death rate is relatively low, the disease spreads very quickly. Hospitals are beginning to face staff shortages and a lack of available beds. In response, the government introduces new public health measures, including mandatory mask-wearing in certain places, restrictions on large gatherings, and regular health checks for some high-risk workers. Supporters believe these policies can reduce the risk of the healthcare system collapsing and better protect vulnerable groups. However, critics argue that the government should not interfere too much with personal freedom and private life. Some people are also concerned that once governments become used to limiting rights in the name of public health, they may continue expanding those powers in the future. At the same time, some small businesses argue that long-term restrictions may cause greater economic and mental health problems.",storySub:"Society therefore begins debating how governments should balance public health and individual freedom during a health crisis.",question:"If you were a member of a public policy committee, which approach would best reflect the core principle of SDG 3: Good Health and Well-being?",options:{A:"Prioritize personal freedom, even if the disease spreads more quickly, and avoid government restrictions on daily life.",B:"Expand all possible restrictions without limitation as long as they reduce public health risks.",C:"Use scientifically supported and necessary measures that protect public health while minimizing impacts on individual rights, and regularly review the policies.",D:"Leave all responsibility for disease prevention to individuals, with the government only offering recommendations instead of active intervention."},answer:"C",correctFeedback:"Excellent choice! Good Health and Well-being is not only about preventing disease, but also about protecting public health through scientific, reasonable, and rights-conscious policies.",wrongFeedback:"Think again. Focusing only on freedom or only on strict control may ignore the balance between public health and individual rights."},
+            4:{title:"Quality Education",storyNote:"Education is not only about entering university, but also about fairness, affordability, and developing meaningful skills for the future.",storyMain:"In recent years, university admission rates in a country have continued to rise. Even students with average academic performance are often expected to continue into higher education. Many parents still believe that a university degree is necessary for future employment opportunities, so they are willing to pay high tuition fees and expensive cram school costs to help their children compete. At the same time, vocational schools and industries report growing shortages of skilled technical workers. However, society often continues to view vocational education as a secondary option for students who could not enter traditional universities. Some students who may be better suited for technical training still feel pressured to follow academic pathways because of social expectations. In addition, educational resources vary greatly between regions. Some students can afford private tutoring, bilingual programs, and academic planning, while others must work part-time jobs while preparing for exams.",storySub:"The Ministry of Education is therefore preparing to reform the education system and reconsider future education policies.",question:"If you were a member of an education policy committee, which approach would best reflect the core principle of SDG 4: Quality Education?",options:{A:"Continue expanding university admission opportunities so more people can obtain higher education degrees.",B:"Strengthen vocational education and industry partnerships while reducing society’s dependence on a single academic pathway.",C:"Limit cram schools and private education markets to reduce the influence of family income on educational competition.",D:"Concentrate educational resources on top-performing schools and students in order to improve international competitiveness."},answer:"B",correctFeedback:"Excellent choice! Quality Education is not only about increasing university enrollment, but also about ensuring affordable, high-quality, and diverse educational opportunities, including vocational and technical education.",wrongFeedback:"Think again. Expanding university access, restricting private education, or concentrating resources may address only part of the issue. SDG 4 emphasizes fairness, affordability, quality, and multiple educational pathways, including vocational education."},
+            5:{title:"Gender Equality",storyNote:"When laws, marriage, and bodily autonomy conflict, people may hold very different opinions.",storyMain:"A country is currently debating whether to revise its abortion laws. Under the current law, married women must obtain their spouse’s consent before terminating a pregnancy. Supporters of the existing system argue that marriage and family involve shared responsibilities, so decisions related to childbirth should be made jointly in order to maintain trust and family stability. However, critics point out that not all marriages are equal in reality. Some women may become pregnant against their will, or experience control, coercion, or domestic violence, yet still be legally unable to make decisions about their own pregnancy without spousal approval. In addition, some medical professionals worry that requiring spousal involvement may delay medical care and prevent women from accessing safe and legal treatment in time.",storySub:"Society therefore begins debating how the law should balance shared family decision-making and an individual’s bodily autonomy within marriage.",question:"If you were part of a public policy committee, which approach would best reflect the core principle of SDG 5: Gender Equality?",options:{A:"Maintain the current system, since marriage means both partners should share responsibility for childbirth and family decisions.",B:"Allow abortion without spousal consent only in special cases such as domestic violence or sexual assault.",C:"The decision to continue or terminate a pregnancy should belong solely to the pregnant person, without requiring spousal consent for medical choices.",D:"Require hospitals, social workers, and family members to jointly review each case before allowing an abortion, in order to avoid one-sided decisions."},answer:"C",correctFeedback:"Excellent choice! Gender equality emphasizes that marriage should not remove a person’s right to make decisions about their own body and reproductive choices.",wrongFeedback:"Think again. Shared family responsibility or external review may seem reasonable, but SDG 5 places greater importance on equal rights and bodily autonomy in reproductive decisions."},
+            6:{title:"Clean Water and Sanitation",storyNote:"Problems with urban infrastructure are often difficult to solve in a short period of time.",storyMain:"Although the tap water in a city consistently meets official safety standards, many older neighborhoods still experience issues such as rusty pipes, poorly maintained water tanks, and high leakage rates. As a result, some residents regularly buy bottled water or install their own filtration systems. The government is preparing a new infrastructure budget, but resources are limited, so different groups have proposed different solutions. Some argue that old water pipelines should be replaced first, even though the process would be expensive and disruptive, because it would address the root of the problem. Others believe it would be more efficient to subsidize household filtration systems instead of investing in large-scale public construction projects. Meanwhile, some economists argue that major pipeline replacement projects could reduce funding for other urgent public infrastructure needs and may not be the most efficient use of resources at the moment.",storySub:"Each proposal involves different trade-offs in cost, efficiency, and fairness, and policymakers must decide how to use limited public resources.",question:"If you were a member of the city infrastructure committee, which approach would best reflect the core principle of SDG 6: Clean Water and Sanitation?",options:{A:"Prioritize subsidies for household filtration and water storage systems so families can improve water quality based on their own needs.",B:"Focus on replacing aging and high-leakage water supply systems in older districts to gradually reduce long-term infrastructure problems.",C:"Reserve most of the budget for other urgent public projects and only address water systems when water quality fails official standards.",D:"Gradually privatize the water supply system in order to improve efficiency and service quality through market competition."},answer:"B",correctFeedback:"Excellent choice! Clean Water and Sanitation is not only about meeting temporary safety standards, but also about maintaining safe, reliable, and sustainable water infrastructure for everyone over the long term.",wrongFeedback:"Think again. Personal filtration systems, budget reductions, or market competition may solve part of the problem, but SDG 6 focuses on ensuring stable and equitable access to safe water through reliable long-term infrastructure."},
+            7:{title:"Affordable and Clean Energy",storyNote:"Corporate energy transition and procurement of renewable energy certificates.",storyMain:"To respond to net-zero carbon requirements in the supply chain, a mid-sized manufacturing enterprise must adjust its energy structure. Currently, the enterprise heavily relies on traditional fossil fuel power. Shifting completely to self-built solar or wind infrastructure requires extremely high initial capital expenditure and poses technical bottlenecks due to regional grid instability.",storySub:"Purchasing untraceable conventional power is the cheapest option but fails international green supply chain audits. Conversely, procuring Renewable Energy Certificates (RECs) with traceability or signing long-term corporate Power Purchase Agreements (PPAs) involves a premium but ensures the enterprise utilizes clean energy, balancing financial cost with transition benefits.",question:"Which energy management decision best aligns with expanding clean energy use and improving energy efficiency?",options:{A:"Maintain conventional fossil fuel power procurement and use external carbon credits with no carbon validity for financial claims.",B:"Implement Renewable Energy Certificate (REC) and PPA procurement mechanisms to substantially increase the organizational green power transition ratio.",C:"Passively abandon the low-carbon transition due to green power premiums, leaving energy transition responsibilities entirely to national grid improvements.",D:"Cut off all external grid connections and rely solely on immature, self-built micro-storage systems to maintain extreme self-sufficiency."},answer:"B",correctFeedback:"Excellent! Entering the renewable energy market through traceable mechanisms like PPAs and Renewable Energy Certificates (RECs) effectively drives the development of clean energy infrastructure from the demand side.",wrongFeedback:"Try again. Virtual carbon credits cannot change the actual energy structure. Passive waiting or extreme grid disconnection fails to balance corporate sustainable operations with energy affordability."},
+            8:{title:"Decent Work and Economic Growth",storyNote:"Automation transition and protection of labor rights.",storyMain:"A traditional logistics and warehousing enterprise is implementing digital and automation transitions. Introducing Automated Guided Vehicles (AGVs) and smart sorting systems significantly enhances operational efficiency but triggers anxiety among frontline workers fearing technology displacement, alongside bringing new occupational safety risks.",storySub:"To maximize shareholder interests, the enterprise could directly terminate employees who adapt slowly to transition and extend the working hours of remaining staff to offset equipment maintenance costs. However, to pursue sustainable growth, the enterprise should establish transition training mechanisms and upgrade Occupational Safety and Health (OSH) systems to ensure technological progress aligns with decent work.",question:"Which corporate governance strategy best balances economic productivity enhancement with promoting decent work for all?",options:{A:"Implement aggressive layoffs to maximize automation benefits while applying high-intensity working hour controls on remaining staff.",B:"Implement inclusive transition mechanisms by providing skills retraining for workers and upgrading Occupational Safety and Health protections.",C:"Ban automation technology entirely to protect existing jobs, maintaining a low-efficiency, traditional labor-intensive model.",D:"Allow market mechanisms to naturally eliminate vulnerable workers, refusing to assume corporate social responsibility or institutional guidance."},answer:"B",correctFeedback:"Excellent! Sustainable economic growth must not be built on the exploitation or displacement of workers. Achieving inclusive growth requires upskilling programs and comprehensive safety protections.",wrongFeedback:"Try again. Aggressive layoffs violate labor justice, while resisting technological transition destroys market competitiveness. A dynamic balance between technological progress and labor rights must be sought."},
+            9:{title:"Industry, Innovation and Infrastructure",storyNote:"Smart manufacturing upgrades and construction of resilient infrastructure.",storyMain:"The government plans to upgrade core infrastructure in an industrial park to tackle rainstorm and water shortage risks caused by extreme weather, driving traditional manufacturers toward smart factories. However, many small and medium-sized enterprises (SMEs) face high upgrade costs and lack interoperability standards for digital infrastructure.",storySub:"Relying on conventional road and grid maintenance saves public funds but fails to withstand future climate disasters or support Industry 4.0 data transmission. Upgrading infrastructure requires low-carbon building materials, smart water grids, and 5G private networks to establish a modern industrial park with resilience and innovation spillovers.",question:"Which infrastructure development strategy best aligns with promoting sustainable industrialization and fostering innovation resilience?",options:{A:"Follow traditional engineering standards for basic repairs while rejecting smart IoT integration and low-carbon, low-energy building materials.",B:"Deploy smart water grids and resilient digital infrastructure while providing standardized digital transition subsidies for SMEs.",C:"Transfer infrastructure upgrade costs entirely to park enterprises, implementing elimination policies for those unable to afford them.",D:"Halt all physical infrastructure investments in the industrial park, forcing industrial production activities to dismantle and return to micro-units."},answer:"B",correctFeedback:"Excellent! Constructing resilient infrastructure and supporting inclusive industrial upgrades foster an innovative environment for SMEs, enhancing overall risk resistance.",wrongFeedback:"Try again. Adhering to old standards fails to address climate resilience challenges, while transferring all costs or halting investment dismantles the industrial ecosystem. Industrialization requires systematic smart upgrades."},
+            10:{title:"Reduced Inequalities",storyNote:"Algorithmic bias and equal digital opportunities.",storyMain:"A large fintech company developed an artificial intelligence (AI) screening system to evaluate microfinance credit eligibility. Big data analytics reveal that the algorithm absorbed historical biases during training, causing the system to automatically assign lower credit ratings to applicants from low-income areas or minority backgrounds, worsening inequality.",storySub:"To minimize lending risks, the company could continue using the system and evade responsibility by claiming it is a 'purely algorithmic decision'. However, to eliminate inequality, the company must proactively perform debiasing corrections on the AI model and establish manual review mechanisms to ensure financial inclusion for vulnerable groups.",question:"Which technology management decision best aligns with reducing inequalities of opportunity and outcome within the country?",options:{A:"Maintain the existing black-box algorithmic model, using technical objectivity as a pretext to ignore systemic structural biases.",B:"Conduct regular debiasing audits on algorithms, establishing manual review and inclusive access mechanisms for vulnerable groups.",C:"Abolish all digital financial screening systems, returning to traditional credit models that rely on closed networks and subjective relationships.",D:"Restrict financial application eligibility for specific low-income groups, cutting off their interaction with the modern digital economy at the source."},answer:"B",correctFeedback:"Excellent! Reducing inequality requires proactively identifying and eliminating implicit biases within institutional and technical tools, ensuring everyone, especially vulnerable groups, has equal opportunities and resource access.",wrongFeedback:"Try again. Allowing algorithmic bias to persist solidifies social stratification, while canceling digitalization or stripping access rights goes backward. Tech governance must incorporate principles of fairness and inclusion."},
+            11:{title:"Sustainable Cities and Communities",storyNote:"Urban public transportation and low-carbon resilient community transition.",storyMain:"An urban planning committee is reviewing transportation and housing plans for a rapidly growing new district. The area faces severe traffic congestion and air pollution. Developers prefer constructing larger parking lots and expressways for private cars, while urban ecology groups advocate for Transit-Oriented Development (TOD).",storySub:"Planning around private car demands satisfies short-term market expectations but leads to urban sprawl and surging carbon emissions. Adopting a TOD model requires reallocating road space, prioritizing sidewalks, bicycle lanes, and electric bus lanes to construct a safe, inclusive, and affordable green transport network.",question:"Which urban spatial planning project most effectively implements sustainable urban development and green public transit transition?",options:{A:"Maximize private vehicle infrastructure construction, expanding right-of-way for fuel-powered vehicles while compressing green transit space.",B:"Implement Transit-Oriented Development (TOD) to construct a comprehensive network of pedestrian walkways, bicycle lanes, and public transit.",C:"Ban all inbound migration, using administrative restrictions to forcefully freeze urban spatial expansion and evolution.",D:"Abolish all modern public transit investments, requiring citizens to rely entirely on walking to pursue an absolute zero-carbon community."},answer:"B",correctFeedback:"Excellent! The key to sustainable cities lies in providing safe, affordable, and low-carbon public transit systems (TOD), alongside utilizing reasonable spatial planning to enhance climate resilience and urban inclusivity.",wrongFeedback:"Try again. Over-indexing on private vehicles worsens urban environmental disasters, while administrative freezes or abolishing modern transit remains impractical. Sustainable cities require smarter green network layouts."},
+            12:{title:"Responsible Consumption and Production",storyNote:"Product-as-a-Service and circular economy business models.",storyMain:"An electronic manufacturer faces strict international electronic waste (E-waste) regulations. The traditional 'linear economy' model (take-make-consume-dispose) generates rapid corporate profits but causes massive waste of scarce rare earth resources and produces toxic environmental waste.",storySub:"The enterprise can engage in 'greenwashing' through misleading environmental claims on packaging without changing the fast-expiring nature of products. Genuine responsible production requires introducing circular economy thinking, shifting to a Product-as-a-Service (PaaS) model, designing easy-to-disassemble hardware, and establishing closed-loop material recycling chains.",question:"Which business model and consumption strategy most effectively implements sustainable consumption and production to promote resource circularity?",options:{A:"Maintain planned obsolescence strategies, utilizing superficial greenwashing to conceal the destructive nature of the linear economy.",B:"Implement Product-as-a-Service (PaaS) and circular design, establishing hardware repairability alongside closed-loop material recycling chains.",C:"Require consumers to bear all waste recycling responsibilities, while the manufacturing side completely exits end-of-life cycle management.",D:"Ban all production and consumption of new electronic products, forcing society to return to a stone-age state devoid of digital technology."},answer:"B",correctFeedback:"Excellent! Responsible consumption and production emphasize eco-design at the source. Extending product lifecycles and transforming business models (like PaaS) realize sustainable resource management.",wrongFeedback:"Try again. Planned obsolescence and greenwashing are typical evasions of responsibility, while pushing all burdens onto consumers or banning tech production fails to achieve systemic transition. Extended Producer Responsibility (EPR) must be enforced."},
+            13:{title:"Climate Action",storyNote:"Carbon offsetting for flights vs. real-life emission reduction.",storyMain:"Due to business requirements, you must arrange a long-haul flight. During online checkout, the system prompts a cheap 'Carbon Offset' add-on option, claiming the money will fund tree planting to neutralize your flight emissions. However, recent environmental audit reports indicate that many cheap offset projects on the market severely overestimate their actual impact, and tree survival rates are extremely low.",storySub:"Spending a small amount on carbon offsets provides instant environmental compliance peace of mind without requiring any changes to high-carbon lifestyles. Conversely, pursuing genuine emission reduction means reducing business flights, switching to online video conferences, or investing more in verified high-tech carbon capture funds, which demands more personal time and financial cost.",question:"Which action best aligns with the goal of taking urgent action to combat climate change and its impacts?",options:{A:"Purchase unverified forest carbon offsets to maintain existing business travel habits without changes.",B:"Follow the mitigation hierarchy for source management, prioritizing digital alternatives to curb physical travel.",C:"Adopt a passive strategy of changing no behaviors, leaving emission responsibilities entirely to macro行政 control.",D:"Adopt an extreme, absolute isolation survival mode, cutting off all interactions with modern public transportation."},answer:"B",correctFeedback:"Excellent! Effective climate action follows the 'reduction first' principle. We should first reduce actual emissions at the source, and seek highly transparent, credible offset projects only for unavoidable emissions.",wrongFeedback:"Try again. Buying cheap, unverified carbon offsets tends to be superficial, creating little marginal real-world benefit. Passive avoidance or extreme isolation also fails to resolve systemic challenges."},
+            14:{title:"Life Below Water",storyNote:"Seafood procurement certification and marine resource conservation.",storyMain:"While shopping at a traditional market for a family gathering, you see cheap imported fish alongside higher-priced seafood bearing the Marine Stewardship Council (MSC) sustainable label. Conservation research reveals that most uncertified cheap fish come from bottom-trawling fleets, a practice that scrapes the seabed flat, destroys ecosystems, and causes high bycatch of dolphins and sea turtles.",storySub:"Buying uncertified imported fish saves grocery budget. On the other hand, insisting on certified sustainable catch, or switching to local, smaller wild fish (like sardines), increases grocery costs and restricts culinary options, but reduces personal contribution to the collapse of marine ecosystems.",question:"Which consumer purchasing decision best aligns with the conservation and sustainable use of marine resources?",options:{A:"Maximize low-cost procurement based on budget constraints, disregarding high bycatch rates and habitat destruction at the capture source.",B:"Prioritize purchasing seafood products that meet maximum sustainable yield guidelines and carry the MSC ecological label.",C:"Continue purchasing high-risk fish catch while attempting to offset the impact through environmental donations afterward.",D:"Ignore biogeographical distribution boundaries and privately transfer non-native live seafood into natural marine waters."},answer:"B",correctFeedback:"Excellent! Consumer choices directly influence market supply and demand. Rejecting destructive fishing practices and supporting sustainable fishery certifications drives responsible fishing from the demand side, protecting marine biodiversity.",wrongFeedback:"Try again. Ignoring the source of the catch condones illegal and overfishing. Downstream donations cannot restore depleted marine resources, and releasing non-native species risks causing ecological invasions."},
+            15:{title:"Life on Land",storyNote:"Daily necessities procurement and prevention of tropical deforestation.",storyMain:"While purchasing daily snacks, cosmetics, and toilet paper, you notice the ingredients labels show they widely contain palm oil or wood pulp. Environmental monitoring data indicates that if these raw materials come from unmanaged conventional supply chains, they are often the primary drivers behind illegal tropical deforestation, stripping endangered species like orangutans of their habitats.",storySub:"Ensuring products are deforestation-free requires time to check for Forest Stewardship Council (FSC) or Roundtable on Sustainable Palm Oil (RSPO) certifications, and such products are typically pricier. However, a total blind boycott of all palm oil could drive the market toward less efficient oil crops that require more land clearance, worsening global deforestation.",question:"Which procurement strategy most effectively implements the protection of forests and halts biodiversity loss?",options:{A:"Adopt a passive supply chain policy that ignores potential deforestation risks embedded in upstream raw materials.",B:"Implement responsible procurement by screening and paying a reasonable green premium for products certified by FSC and RSPO.",C:"Enact a comprehensive, blind boycott policy, indirectly triggering land-use conversion and destruction for alternative crops.",D:"Violate zoning regulations to privately occupy protected forest lands for predatory agricultural exploitation."},answer:"B",correctFeedback:"Excellent! Supporting credible international third-party supply chain certifications (like FSC and RSPO) guides producers toward responsible land management, protecting terrestrial ecosystems and biological habitats.",wrongFeedback:"Try again. Ignoring material sources indirectly funds deforestation, while blind palm oil boycotts trigger worse indirect land clearance crises. Choosing certified sustainable supply chains is the effective path."},
+            16:{title:"Peace, Justice and Strong Institutions",storyNote:"SMS scam defense and safeguarding digital social security.",storyMain:"You receive a highly realistic SMS spoofing the national tax bureau, claiming the system detected a tax overpayment refund. It instructs you to click an external link and enter your national ID, bank account number, and SMS verification code to process the instant refund, warning that the funds will otherwise be forfeited indefinitely.",storySub:"Following the text instructions leads to severe financial loss and identity theft, indirectly funding transnational cybercrime syndicates. To combat such pervasive threats, individuals must overcome anxiety, take time to independently verify through official channels, and report malicious URLs to anti-fraud systems.",question:"Which defensive behavior best supports public safety institutions and prevents criminal expansion in the digital environment?",options:{A:"Succumb to loss-aversion cognitive bias, blindly following unsafe channels to leak personal digital identity credentials.",B:"Adopt a passive defense strategy, failing to report threat indicators and malicious links to public governance networks.",C:"Deploy a digital security 'Zero Trust' framework, utilizing official channels for independent verification and reporting.",D:"Violate legal procedures to privately launch unauthorized cyber counter-attacks using underground technical tools."},answer:"C",correctFeedback:"Excellent! Strong justice and security institutions rely on the rational practices of citizens. Verifying through official channels and reporting illegal activities are vital cornerstones for law enforcement to disrupt crime chains and maintain public trust.",wrongFeedback:"Try again. Blind compliance feeds criminal networks, while vigilante cyber-attacks violate the law. A robust social system must rely on formal legal frameworks and reporting mechanisms."},
+            17:{title:"Partnerships for the Goals",storyNote:"Cross-sector community resource collaboration and food waste resolution.",storyMain:"An urban community simultaneously faces two problems: local restaurants generate large amounts of unsold, safe surplus food daily, while a nearby neighborhood houses vulnerable elderly individuals suffering from nutritional imbalances. Individual volunteers or resource-strapped single organizations lack the legal expertise, logistics, and cold chain equipment to safely redistribute these resources at scale.",storySub:"Effectively solving this structural waste and resource disparity requires cross-sector partnerships. This involves coordinating restaurant owners (private sector), health bureau inspectors (public sector), and community volunteer teams (civil society) to co-create a compliant, food-safe, and highly efficient resource-sharing network.",question:"Which action plan best embodies the spirit of resolving systemic challenges through multi-stakeholder partnerships?",options:{A:"Take isolated individual action, collecting and distributing food independently without established food safety compliance.",B:"Follow a market-failure fatalistic mindset, passively waiting for macro-level national legislation to be issued.",C:"Initiate a multi-stakeholder integration mechanism to construct a shared network bridging public, private, and third sectors.",D:"Launch non-constructive shaming campaigns on media platforms, completely shutting down sustainable dialogue between actors."},answer:"C",correctFeedback:"Excellent! Sustainable development goals cannot be achieved by any single entity. Establishing multi-stakeholder partnerships connecting government, business, and civil society maximizes resource efficiency and creates lasting localized solutions.",wrongFeedback:"Try again. Isolated individual actions without regulatory compliance carry high food safety risks, while aggressive shaming destroys the social capital needed for cooperation. Sustainable governance relies on cross-sector synergy."}
+        };
+        
+ 
+        /* ============================================================
+           三、情境題庫（繁體中文版）
+           ------------------------------------------------------------
+           結構與英文版完全一致，
+           applyLanguage() 切換語言時會同步更新彈窗內容。
+        ============================================================ */
+        const zhQuestions = {
+            1:{title:"消除貧窮",storyNote:"你注意到午餐時間出現了一些變化。",storyMain:"你發現班上的一位同學最近開始不帶午餐到學校。",storySub:"隨著時間過去，你意識到這並不是暫時的情況——可能與家中的經濟困難有關。你想幫助對方，但同時也不希望讓他感到尷尬或與其他人不同。你開始思考，什麼樣的方式才是真正合適且尊重對方的做法。",question:"你會怎麼做？",options:{A:"告訴全班這件事，並提議大家一起募款。",B:"認為這是對方的私事，因此不介入。",C:"每天默默給對方食物，不告訴任何人。",D:"私下與對方談談，並協助他尋找適合的支援。"},answer:"D",correctFeedback:"很好的選擇！尊重與適當的支持非常重要。",wrongFeedback:"再想想看。請考慮對方的尊嚴與感受。"},
+            2:{title:"終結飢餓",storyNote:"解決飢餓的方法不同，可能帶來完全不同的結果。",storyMain:"某個城市最近正在討論新的糧食政策。雖然城市整體其實並不缺食物，但仍有不少低收入家庭難以穩定取得營養均衡的餐點。在公聽會中，各方提出了不同的解決方案。有些企業主張大量購買便宜且保存期限長的加工食品，因為這樣能在短時間內幫助更多人。部分農業團體則認為，應該優先支持在地農業與新鮮食材供應系統，即使成本較高，也能改善長期營養與糧食穩定問題。另外，也有人認為市場本來就會自行調整供需，不需要政府過度介入。",storySub:"你被邀請作為學生代表參與討論，必須從中選出最符合 SDG「終結飢餓」理念的方案。",question:"你認為哪個方案最符合 SDG 2「終結飢餓」的核心精神？",options:{A:"優先提供大量低成本的加工食品，讓更多人能在短時間內獲得足夠熱量。",B:"支持在地農業並改善新鮮食物供應系統，讓更多人能穩定取得有營養的食物。",C:"減少政府介入，讓市場自行調整食物價格與供應問題。",D:"將預算平均分配給所有方案，避免資源過度集中在單一方向。"},answer:"B",correctFeedback:"很好！SDG 2 不只是讓人吃飽，更強調長期、穩定、營養且永續的糧食系統。",wrongFeedback:"再想想看。某些方案或許能短期改善問題，但 SDG 2 更重視長期的糧食安全、營養品質與永續性。"},
+            3:{title:"良好健康與福祉",storyNote:"有時候，保護公共健康與保障個人自由之間，並不容易取得平衡。",storyMain:"某地近期爆發傳染性疾病，雖然死亡率不高，但傳播速度非常快。醫院開始出現人力吃緊與病床不足的情況。政府因此提出新的公共健康政策，包括在特定場所強制佩戴口罩、限制大型聚會，以及要求部分高風險工作者定期接受健康檢查。支持者認為，這些措施能降低醫療系統崩潰的風險，也能保護高風險族群。但反對者則認為，政府不應過度干涉個人生活與自由選擇。有些人也擔心，一旦政府習慣以「公共健康」為理由限制權利，未來可能擴大干預範圍。同時，部分中小企業則表示，長期限制活動可能對經濟與民眾心理健康造成更多影響。",storySub:"社會因此開始討論：當公共健康與個人自由發生衝突時，政府應該如何取得平衡？",question:"如果你是公共政策委員會成員，你認為哪種做法最符合 SDG「良好健康與福祉」的核心精神？",options:{A:"優先保障個人自由，即使疾病傳播速度增加，也不應由政府限制人民生活。",B:"只要能有效降低疫情風險，政府應該無限制擴大所有管制措施。",C:"在保護公共健康的前提下，採取具有科學依據且影響最小的必要措施，並定期檢討政策。",D:"將防疫責任完全交給個人自行決定，政府只提供建議，不主動介入。"},answer:"C",correctFeedback:"很好！良好健康與福祉不只是避免疾病，也包含以科學、合理且兼顧人權的方式保護公共健康。",wrongFeedback:"再想想看。單純追求自由或全面管制都可能忽略公共健康與個人權利之間的平衡。"},
+            4:{title:"優質教育",storyNote:"教育不只是能不能升學，也包含是否公平、負擔得起，並能連結未來能力。",storyMain:"近年來，某地的大學錄取率持續提高，即使成績普通，許多學生仍會選擇升學。部分家長認為，大學文憑仍然是求職的重要門檻，因此即使需要長期補習與支付高額學費，也希望孩子繼續升學。另一方面，部分技職學校與產業則表示，許多技術型工作其實缺乏人才，但社會長期仍將技職視為「考不上普通大學後的選擇」。有些學生即使更適合技術訓練，也因社會期待而被迫進入學術體系。同時，不同地區的教育資源差距也越來越明顯。有些學生能負擔昂貴補習、雙語課程與升學規劃；有些學生則必須一邊打工、一邊準備考試。",storySub:"教育部因此準備調整未來教育政策。",question:"如果你是教育政策委員會成員，你認為哪個方向最符合 SDG「優質教育」的核心精神？",options:{A:"持續擴大大學錄取名額，讓更多人能取得高等教育文憑。",B:"優先強化技職教育與產業合作，並降低社會對單一學歷路徑的依賴。",C:"限制補習班與私人教育市場，避免家庭收入影響學生競爭機會。",D:"將教育資源集中於頂尖學校與高成就學生，以提升整體國際競爭力。"},answer:"B",correctFeedback:"很好！優質教育不只是提高升學率，而是讓不同背景的學生都能負擔並取得有品質的教育，也包含技職與高等教育的多元發展。",wrongFeedback:"再想想看。提高大學錄取率、限制補習或集中資源都只解決部分問題；SDG 4 更重視公平、負擔得起、高品質，並包含技職與多元教育路徑。"},
+            5:{title:"性別平等",storyNote:"當法律、婚姻與個人身體自主權發生衝突時，不同人可能會有不同看法。",storyMain:"某地近期正在討論是否修改人工流產相關規定。目前法律規定，已婚女性若要終止懷孕，需要取得配偶同意。支持現行制度的人認為，婚姻與家庭涉及雙方責任，因此生育相關決定應由夫妻共同討論，才能維持家庭關係與彼此信任。但也有人指出，現實中的婚姻關係並不一定完全平等。有些女性可能是在不願意的情況下懷孕，甚至面臨控制、脅迫或家庭暴力，但仍因法律限制而無法自行決定是否繼續懷孕。此外，部分醫療團體也擔心，如果法律過度要求配偶參與，可能會讓部分女性延誤醫療時機，甚至失去安全合法的醫療協助。",storySub:"社會因此開始討論：在婚姻關係中，法律應該如何平衡家庭共同決定與個人的身體自主權？",question:"如果你是政策討論委員會的成員，你認為哪個方向最符合 SDG「性別平等」的核心精神？",options:{A:"維持現行制度，因為婚姻本來就代表雙方需要共同承擔生育責任與家庭決策。",B:"只有在家暴、性侵或特殊情況下，才允許女性不經配偶同意進行人工流產。",C:"是否繼續懷孕應由懷孕者本人決定，法律不應要求配偶同意才能進行醫療選擇。",D:"由醫院、社工與家屬共同評估後，再決定是否能進行人工流產，以避免單方面決定。"},answer:"C",correctFeedback:"很好！性別平等強調女性不應因婚姻關係而失去對自身身體與生育選擇的自主權。",wrongFeedback:"再想想看。家庭責任或外部評估看似合理，但 SDG 5 更重視個人在身體與生育決策上的平等權利與自主性。"},
+            6:{title:"潔淨水與衛生",storyNote:"城市基礎設施的問題，往往不是短時間內就能完全解決。",storyMain:"某地的自來水長期檢驗皆符合安全標準，但許多老舊社區仍經常出現水管生鏽、水塔清潔不完全、漏水率過高等問題。有些居民因此長期購買瓶裝水或自行安裝濾水設備。政府近期準備編列新的公共建設預算，但預算有限，因此不同單位提出了不同方向。有些人認為，應該優先更新老舊供水管線，雖然施工期長、成本高，但能從根本改善問題；也有人認為，與其投入大量公共工程，不如補助家庭自行安裝濾水設備，能更快改善民眾生活品質。此外，部分經濟學者則指出，大規模更新管線可能排擠其他公共建設預算，未必是目前最有效率的資源分配方式。",storySub:"不同方案各有成本、效率與公平性的考量，政策制定者必須在有限預算下做出取捨。",question:"如果你是城市基礎建設委員會成員，你認為哪個方向最符合 SDG「潔淨水與衛生」的核心精神？",options:{A:"優先補助居民自行安裝濾水與儲水設備，讓家庭能依需求改善用水品質。",B:"集中更新高漏水率與老舊地區的供水系統，逐步降低基礎設施造成的長期問題。",C:"將大部分預算保留給其他更急迫的公共建設，只在水質不合格時再處理供水問題。",D:"將供水系統逐步民營化，透過市場競爭提升設備更新效率與服務品質。"},answer:"B",correctFeedback:"很好！潔淨水與衛生不只看水質是否暫時合格，也重視安全、穩定且可長期維持的供水系統，特別是老舊基礎設施帶來的公平與安全問題。",wrongFeedback:"再想想看。個人設備、預算保留或市場競爭都可能解決部分問題，但 SDG 6 更重視所有人都能穩定取得安全用水，以及供水系統的長期可靠性。"},
+            7:{title:"可負擔的清潔能源",storyNote:"企業能源轉型與綠電憑證採購。",storyMain:"一家中型製造企業為了響應供應鏈淨零碳排的要求，必須調整其能源結構。目前企業內部高度依賴傳統化石燃料電力，若要全面更換為自建的太陽能或風電設備，初期資本支出極高，且可能面臨區域電網供電不穩定的技術瓶頸。",storySub:"直接購買未經追溯的常規電力雖然成本最低，但無法通過國際綠色供應鏈審查；而透過購買具備追溯效力的再生能源憑證（REC），或與綠電業者簽署長期企業電力採購協議（PPA），雖然需要支付溢價，卻能實質確保企業使用的是清潔能源，平衡財務成本與轉型效益。",question:"何種能源管理決策最符合本目標擴大使用清潔能源並提升能源效率的精神？",options:{A:"維持常規化石燃料電力採購，透過購買外部無碳效力之碳權進行財務宣稱。",B:"導入再生能源憑證（REC）與 PPA 採購機制，實質提升組織之綠電轉型比例。",C:"因應綠電溢價而消極放棄低碳轉型，將能源轉型責任完全訴諸國家電網的改善。",D:"全面切斷外部電網連線，單純依賴未成熟之微型自建儲能系統維持極端自給自足。"},answer:"B",correctFeedback:"正確。透過 PPA 與綠電憑證（REC）等具追溯效力的機制投入再生能源市場，能有效從需求端驅動清潔能源的基礎建設發展。",wrongFeedback:"虛擬碳權無法改變實質能源結構，消極等待或走向極端去電網化也無法兼顧企業的永續營運與能源可負擔性。"},
+            8:{title:"體面工作和經濟增長",storyNote:"自動化轉型與勞工權益保障。",storyMain:"一家傳統物流倉儲企業正在推行數位化與自動化轉型。引入無人搬運車與智慧分揀系統後，企業的營運效率大幅提升，但同時也面臨基層勞工恐被科技淘汰的焦慮，以及自動化設備運作時可能帶來的全新職業安全風險。",storySub:"為了最大化股東利益，企業可以直接資遣轉型慢的員工，並延長留任者的工時以分攤設備維護成本；然而，若要追求永續增長，企業應建立勞工轉型培訓機制，並升級自動化環境下的職業安全衛生（OSH）防禦系統，讓科技進步與體面勞動並行。",question:"何種企業治理策略最能兼顧經濟生產力提升與促進人人獲得體面工作的目標？",options:{A:"實施激進裁員以極大化自動化效益，並對留任員工採取高強度工時管制。",B:"導入包容性轉型機制，提供勞工再就業技能培訓並升級職業安全衛生防禦。",C:"為保障既有職缺而全面禁止自動化技術，維持低效率的傳統勞力密集模式。",D:"放任市場機制自然淘汰弱勢勞工，拒絕承擔任何企業社會責任與制度性輔導。"},answer:"B",correctFeedback:"正確。永續的經濟增長不應建立在剝削或淘汰勞工的基礎上，透過技能提升（Upskilling）與完善的職安保障，才能實現包容性增長。",wrongFeedback:"激進裁員會破壞勞動正義，而完全抗拒科技轉型則會喪失市場競爭力。應尋求技術進步與勞工權益的動態平衡。"},
+            9:{title:"產業、創新和基礎設施",storyNote:"智慧製造升級與彈性基礎設施建構。",storyMain:"政府計畫升級某工業園區的核心基礎設施，以應對極端氣候帶來的暴雨、缺水風險，並推動園區內傳統製造業轉型為智慧工廠。然而，許多中小企業面臨技術升級成本過高、缺乏數位基礎建設互通標準的困境。",storySub:"若僅進行常規的道路與電網修補，雖能節省公帑，卻無法抵禦未來的氣候災害，也無法支持工業 4.0 的數據傳輸需求；升級基礎設施需要引進低碳建築材料、智慧水網與 5G 專網，建立具備韌性（Resilience）與創新外溢效應的現代工業園區。",question:"何種基礎設施發展策略最符合推動永續工業化與強化創新能力的韌性精神？",options:{A:"沿用傳統工程標準進行修補，排斥導入智慧物聯網與低碳低耗能之建材。",B:"布建智慧水網與韌性數位基礎設施，並提供中小企業標準化之數位轉型補助。",C:"將基礎設施升級成本完全轉嫁予園區企業，對無法負擔之業者實施淘汰政策。",D:"停止所有實體園區之基礎建設投資，將工業生產活動強制拆解並退回微型個體。"},answer:"B",correctFeedback:"正確。建構彈性（Resilient）基礎設施並支持包容性的工業化升級，能為中小企業創造創新環境，增強整體產業抗風險能力。",wrongFeedback:"沿用舊標準無法應對氣候韌性挑戰，而轉嫁成本或停止投資則會瓦解產業生態系。現代工業化需要系統性的智慧升級。"},
+            10:{title:"減少不平等",storyNote:"演算法偏誤與數位機會均等。",storyMain:"一家大型金融科技公司開發了一套人工智慧（AI）審核系統，用來評估小額信貸的申請資格。大數據分析顯示，該演算法在訓練過程中吸收了歷史偏見，導致系統自動對特定低收入區域或少數族群背景的申請者給予較低的信用評等，加劇了數位金融體制下的不平等。",storySub:"若為了降低企業放貸風險，公司可以繼續沿用該系統，並以「純粹交由演算法決定」為由推卸責任；但若要消弭不平等，公司必須主動對 AI 模型進行「去偏誤（Debiasing）」修正，並建立人工複核機制，確保弱勢群體享有平等的金融近用權（Financial Inclusion）。",question:"何種技術管理決策最符合減少國內及國家間機會與成果不平等的治理精神？",options:{A:"沿用具黑箱效應之既有演算法模型，以技術客觀性為由忽視系統性的結構偏見。",B:"定期對演算法進行去偏誤稽核，並針對弱勢群體建立人工覆核與包容性近用機制。",C:"全面廢除所有數位金融審核系統，退回依賴封閉人脈與主觀關係的傳統授信模式。",D:"限制特定低收入群體之金融申請資格，從源頭切斷其與現代數位經濟之互動。"},answer:"B",correctFeedback:"正確。減少不平等需要主動識別並消除體制與技術工具中的隱性偏見，確保所有人（特別是弱勢群體）擁有平等的發展機會與資源近用權。",wrongFeedback:"放任演算法偏誤會使階級與不平等固化，而取消數位化或剝奪申請權則是開倒車。科技治理必須導入公平與包容性原則。"},
+            11:{title:"可持續城市和社區",storyNote:"都市大眾運輸與低碳韌性社區轉型。",storyMain:"都市計劃委員會正在審查一個新興重劃區的交通與居住方案。隨著人口快速湧入，該區面臨嚴重的交通擁堵與空氣污染。開發商傾向興建更多大型停車場與快速道路以便利私家車通行，但都市生態組織則主張將預算轉向大眾運輸導向型發展（TOD）。",storySub:"順應私家車需求的規劃能在短期內迎合市場，卻會導致都市無序擴張與碳排放激增；採取 TOD 模式則需要重新配置道路空間，優先建設人行道、自行車道與電動公車專用道，建構安全、具包容性且可負擔的綠色交通路網。",question:"何種都市空間規劃方案最能有效實踐永續都市發展與綠色大眾運輸轉型的精神？",options:{A:"最大化私家車基礎設施建設，擴大燃油車路權並壓縮綠色交通空間。",B:"落實大眾運輸導向型發展（TOD），建構完整之人行、自行車與公共交通路網。",C:"禁止所有外來人口移入，透過行政限制手段強行凍結都市的空間擴張與演進。",D:"廢除所有現代大眾運輸投資，要求市民完全回歸步行以追求絕對的零碳社區。"},answer:"B",correctFeedback:"正確。永續城市的關鍵在於提供安全、可負擔且低碳的大眾運輸系統（TOD），並透過合理的空間規劃提升城市的氣候韌性與包容性。",wrongFeedback:"過度向私家車傾斜會惡化都市環境災難，而行政凍結或廢除現代交通則不切實際。永續都市需要更智慧的綠色網絡佈局。"},
+            12:{title:"負責任消費和生產",storyNote:"產品服務化與循環經濟商業模式。",storyMain:"一家電子產品製造商正面臨國際電子垃圾（E-waste）法規的嚴格約束。傳統的「線性經濟」模式（開採-製造-消費-丟棄）讓企業賺取快速擴張的利潤，但也導致大量珍貴稀土資源浪費，並產生具毒性的環境廢棄物。",storySub:"企業可以透過包裝上的虛假環保宣稱來進行「漂綠」，但無法改變產品快速報廢的本質；真正的責任生產需要導入循環經濟（Circular Economy）思維，轉向「產品服務化（PaaS）」模式，設計易拆解、易維修的硬體，並建立封閉式的原物料回收再生鏈。",question:"何種商業模式與消費策略最能有效落實永續消費與生產、促進資源循環利用的精神？",options:{A:"維持計畫性淘汰（Planned Obsolescence）策略，透過表象漂綠掩蓋線性經濟之破壞。",B:"導入產品服務化（PaaS）與循環設計，建立硬體易維修性與原料封閉式循環鏈。",C:"要求消費者自行承擔所有廢棄物回收責任，製造端完全退出後端生命週期管理。",D:"全面禁止任何新型電子產品的生產與消費，強迫社會回歸無數位科技之石器狀態。"},answer:"B",correctFeedback:"正確。負責任的消費與生產強調從源頭進行循環設計（Eco-design），透過延長產品生命週期與推動商業模式轉型（如 PaaS），實現永續的資源管理。",wrongFeedback:"計畫性淘汰與表面漂綠是典型的責任推卸，而將責任完全推給消費者或禁止科技生產則無法達成系統性轉型。應落實生產者延伸責任（EPR）。"},
+            13:{title:"氣候行動",storyNote:"機票的碳抵消加價與實質的生活減碳。",storyMain:"因公務需求必須安排一趟長途飛行。在線上訂票結帳時，系統跳出一個便宜的「碳抵消」加價選項，聲稱這筆錢會拿去種樹，用來抵消這趟飛行的碳排放。然而，最新的環保稽核報告指出，市面上許多廉價的碳抵消專案嚴重高估了實際效果，樹木存活率極低。",storySub:"花小錢買碳抵消能立刻獲得環保合規感，卻不需要改變任何高碳排的生活習慣；相反地，若要追求真正的減碳，就必須實質減少出差飛行次數、改用線上視訊會議，或者花更多錢投入真正經過驗證的高科技碳捕捉基金，這需要耗費更多個人時間與財務成本。",question:"何種行動決策最符合本目標採取實質行動應對氣候變遷的精神？",options:{A:"採購未經驗證的森林碳匯，藉此維持既有的業務差旅慣性。",B:"遵循減量階層進行源頭管理，優先透過數位替代方案抑制實體差旅。",C:"採取不改變行為的消極策略，將減碳責任完全訴諸總體行政管制。",D:"採取極端絕對的孤立生存模式，全面切斷與現代大眾運輸的互動。"},answer:"B",correctFeedback:"有效率的氣候行動遵循「減量優先」的原則。我們應該先從日常生活中減少實質碳排放，對於無法避免的排放再尋求高度透明、具公信力的減碳專案。",wrongFeedback:"購買便宜且未經認證的碳抵消容易流於表面，無法對環境產生邊際實質效益；而完全推卸責任或走向極端孤立也無法解決實質問題。"},
+            14:{title:"保育海洋生態",storyNote:"海鮮採購認證與海洋資源維護。",storyMain:"在傳統市場採購家庭聚餐所需的海鮮時，貨架上擺放著價格低廉的進口魚，以及價格較高、貼有「海洋管理委員會（MSC）」永續標章的認證海鮮。保育組織研究指出，沒認證的便宜魚類多數來自盛行底拖網的船隊，這種捕撈方式會徹底刮平海底、破壞生態，還會誤捕海豚和海龜。",storySub:"買沒認證的進口魚能省下不少伙食費；而堅持購買有永續認證的魚獲，或是改買在地、體型較小的小型野生魚類（如沙丁魚），雖然會增加買菜成本且限制料理花樣，但能減少個人消費對海洋生態崩潰的推波助瀾。",question:"何種消費者採購抉擇最符合本目標保育及永續利用海洋資源的精神？",options:{A:"基於預算約束最大化低價採購，放任捕撈端之高混獲比與棲地破壞。",B:"優先選購符合最大永續產量、具 MSC 生態標章認證之水產品。",C:"持續採購高破壞風險之漁獲，試圖在後端透過環境捐款進行對沖。",D:"無視生物地理分布限制，私自將非本土性活體海鮮移轉至天然海域。"},answer:"B",correctFeedback:"消費者的選擇能直接影響市場供需。透過拒買破壞性捕撈的產品並支持永續漁業認證，能從需求端鼓勵負責任的捕撈，保護海洋多樣性。",wrongFeedback:"忽視捕撈源頭會縱容非法與過度捕撈；捐款淨灘無法挽回耗竭的海洋資源；而盲目放生外來種更會引發生態入侵危機。"},
+            15:{title:"保育陸域生態",storyNote:"日常用品採購與防止熱帶雨林砍伐。",storyMain:"在採購日常零食、化妝品與衛生紙時，成分標籤顯示它們廣泛含有棕櫚油或木漿成分。環境監測數據指出，這類原物料若來自未經管制的常規供應鏈，往往是導致熱帶雨林遭到非法砍伐、使瀕危物種（如紅毛猩猩）失去家園的最主要元兇。",storySub:"若要確保商品不涉及雨林破壞，必須花時間查驗產品是否通過「森林管理委員會（FSC）」或「永續棕櫚油（RSPO）」認證，且這類產品通常比較貴。然而，若採取全面拒買所有棕櫚油的極端作法，反而可能使市場轉向生產效率更低、需要更多土地開墾的其他油料作物，進而加劇全球毀林負擔。",question:"何種採購與物料管理策略最能有效落實本目標保護森林、遏止生物多樣性喪失的精神？",options:{A:"採取消極之供應鏈追溯政策，不排除上游原料涉及之毀林風險。",B:"導入負責任採購，篩選並願意支付適度綠色溢價予通過 FSC 與 RSPO 認證商品。",C:"實施全面性盲目抵制政策，間接引發替代作物之土地利用變更與破壞。",D:"違反土地分區管制法規，私自佔用保護區林地進行掠奪式開墾。"},answer:"B",correctFeedback:"支持具備國際公信力的第三方供應鏈認證（如 FSC、RSPO），能引導生產端轉向負責任的土地管理，實質保護陸域生態系與生物棲地。",wrongFeedback:"無視物料來源等同於間接資助毀林產業，而全面盲目抵制棕櫚油則會引發更嚴重的間接土地開墾危機。應選擇經過永續認證的供應鏈。"},
+            16:{title:"和平、正義與健全制度",storyNote:"手機詐騙簡訊防禦與維護數位社會安全。",storyMain:"手機收到一則非常逼真、模仿國家稅務局的簡訊，聲稱系統偵測到一筆年度溢繳稅款，要求點擊簡訊內的外部連結，並輸入身分證字號、銀行帳號與簡訊驗證碼來辦理即時退稅，否則這筆錢將被無限期充公。",storySub:"直接照著簡訊操作會面臨嚴重的存款損失與個資外洩，並間接成為跨國網路犯罪集團的資金來源；然而，若要對抗這類普遍的詐騙威脅，個體必須克服焦慮，花時間透過官方管道進行獨立查證，並主動將詐騙網址舉報給反詐騙系統。",question:"何種防禦行為最能實質支持社會安全制度、防範數位環境下的犯罪擴張？",options:{A:"受制於損失規避心理偏誤，盲目依循非安全渠道洩漏個人數位身份憑證。",B:"採取消極防禦策略，不向公共治理網絡呈報相關威脅指標與惡意連結。",C:"啟動數位安全「零信任」架構，利用官方正式渠道進行獨立覆核與通報。",D:"違反司法程序法規，私自利用地下非授權之技術工具發動網路反擊。"},answer:"C",correctFeedback:"健全的正義與安全制度有賴於公民的理性實踐。透過官方管道查證並主動通報不法，是協助執法機關阻斷犯罪鏈、維護公共信任的重要基石。",wrongFeedback:"盲目順從會讓自己蒙受損失並滋養犯罪，而私自發動駭客攻擊則屬於違法行為。健全的社會制度必須依循正式法律與通報機制。"},
+            17:{title:"多元夥伴關係",storyNote:"社區跨界資源合作與剩食問題解決。",storyMain:"一個都市社區同時面臨兩個問題：轄區內在地餐廳每天產生大量未售出的安全剩食，而鄰近街區卻存在著因經濟弱勢而面臨營養不均衡的長輩。單一的個體志工或資源有限的單一團體，都缺乏足夠的法規知識、物流與冷鏈設備來安全且大規模地調度 these 物資。",storySub:"要有效解決此一結構性浪費與資源不均問題，必須建立跨領域的合作關係。這需要協調餐廳老闆（私部門）、衛生局稽查員（公部門）、以及社區志工隊（公民社會），共同創立一個符合法規、有食安保障且高效率的資源共享網。",question:"何種行動方案最能體現透過多元夥伴關係來解決系統性問題的精神？",options:{A:"採取孤立之個體行動主義，在缺乏食安規範下私自收集並分發糧食。",B:"依循市場失靈之宿命論思維，消極靜待國家層次之宏觀法令發布。",C:"發起多方利益關係人整合機制，建構公、私與第三部門之多邊共享網絡。",D:"在傳播平台上發起非建設性羞辱運動，全面關閉主體間之永續對話。"},answer:"C",correctFeedback:"永續發展目標無法靠單一主體達成。透過建立連結政府、企業與公民社會的跨界合作平台（Multi-stakeholder Partnerships），能最大化資源利用效率並創造持久的在地解方。",wrongFeedback:"缺乏法規約束的個體行為存在高食安隱患，而激進獵巫則會摧毀社會互信資本。永續治理必須依靠公、私、民三方協同的「多元夥伴關係」來實踐。"}
+        };
+ 
+        /* ============================================================
+           四、延伸學習與行動建議資料庫
+           ------------------------------------------------------------
+           每個 SDG 目標包含：
+           - title：目標名稱
+           - intro：背景說明（顯示於延伸學習頁左側引言欄）
+           - targets：細項目標陣列（code + text）
+           - actions：行動建議陣列（字串）
+        ============================================================ */
+        const learnBanks = {
+            "zh": {
+                "1": { "title": "消除貧窮", "intro": "消除各地一切形式的貧窮。確保所有人（特別是窮人和弱勢群體）享有平等的經濟資源權利、基本服務、財產所有權，並提升對氣候極端事件等經濟、社會與環境衝擊的韌性。", "targets": [{"code":"1.1","text":"2030年前，消除全球所有人的極端貧窮（目前定義為每日生活費低於1.25美元的人）。"},{"code":"1.2","text":"2030年前，依據國家定義，將各年齡層陷入各種形式貧窮的男女及兒童比例至少減半。"},{"code":"1.3","text":"建立適合全國各界的全民社會保護制度與措施，並在2030年前實現對窮人和弱勢群體的實質覆蓋。"},{"code":"1.4","text":"2030年前，確保所有人（特別是窮人和弱勢群體）享有平等的經濟資源權利，以及獲得基本服務、土地與其他形式財產的所有權。"},{"code":"1.5","text":"2030年前，增強窮人和弱勢群體的韌性，減少他們遭受與氣候相關的極端事件和其他衝擊的脆弱性。"},{"code":"1.a","text":"確保從各種管道動員大量資源，為發展中國家提供充足且可預測的手段，以執行消除一切形式貧窮的計劃與政策。"},{"code":"1.b","text":"根據對窮人友善且具性別敏感度的發展戰略，建立健全政策框架，支持加大對消除貧窮行動的投資。"}], "actions": ["定期整理家中完好但不再使用的衣物、書籍或家電，捐贈給社福團體或愛心物資站。","優先購買支持弱勢就業的社會企業商品，或聘用二度就業人士的服務。","結帳時順手將發票捐贈給慈善機構，或設定自動捐贈指定單位。","支持微型金融或在地小農，幫助低收入勞作者獲得尊嚴報酬。","主動關心身邊經濟陷入困境的朋友，適時分享政府補助或職缺資訊。"] },
+                "2": { "title": "消除飢餓", "intro": "消除飢餓，達成糧食安全，改善營養狀況，並促進永續農業。確保所有人全年都能獲得安全、營養且充足的食物，並推動多元與具韌性的農業生產。", "targets": [{"code":"2.1","text":"2030年前，消除飢餓，確保所有人（特別是窮人和弱勢群體）全年都能獲得安全、營養且充足的食物。"},{"code":"2.2","text":"2030年前，消除一切形式的營養不良，在2025年前達成國際商定的5歲以下兒童發育遲緩與消瘦目標。"},{"code":"2.3","text":"2030年前，使小規模食品生產者的農業生產力與收入翻倍。"},{"code":"2.4","text":"2030年前，確保建立永續的食品生產體系，並落實具韌性的農業實踐。"},{"code":"2.5","text":"2020年前，維持種子、農作物、馴養與野生動物的基因多樣性。"},{"code":"2.a","text":"透過加強國際合作，加大對農業基礎設施、農業研究與技術開發的投資。"},{"code":"2.b","text":"糾正與防止全球農業市場的貿易限制與扭曲，消除一切形式的農業出口補貼。"},{"code":"2.c","text":"採取措施確保大宗商品市場正常發揮功能，限制食品價格的極端波動。"}], "actions": ["實行「光盤行動」，在家做飯或在外點餐吃多少準備多少，吃不完主動打包。","多選購在地、當季的農產品，減少因長途運輸造成的糧食損耗。","購物時接受賣相不佳但營養不減的「醜蔬果」，避免完好食材被丟棄。","注意家中食品保存期限，實踐「先進先出」避免過期浪費。","維持均衡飲食，適度提高植物性蛋白的攝取比例。"] },
+                "3": { "title": "健康與福祉", "intro": "確保健康的生活方式，促進各年齡層所有人的福祉。降低孕產婦與新生兒死亡率，終結重大傳染病流行，並普及心理健康服務。", "targets": [{"code":"3.1","text":"2030年前，將全球孕產婦死亡率降低到每10萬例活產死亡低於70人。"},{"code":"3.2","text":"2030年前，終結新生兒與5歲以下兒童的可預防死亡。"},{"code":"3.3","text":"2030年前，終結愛滋病、肺結核、瘧疾和忽視熱帶病的流行。"},{"code":"3.4","text":"2030年前，透過預防與治療，將非傳染性疾病導致的過早死亡率降低三分之一。"},{"code":"3.5","text":"加強對物質濫用的預防與治療，包括麻醉藥品濫用與有害地使用酒精。"},{"code":"3.6","text":"2020年前，全球因道路交通事故造成的死傷人數減半。"},{"code":"3.7","text":"2030年前，確保普遍獲得性與生殖保健服務。"},{"code":"3.8","text":"實現全民健康覆蓋，包括財務風險保護與獲得優質的基本保健服務。"},{"code":"3.9","text":"2030年前，大幅減少因危險化學品、空氣、水和土壤污染造成的死亡與疾病人數。"}], "actions": ["養成規律作息與運動習慣，確保充足睡眠以提升免疫力。","多喝白開水，注重日常飲食的少油、少鹽、低糖與高纖。","關照自己的心理壓力，難過或焦慮時主動尋求專業諮商協助。","出入密閉公共場所時主動佩戴口罩，維持勤洗手習慣。","嚴格遵守交通法規，過馬路不低頭看手機，保護自己與他人安全。"] },
+                "4": { "title": "優質教育", "intro": "確保包容和公平的優質教育，讓所有人都有終身學習的機會。消除教育中的性別與貧富差距，確保人人能獲得可負擔的技術、職業與高等教育。", "targets": [{"code":"4.1","text":"2030年前，確保所有男女童完成免費、公平且優質的小學和中學教育。"},{"code":"4.2","text":"2030年前，確保所有男女童都能獲得優質的兒童早期發展與學前教育。"},{"code":"4.3","text":"2030年前，確保所有男女平等獲得可負擔且優質的技術、職業與高等教育。"},{"code":"4.4","text":"2030年前，大幅增加擁有相關技能的青年與成年人數，以利就業與創業。"},{"code":"4.5","text":"2030年前，消除教育中的性別差距，確保弱勢群體平等獲得各級教育。"},{"code":"4.6","text":"2030年前，確保所有青年及大部分成年人都具備識字與識數能力。"},{"code":"4.7","text":"2030年前，確保所有學習者都掌握促進永續發展所需的知識與技能。"}], "actions": ["將不再需要的優質二手書籍捐贈給偏鄉社區、圖書館或義賣。","善用線上免費教育平台，培養終身學習習慣。","在職場或生活中主動分享專業經驗給後進，或協助長者適應數位工具。","提升媒體識讀能力，轉傳訊息前先查證，不散播假新聞。","閱讀不同領域、跨文化的知識，消除因缺乏理解產生的刻板印象。"] },
+                "5": { "title": "性別平等", "intro": "實現性別平等，並賦予所有婦女與女孩權力。消除一切對婦女的歧視、暴力與有害實踐，並確保婦女在政治、經濟與公共生活中的全面參與。", "targets": [{"code":"5.1","text":"消除各地對所有婦女與女孩的一切形式歧視。"},{"code":"5.2","text":"消除公共與私領域中對所有婦女與女孩一切形式的暴力。"},{"code":"5.3","text":"消除所有有害實踐，例如童婚、早婚、強迫婚嫁及女性割禮。"},{"code":"5.4","text":"透過提供公共服務，承認與重視無給職的照料與家務工作。"},{"code":"5.5","text":"確保婦女全面有效參與政治、經濟和公共生活各級決策。"},{"code":"5.6","text":"根據國際協議確保普遍獲得性與生殖健康及生殖權利。"}], "actions": ["在日常對話中不說帶有性別偏見的玩笑話，不以刻板印象框限他人。","公平分擔家庭的家務勞動，尊重不支薪家務勞動者的付出。","在職場或社交場合中，給予不同性別者平等的發言權與領導機會。","主動拒絕並反對任何形式的網路性別霸凌與騷擾。","消費時支持打破性別標籤的商品設計與女性賦權企業。"] },
+                "6": { "title": "潔淨水與衛生", "intro": "確保所有人都能享有水和衛生的可持續管理。普及安全可負擔的飲用水與衛生設備，改善水質，提高水資源利用效率。", "targets": [{"code":"6.1","text":"2030年前，實現人人平等獲得安全且可負擔的飲用水。"},{"code":"6.2","text":"2030年前，人人享有適當和公平的衛生條件，終結隨地大小便。"},{"code":"6.3","text":"2030年前，改善水質，將未處理廢水的比例減半。"},{"code":"6.4","text":"2030年前，大幅提高各行業的水資源利用效率。"},{"code":"6.5","text":"2030年前，在各級落實綜合水資源管理。"},{"code":"6.6","text":"2020年前，保護和恢復與水相關的生態系統。"}], "actions": ["洗手、刷牙時，隨手將水龍頭關緊，避免自來水無謂流失。","縮短淋浴時間，減少熱水與水資源的過度消耗。","實踐水資源重複利用，例如將洗米水用來澆花。","洗碗時先用紙巾擦掉油脂再清洗，減少洗潔劑用量與廢水污染。","不將藥品或化學藥劑直接倒入馬桶，避免造成水體污染。"] },
+                "7": { "title": "可負擔的清潔能源", "intro": "確保所有人都能獲得可負擔、可靠、永續且現代的能源。提高全球再生能源比例，並加強清潔能源研究與技術的國際合作。", "targets": [{"code":"7.1","text":"2030年前，確保人人都能獲得負擔得起、可靠且現代的能源服務。"},{"code":"7.2","text":"2030年前，大幅增加再生能源在全球能源結構中的份額。"},{"code":"7.3","text":"2030年前，使全球能源效率的改善率翻倍。"},{"code":"7.a","text":"2030年前，加強國際合作以促進獲取清潔能源研究與技術。"},{"code":"7.b","text":"2030年前，擴大基礎設施以提供現代且永續的能源服務。"}], "actions": ["離開房間時，隨手關閉不必要的電燈、冷氣與電腦。","冷氣溫度設定在 26–28 度，搭配電風扇提高冷房效率並節省電力。","長期不使用的電器應拔除插頭，減少待機電力浪費。","短距離移動時多走樓梯代替搭電梯，兼顧節能與鍛鍊身體。","選購家電時優先挑選具有節能標章的環保產品。"] },
+                "8": { "title": "尊嚴勞動與經濟成長", "intro": "促進持久、包容和永續的經濟成長，實現全面、生產性就業與人人獲得尊嚴工作。消除強迫勞動、現代奴役，並創造安全的工作環境。", "targets": [{"code":"8.1","text":"維持人均經濟增長，最低度開發國家 GDP 年增長率至少達到 7%。"},{"code":"8.2","text":"透過多元化、技術升級和創新，實現更高水平的經濟生產力。"},{"code":"8.3","text":"推動導向生產性活動、創造尊嚴工作與創業的發展導向政策。"},{"code":"8.5","text":"2030年前，實現所有男女的全面和生產性就業及尊嚴工作，並實行同工同酬。"},{"code":"8.7","text":"採取立即且有效的措施，消除強迫勞動，終結現代奴役與人口販運。"},{"code":"8.8","text":"保護勞工權利，促進所有勞工的安全和有保障的工作環境。"}], "actions": ["點餐或接受服務時，對服務業從業人員與外送員保持禮貌與尊重。","拒絕購買涉嫌剝削勞工或雇用童工的廉價劣質商品。","消費時優先支持在地獨立小店或青年創業品牌。","積極了解並捍衛自身與同事的合法勞動權益。","尊重專業分工，按時交付成果，肯定他人的勞動產出。"] },
+                "9": { "title": "產業、創新與基礎建設", "intro": "建造具韌性的基礎設施，促進包容且永續的工業化，並推動創新。提高中小企業獲得金融服務的機會，並提升資源利用效率。", "targets": [{"code":"9.1","text":"發展優質、可靠、永續且具韌性的基礎設施，支持經濟發展與人類福祉。"},{"code":"9.2","text":"促進包容且永續的工業化，到2030年顯著提高工業在就業和GDP中的份額。"},{"code":"9.4","text":"2030年前，升級基礎設施並改造工業，使其具有永續性，提高資源利用效率。"},{"code":"9.5","text":"加強科學研究，升級各國工業部門的技術能力，鼓勵創新。"},{"code":"9.c","text":"大幅增加獲取資訊與通信技術的渠道，致力在最低度開發國家普及廉價網路。"}], "actions": ["善用雲端空間與數位工具進行無紙化辦公，減少紙張浪費。","多搭乘大眾運輸或騎乘共享單車通勤，減少私人載具壓力。","發現社區設施損壞時，主動透過政府回報系統通報修復。","消費時優先支持採用環保材質或循環經濟概念的創新產品。","多參與產業講座或創新工作坊，提升適應未來數位轉型的能力。"] },
+                "10": { "title": "減少不平等", "intro": "減少國家內部和國家之間的不平等。確保底層群體的收入增長，促進社會、經濟和政治包容，並消除歧視性法律與實踐。", "targets": [{"code":"10.1","text":"2030年前，逐步實現並維持底層40%人口的收入增長率高於全國平均水平。"},{"code":"10.2","text":"2030年前，賦予所有人權力並促進其社會、經濟和政治包容。"},{"code":"10.3","text":"確保機會平等並減少結果不平等，消除歧視性的法律、政策和實踐。"},{"code":"10.4","text":"採用財政、工資和社會保護政策，逐步實現更大的平等。"},{"code":"10.7","text":"促進有序、安全、正常和負責任的人口遷移和流動。"}], "actions": ["與不同文化、國籍、宗教背景的人相處時，保持開放、包容與尊重。","在公共場所遇到身心障礙者或行動不便的長者，主動詢問是否需要協助。","說話與撰文時使用包容性語言，避免污名化特定群體的詞彙。","籌辦公共活動時，留意是否有規劃無障礙空間與相關引導設施。","拒絕轉發任何涉及歧視弱勢群體的網路言論與迷因。"] },
+                "11": { "title": "永續城市與社區", "intro": "打造包容、安全、具韌性且永續的城市與人類住區。確保人人獲得安全可負擔的住房，發展大眾運輸，並降低災害帶來的損失。", "targets": [{"code":"11.1","text":"2030年前，確保人人獲得安全、適當且可負擔的住房與基本服務。"},{"code":"11.2","text":"2030年前，為所有人提供安全、可負擔且永續的交通運輸系統。"},{"code":"11.4","text":"進一步加大保護和捍衛世界文化與自然遺產的力度。"},{"code":"11.5","text":"2030年前，大幅減少遭受災害影響的人數與直接經濟損失。"},{"code":"11.6","text":"2030年前，減少城市的人均不利環境影響，關注空氣品質與廢棄物管理。"}], "actions": ["愛護社區的公園綠地與公共設施，不隨地亂丟垃圾。","積極參與防災、防震演練，學習急救技能，提升居住環境的防災韌性。","近距離移動時選擇走路或騎腳踏車，改善空氣品質。","支持社區跳蚤市場或二手交換，讓舊物在鄰里間循環。","關心居住地區的都市規劃與公聽會，透過公民參與打造宜居社區。"] },
+                "12": { "title": "責任消費與生產", "intro": "確保永續的消費與生產模式。實現自然資源的永續管理，將糧食浪費減半，減少廢棄物產生，並鼓勵企業採用永續實踐。", "targets": [{"code":"12.2","text":"2030年前，實現自然資源的永續管理與有效利用。"},{"code":"12.3","text":"2030年前，將零售和消費環節的全球人均糧食浪費減半。"},{"code":"12.4","text":"2020年前，實現化學品和廢棄物在全生命週期中的環境無害化管理。"},{"code":"12.5","text":"2030年前，透過預防、減量、回收和再利用，大幅減少廢棄物的產生。"},{"code":"12.6","text":"鼓勵大企業及跨國公司採用永續實踐，並將永續性資訊納入報告。"},{"code":"12.8","text":"2030年前，確保世界各地的人們都擁有永續發展生活方式的相關資訊。"}], "actions": ["出門隨身攜帶環保提袋、環保餐具與自備購物袋，減少一次性塑料。","購物前落實「消費斷捨離」，先問自己是「需要」還是「想要」。","外帶手搖飲或咖啡時自備環保杯，落實源頭減塑。","認真落實垃圾分類與資源回收，將一般垃圾與可回收物徹底分開。","購物時優先挑選包裝簡單或使用可回收包材的綠色商品。"] },
+                "13": { "title": "氣候行動", "intro": "採取緊急行動應對氣候變遷及其衝擊。加強各國對氣候相關災害的韌性，將氣候變遷措施納入國家政策，並提升氣候變遷教育。", "targets": [{"code":"13.1","text":"加強所有國家對氣候相關危害和自然災害的韌性與適應能力。"},{"code":"13.2","text":"將氣候變遷措施納入國家政策、戰略和規劃中。"},{"code":"13.3","text":"改善氣候變遷減緩、適應與早期預警方面的教育與意識提升。"},{"code":"13.a","text":"落實發達國家承諾，每年從各種管道共同動員1,000億美元解決發展中國家需求。"},{"code":"13.b","text":"促進在最低度開發國家建立有效氣候變遷相關規劃和管理能力的機制。"}], "actions": ["實踐「低碳飲食」，多吃在地低碳蔬果，挑戰每週一日蔬食。","隨身攜帶環保手帕，減少日常擦手紙與濕紙巾的消耗量。","上下班多利用大眾運輸或與同事共乘，降低個人碳排放。","關心氣候變遷新聞，支持推動淨零碳排、綠能發展的政策。","適度減少吹冷氣的時間，定期清洗冷氣濾網以提高效能。"] },
+                "14": { "title": "保育海洋生態", "intro": "保育和永續利用海洋與海洋資源。防止和大幅減少各類海洋污染，永續管理海洋與沿海生態系統，並終結過度捕撈。", "targets": [{"code":"14.1","text":"2025年前，防止並大幅減少各類海洋污染，特別是陸地活動產生的污染。"},{"code":"14.2","text":"2020年前，永續管理和保護海洋及沿海生態系統，以避免重大不利影響。"},{"code":"14.3","text":"透過加強科學合作，盡量減少和解決海洋酸化的影響。"},{"code":"14.4","text":"2020年前，有效監管捕撈活動，終結過度捕撈、非法和未受規範的捕撈。"},{"code":"14.5","text":"2020年前，根據最佳科學資訊，保護至少10%的沿海和海洋區域。"}], "actions": ["去海邊或離島遊玩時，將自己產生的廢棄物全部帶走，不遺留在沙灘。","在日常生活中徹底減少一次性塑膠袋、吸管的使用。","戲水或浮潛時選擇使用「海洋友善」的防曬乳，保護珊瑚礁。","購買海鮮時優先挑選符合永續捕撈原則的魚類。","積極參與淨灘、淨溪活動，清理水域周邊的海洋垃圾。"] },
+                "15": { "title": "保育陸域生態", "intro": "保護、恢復並促進陸域生態系統的永續利用，永續管理森林，打擊荒漠化，並遏制生物多樣性的喪失。", "targets": [{"code":"15.1","text":"2020年前，確保陸地和內陸淡水生態系統的保育、恢復和永續利用。"},{"code":"15.2","text":"2020年前，推動落實所有類型森林的永續管理，終止砍伐森林。"},{"code":"15.3","text":"2030年前，打擊荒漠化，恢復退化的土地和土壤。"},{"code":"15.5","text":"採取緊急行動，減少自然棲息地退化，遏制生物多樣性的喪失。"},{"code":"15.7","text":"採取緊急行動，終止偷獵和販運受保護的動植物物種。"}], "actions": ["戶外活動時遵守「無痕山林」原則，不留下任何垃圾、果皮與廚餘。","拒絕購買任何由珍稀野生動物製成的標本、皮草或象牙製品。","不隨意棄養寵物，在野外也不隨便餵食野生動物。","在自家庭院或社區空地種植在地原生植物，為昆蟲與鳥類營造棲息環境。","工作複印時優先選擇雙面列印，推動文件數位化減少紙張消耗。"] },
+                "16": { "title": "和平、正義與強大機構", "intro": "促進和平與包容的社會，為所有人提供獲取正義的渠道，並在各級建立有效、負責且包容的機構。", "targets": [{"code":"16.1","text":"在各地大幅減少一切形式的暴力及相關的死亡率。"},{"code":"16.2","text":"終止對兒童的一切形式虐待、剝削、販運以及暴力和酷刑。"},{"code":"16.3","text":"推動國家和國際層面的法治，並確保所有人平等獲得正義。"},{"code":"16.5","text":"大幅減少一切形式的貪污賄賂行為。"},{"code":"16.6","text":"在各級建立有效、負責且透明的機構。"},{"code":"16.10","text":"確保公眾獲取資訊並保護基本自由。"}], "actions": ["面對意見衝突時，保持理性溝通，不使用言語或肢體暴力解決爭議。","在職場或網路社群遇到不公義事件，勇於向正當管道反映。","遵守社會規範與法律，培養誠實守法的公民意識，反對行賄行為。","積極行使公民權利，參與公投、選舉或地方自治討論。","尊重每個人不同的宗教信仰、政治觀點與文化習俗。"] },
+                "17": { "title": "多元夥伴關係", "intro": "強化永續發展執行手段，並活化永續發展全球夥伴關係。透過財政、技術、能力建設與貿易的國際合作，實現所有目標。", "targets": [{"code":"17.2","text":"發達國家全面落實官方發展援助承諾，向發展中國家提供占GNI 0.7%的援助。"},{"code":"17.6","text":"加強在科學、技術與創新方面的南北、南南及三方國際合作。"},{"code":"17.9","text":"加大對發展中國家實施有效能力建設的支持。"},{"code":"17.16","text":"加強全球永續發展夥伴關係，輔以多利益攸關方夥伴關係。"},{"code":"17.17","text":"鼓勵並促進有效的公共、公私合營以及公民社會夥伴關係。"},{"code":"17.19","text":"2030年前，制定衡量永續發展進展的指標，支持發展中國家的統計能力建設。"}], "actions": ["支持或主動加入民間環保、公益或永續發展 NGO 志工社團。","在個人社群平台分享 SDGs 相關知識，擴大個人的永續社會影響力。","在職場合作中，發揮自身專長跨界結盟，共同達成永續目標。","積極參加跨領域的永續講座或交流活動，從不同視角看待全球議題。","支持跨國公益倡議或公平貿易商品，關心國際間的資源與技術合作。"] }
+            },
+            "en": {
+                "1": { "title": "No Poverty", "intro": "End poverty in all its forms everywhere. Ensure equal rights to economic resources, basic services, and property ownership for all, especially the poor and vulnerable, while building resilience against economic, social, and environmental shocks.", "targets": [{"code":"1.1","text":"By 2030, eradicate extreme poverty for all people everywhere, currently measured as people living on less than $1.25 a day."},{"code":"1.2","text":"By 2030, reduce at least by half the proportion of men, women and children of all ages living in poverty."},{"code":"1.3","text":"Implement nationally appropriate social protection systems for all, achieving substantial coverage of the poor and vulnerable by 2030."},{"code":"1.4","text":"By 2030, ensure equal rights to economic resources, basic services, and land ownership for the poor and vulnerable."},{"code":"1.5","text":"By 2030, build the resilience of the poor and reduce their exposure to climate-related extreme events."},{"code":"1.a","text":"Ensure significant mobilization of resources from various sources to provide means for developing countries to end poverty."},{"code":"1.b","text":"Create sound policy frameworks based on pro-poor and gender-sensitive development strategies to support investment in poverty eradication."}], "actions": ["Regularly donate functional but unused clothing, books, or appliances to local shelters and charities.","Prioritize buying from social enterprises or businesses that intentionally hire marginalized individuals.","Donate spare change or set up automatic donations to charitable organizations.","Support microfinance initiatives or buy directly from local small-scale farmers for fair wages.","Stay informed about poverty relief programs and share them with neighbors facing financial hardships."] },
+                "2": { "title": "Zero Hunger", "intro": "End hunger, achieve food security and improved nutrition, and promote sustainable agriculture. Ensure all people have access to safe, nutritious, and sufficient food year-round.", "targets": [{"code":"2.1","text":"By 2030, end hunger and ensure access to safe, nutritious and sufficient food for all people year round."},{"code":"2.2","text":"By 2030, end all forms of malnutrition, including achieving targets on stunting and wasting in children under 5."},{"code":"2.3","text":"By 2030, double the agricultural productivity and incomes of small-scale food producers."},{"code":"2.4","text":"By 2030, ensure sustainable food production systems and resilient agricultural practices."},{"code":"2.5","text":"By 2020, maintain the genetic diversity of seeds, cultivated plants and farmed animals."}], "actions": ["Order or cook only what you can finish, and proactively take leftovers home when dining out.","Choose locally sourced and seasonal produce to minimize food spoilage and carbon emissions.","Buy 'ugly produce' that is nutritious but often discarded by retail stores due to aesthetics.","Implement a 'First In, First Out' system in your home to prevent food waste from expired items.","Adopt a balanced diet with more plant-based protein options to lower resource-heavy meat production."] },
+                "3": { "title": "Good Health and Well-being", "intro": "Ensure healthy lives and promote well-being for all at all ages. Reduce maternal mortality, end major epidemics, and ensure universal access to health care services.", "targets": [{"code":"3.1","text":"By 2030, reduce the global maternal mortality ratio to less than 70 per 100,000 live births."},{"code":"3.2","text":"By 2030, end preventable deaths of newborns and children under 5 years of age."},{"code":"3.3","text":"By 2030, end the epidemics of AIDS, tuberculosis, malaria and neglected tropical diseases."},{"code":"3.4","text":"By 2030, reduce premature mortality from non-communicable diseases by one third."},{"code":"3.8","text":"Achieve universal health coverage, including financial risk protection and access to quality essential health-care services."}], "actions": ["Maintain a regular routine and exercise weekly to ensure adequate sleep and a strong immune system.","Drink plenty of water and focus on meals with lower sodium, less oil, and high fiber.","Regularly check in on your emotional health and seek professional counseling when dealing with burnout.","Practice proper hygiene by washing hands frequently and wearing a mask in crowded spaces if unwell.","Strictly obey traffic laws and avoid looking at your smartphone while crossing roads."] },
+                "4": { "title": "Quality Education", "intro": "Ensure inclusive and equitable quality education and promote lifelong learning opportunities for all. Eliminate gender and wealth disparities and provide affordable technical, vocational, and higher education.", "targets": [{"code":"4.1","text":"By 2030, ensure that all girls and boys complete free, equitable and quality primary and secondary education."},{"code":"4.2","text":"By 2030, ensure all girls and boys have access to quality early childhood development and pre-primary education."},{"code":"4.3","text":"By 2030, ensure equal access for all women and men to affordable and quality technical and tertiary education."},{"code":"4.5","text":"By 2030, eliminate gender disparities in education and ensure equal access for vulnerable groups."},{"code":"4.7","text":"By 2030, ensure all learners acquire knowledge and skills needed to promote sustainable development."}], "actions": ["Donate your books or professional guides to rural community centers, local libraries, or charity sales.","Utilize free educational platforms and podcasts to commit to lifelong learning every day.","Actively mentor junior colleagues and patiently help the elderly adapt to modern digital tools.","Enhance your media literacy: verify information from credible sources before forwarding messages.","Expose yourself to cross-cultural literature and art to maintain an open mind and break stereotypes."] },
+                "5": { "title": "Gender Equality", "intro": "Achieve gender equality and empower all women and girls. Eliminate all forms of discrimination, violence, and harmful practices against women while ensuring their full participation in decision-making.", "targets": [{"code":"5.1","text":"End all forms of discrimination against all women and girls everywhere."},{"code":"5.2","text":"Eliminate all forms of violence against all women and girls in the public and private spheres."},{"code":"5.3","text":"Eliminate all harmful practices, such as child, early and forced marriage and female genital mutilation."},{"code":"5.4","text":"Recognize and value unpaid care and domestic work through public services and social protection policies."},{"code":"5.5","text":"Ensure women's full and effective participation and equal opportunities for leadership at all levels."}], "actions": ["Refrain from gender-biased jokes in conversations or at the workplace, and avoid boxing people into gender roles.","Equally divide domestic responsibilities at home, valuing the effort of unpaid household work.","Ensure all genders have equal voice and leadership consideration in corporate meetings and civic associations.","Speak up against cyber-harassment, online misogyny, and refuse to forward non-consensual private videos.","Support brands that challenge traditional gender expectations or are championed by female founders."] },
+                "6": { "title": "Clean Water and Sanitation", "intro": "Ensure availability and sustainable management of water and sanitation for all. Improve water quality by reducing pollution, increasing water-use efficiency, and protecting water-related ecosystems.", "targets": [{"code":"6.1","text":"By 2030, achieve universal and equitable access to safe and affordable drinking water for all."},{"code":"6.2","text":"By 2030, achieve access to adequate and equitable sanitation and hygiene for all."},{"code":"6.3","text":"By 2030, improve water quality by reducing pollution and minimizing hazardous chemicals."},{"code":"6.4","text":"By 2030, substantially increase water-use efficiency across all sectors."},{"code":"6.6","text":"By 2020, protect and restore water-related ecosystems including mountains, forests, and wetlands."}], "actions": ["Turn off the tap while washing hands or brushing teeth to stop unnecessary water from draining away.","Shorten your daily shower time to save both clean water and heating energy.","Repurpose graywater, such as using water from washing rice to water plants.","Wipe away thick oils from dishes with a napkin before washing to reduce detergent use.","Never flush medications or chemical solvents down the toilet to protect aquatic systems."] },
+                "7": { "title": "Affordable and Clean Energy", "intro": "Ensure access to affordable, reliable, sustainable and modern energy for all. Increase the share of renewable energy globally and double the rate of energy efficiency improvement.", "targets": [{"code":"7.1","text":"By 2030, ensure universal access to affordable, reliable and modern energy services."},{"code":"7.2","text":"By 2030, increase substantially the share of renewable energy in the global energy mix."},{"code":"7.3","text":"By 2030, double the global rate of improvement in energy efficiency."},{"code":"7.a","text":"By 2030, enhance international cooperation to facilitate access to clean energy research and technology."},{"code":"7.b","text":"By 2030, expand infrastructure for supplying modern and sustainable energy services for all."}], "actions": ["Form a habit of turning off unnecessary lights, air conditioners, and fans when exiting a room.","Set your AC temperature between 26–28°C and combine with a circulating fan to save electricity.","Unplug chargers or unused small appliances when leaving for long trips to eliminate phantom load.","Take the stairs instead of the elevator for shorter trips to save electricity and stay physically fit.","Prioritize buying household appliances with certified energy-saving stars or top-tier efficiency labels."] },
+                "8": { "title": "Decent Work and Economic Growth", "intro": "Promote sustained, inclusive and sustainable economic growth, full and productive employment and decent work for all. Protect labor rights and eliminate forced labor and modern slavery.", "targets": [{"code":"8.2","text":"Achieve higher levels of economic productivity through diversification, technological upgrading and innovation."},{"code":"8.5","text":"By 2030, achieve full and productive employment and decent work for all, with equal pay for equal work."},{"code":"8.7","text":"Take immediate measures to eradicate forced labour, end modern slavery and human trafficking."},{"code":"8.8","text":"Protect labour rights and promote safe and secure working environments for all workers."},{"code":"8.10","text":"Strengthen domestic financial institutions to encourage and expand access to banking and financial services."}], "actions": ["Show courtesy and respect toward retail staff, gig workers, delivery drivers, and janitorial personnel.","Boycott counterfeit goods or fast-fashion lines notorious for worker exploitation or child labor.","Intentionally spend your money at independent neighborhood shops to boost localized economic growth.","Familiarize yourself with your legal labor rights and advocate for your peers.","Respect professional division of labor, fulfill task goals on time, and credit colleagues fairly."] },
+                "9": { "title": "Industry, Innovation and Infrastructure", "intro": "Build resilient infrastructure, promote inclusive and sustainable industrialization and foster innovation. Upgrade industrial resource efficiency and enhance access of small-scale enterprises to financial markets.", "targets": [{"code":"9.1","text":"Develop quality, reliable, sustainable and resilient infrastructure to support economic development."},{"code":"9.2","text":"Promote inclusive and sustainable industrialization and significantly raise industry's share of employment."},{"code":"9.4","text":"By 2030, upgrade infrastructure and retrofit industries to make them sustainable with greater resource efficiency."},{"code":"9.5","text":"Enhance scientific research and upgrade technological capabilities, encouraging innovation."},{"code":"9.c","text":"Significantly increase access to information and communications technology in least developed countries."}], "actions": ["Utilize secure cloud drives and e-documents to maintain a paperless office and filing system.","Commute via public transit or rent shared bicycles to reduce private vehicle traffic overhead.","Report broken streetlights or hazardous road potholes using your city's public hotlines.","Support eco-friendly manufacturing by buying products made from recycled or low-carbon materials.","Attend tech expos or modern workshops to stay resilient against digital disruption."] },
+                "10": { "title": "Reduced Inequalities", "intro": "Reduce inequality within and among countries. Empower the social, economic, and political inclusion of all, and eliminate discriminatory laws and practices.", "targets": [{"code":"10.1","text":"By 2030, achieve and sustain income growth of the bottom 40% at a rate higher than the national average."},{"code":"10.2","text":"By 2030, empower and promote the social, economic and political inclusion of all."},{"code":"10.3","text":"Ensure equal opportunity and reduce inequalities by eliminating discriminatory laws and practices."},{"code":"10.4","text":"Adopt fiscal, wage and social protection policies to progressively achieve greater equality."},{"code":"10.7","text":"Facilitate orderly, safe, regular and responsible migration and mobility of people."}], "actions": ["Practice openness, patience, and dignity when cooperating with immigrant workers or cultural minorities.","Proactively assist or offer space to individuals with disabilities, pregnant individuals, and the elderly.","Use inclusive language in communications, avoiding derogatory words or structural stigmas.","When hosting public events, verify that the venue features accessible restrooms and barrier-free paths.","Refuse to participate in or circulate hateful internet comments targeting vulnerable demographics."] },
+                "11": { "title": "Sustainable Cities and Communities", "intro": "Make cities and human settlements inclusive, safe, resilient and sustainable. Provide access to safe housing, expand inclusive public transport, and lower urban environmental impact.", "targets": [{"code":"11.1","text":"By 2030, ensure access for all to adequate, safe and affordable housing and basic services."},{"code":"11.2","text":"By 2030, provide access to safe, affordable, accessible and sustainable transport systems for all."},{"code":"11.4","text":"Strengthen efforts to protect and safeguard the world's cultural and natural heritage."},{"code":"11.5","text":"By 2030, significantly reduce the number of deaths and people affected by disasters."},{"code":"11.6","text":"By 2030, reduce the adverse per capita environmental impact of cities, particularly air quality and waste."}], "actions": ["Respect urban green areas and public spaces; never litter, and help pick up stray trash in parks.","Participate in corporate or residential disaster-readiness drills and pick up basic first-aid knowledge.","Walk or cycle for short-distance trips to limit car idling and improve local air quality.","Support localized thrift markets or swap meets to extend product lifecycles within your community.","Follow regional urban zoning news and voice your support for pedestrian-friendly infrastructure."] },
+                "12": { "title": "Responsible Consumption and Production", "intro": "Ensure sustainable consumption and production patterns. Achieve sustainable management of natural resources, cut consumer food waste in half, and encourage transparent corporate sustainability reporting.", "targets": [{"code":"12.2","text":"By 2030, achieve the sustainable management and efficient use of natural resources."},{"code":"12.3","text":"By 2030, halve per capita global food waste at the retail and consumer levels."},{"code":"12.5","text":"By 2030, substantially reduce waste generation through prevention, reduction, recycling and reuse."},{"code":"12.6","text":"Encourage companies to adopt sustainable practices and integrate sustainability into their reporting."},{"code":"12.8","text":"By 2030, ensure people everywhere have the information and awareness for sustainable lifestyles."}], "actions": ["Pack a reusable kit: a fabric shopping bag, a personal beverage container, and portable utensils.","Adopt a minimalist consumer mindset; ask if an item is a true 'need' versus a fleeting 'want'.","Bring a personal tumbler when grabbing takeout coffee to cut plastic cup waste.","Meticulously sort office and home waste into distinct recycling streams and food compost.","Favor items featuring simple packaging or those encased in 100% recycled or biodegradable materials."] },
+                "13": { "title": "Climate Action", "intro": "Take urgent action to combat climate change and its impacts. Strengthen adaptive capacity to climate hazards, integrate climate measures into institutional policies, and build awareness networks.", "targets": [{"code":"13.1","text":"Strengthen resilience and adaptive capacity to climate-related hazards and natural disasters in all countries."},{"code":"13.2","text":"Integrate climate change measures into national policies, strategies and planning."},{"code":"13.3","text":"Improve education, awareness-raising and institutional capacity on climate change mitigation and adaptation."},{"code":"13.a","text":"Implement the commitment to mobilize jointly $100 billion annually to address developing country needs."},{"code":"13.b","text":"Promote mechanisms for raising capacity for effective climate change planning in least developed countries."}], "actions": ["Lower your dining carbon footprint by prioritizing fresh agricultural food and joining a 'meat-free day' weekly.","Keep a reusable handkerchief with you to decrease systematic use of public paper towels and wet wipes.","Pool rides with coworkers or rely on public transit to immediately slash your greenhouse gas emissions.","Stay educated on local net-zero targets and vote for or sign petitions endorsing clean energy infrastructure.","Clean your HVAC air filters monthly to maximize performance and rely on natural ventilation when possible."] },
+                "14": { "title": "Life Below Water", "intro": "Conserve and sustainably use the oceans, seas and marine resources. Prevent marine pollution, regulate harvesting, and eliminate overfishing to protect marine ecosystems.", "targets": [{"code":"14.1","text":"By 2025, prevent and significantly reduce marine pollution, particularly from land-based activities."},{"code":"14.2","text":"By 2020, sustainably manage and protect marine and coastal ecosystems to avoid significant adverse impacts."},{"code":"14.4","text":"By 2020, effectively regulate harvesting and end overfishing and destructive fishing practices."},{"code":"14.5","text":"By 2020, conserve at least 10% of coastal and marine areas."},{"code":"14.6","text":"By 2020, prohibit certain forms of fisheries subsidies which contribute to overcapacity and overfishing."}], "actions": ["When visiting beaches, bag up your own garbage and discard it inland—leave absolute zero trace.","Cut down on single-use plastics (straws, cups, bags) to keep trash out of local waterways.","Switch to marine-friendly sunscreens when swimming to protect vulnerable coral reefs from bleaching.","Consult sustainable seafood buyer's guides and purchase fish caught through responsible aquaculture.","Volunteer your weekend hours for beach cleanups arranged by local green NGOs or conscious companies."] },
+                "15": { "title": "Life on Land", "intro": "Protect, restore and promote sustainable use of terrestrial ecosystems, sustainably manage forests, combat desertification, and halt biodiversity loss. End illegal poaching and trafficking of flora and fauna.", "targets": [{"code":"15.1","text":"By 2020, ensure the conservation, restoration and sustainable use of terrestrial and freshwater ecosystems."},{"code":"15.2","text":"By 2020, promote sustainable management of all types of forests and halt deforestation."},{"code":"15.3","text":"By 2030, combat desertification and restore degraded land and soil."},{"code":"15.5","text":"Take urgent action to reduce degradation of natural habitats and halt the loss of biodiversity."},{"code":"15.7","text":"Take urgent action to end poaching and trafficking of protected species of flora and fauna."}], "actions": ["Adhere to 'Leave No Trace' when hiking or camping; never leave organic food rinds or trash behind.","Refuse to buy luxury products made from rare animal furs, endangered timbers, or ivory accessories.","Commit to lifelong pet ownership—never abandon domestic pets into the wild.","Plant native flora on your balcony or garden to build green stepping-stones for neighborhood birds.","Enforce default double-sided printing for files and prioritize digital sign-off to reduce paper use."] },
+                "16": { "title": "Peace, Justice and Strong Institutions", "intro": "Promote peaceful and inclusive societies for sustainable development, provide access to justice for all and build effective, accountable and inclusive institutions at all levels.", "targets": [{"code":"16.1","text":"Significantly reduce all forms of violence and related death rates everywhere."},{"code":"16.3","text":"Promote the rule of law at the national and international levels and ensure equal access to justice."},{"code":"16.5","text":"Substantially reduce corruption and bribery in all their forms."},{"code":"16.6","text":"Develop effective, accountable and transparent institutions at all levels."},{"code":"16.10","text":"Ensure public access to information and protect fundamental freedoms."}], "actions": ["De-escalate personal friction with composed negotiation rather than aggressive words or flame wars.","Report corporate bribery, cyberbullying, or predatory scam operations to relevant oversight authorities.","Maintain strong civic values by keeping honest accounting, settling taxes, and refusing legal shortcuts.","Exercise your local voting privileges and invest effort into rational public discourse.","Respect separate philosophical stances and cultural histories, co-creating a balanced social environment."] },
+                "17": { "title": "Partnerships for the Goals", "intro": "Strengthen the means of implementation and revitalize the Global Partnership for Sustainable Development. Revitalize global networks by sharing technology, expertise, financial means, and data capabilities.", "targets": [{"code":"17.2","text":"Developed countries to implement fully their official development assistance commitments of 0.7% of GNI."},{"code":"17.6","text":"Enhance North-South, South-South and triangular regional and international cooperation on science and technology."},{"code":"17.9","text":"Enhance international support for implementing effective capacity-building in developing countries."},{"code":"17.16","text":"Enhance the Global Partnership for Sustainable Development with multi-stakeholder partnerships."},{"code":"17.17","text":"Encourage and promote effective public, public-private and civil society partnerships."},{"code":"17.19","text":"By 2030, develop measurements of progress on sustainable development to complement GDP."}], "actions": ["Join or fund localized citizen eco-initiatives, non-profits, or NGO volunteer groups.","Use your social media footprint to share practical sustainability hacks and expand public awareness.","Initiate cross-functional alliances in your company to achieve collective green milestones.","Attend interdisciplinary sustainability panels to learn how different business models tackle challenges.","Purchase Fair Trade certified goods to support equitable international trade that bolsters communities."] }
+            }
+        };
+ 
+        /* ============================================================
+           五、狀態變數（State Variables）
+           ------------------------------------------------------------
+           全域狀態：目前語言、已選選項、目前目標編號、覆蓋層來源。
+        ============================================================ */
+        let currentLang = "zh";    // 目前介面語言（"zh" 或 "en"）
+        let selectedOption = null; // 使用者選取的選項字母（"A"/"B"/"C"/"D"）
+        let currentGoal = "1";     // 目前正在查看的 SDG 目標編號（字串）
+        let learnSource = "intro"; // 延伸學習頁的來源（"intro" 或 "modal"，決定返回行為）
+ 
+        // 依語言集中管理題庫，方便 loadQuestion() 取用
+        const questionBanks = { zh: zhQuestions, en: enQuestions };
+ 
+        /* ============================================================
+           六、DOM 元素快取
+           ------------------------------------------------------------
+           預先取得後續互動會用到的 HTML 元素，
+           避免每次操作都重複查找 DOM（效能優化）。
+        ============================================================ */
+        const modal          = document.getElementById("modal");
+        const closeBtn       = document.getElementById("closeModal");
+        const backStepBtn = document.getElementById("backStepBtn");
+        const resultBox      = document.getElementById("resultBox");
+        const nextBtn        = document.getElementById("nextBtn");
+        const sdgCards       = document.querySelectorAll(".sdg-card");
+        const introSdgCards  = document.querySelectorAll(".intro-sdg-card");
+        const optionCards    = document.querySelectorAll(".option-card");
+        const learnPage      = document.getElementById("learnPage");
+        const actionPage     = document.getElementById("actionPage");
+        const learnBackBtn   = document.getElementById("learnBackBtn");
+        const actionBtn      = document.getElementById("actionBtn");
+        const learnHomeBtn   = document.getElementById("learnHomeBtn");
+        const actionBackBtn  = document.getElementById("actionBackBtn");
+        const actionHomeBtn  = document.getElementById("actionHomeBtn");
+ 
+        /* ============================================================
+           七、loadQuestion(goal)
+           ------------------------------------------------------------
+           根據 SDG 編號與目前語言，
+           將情境題資料填入彈窗的各個 DOM 元素中。
+        ============================================================ */
+        function loadQuestion(goal) {
+            const q = questionBanks[currentLang][goal];
+            // 更新彈窗標題區
+            document.getElementById("modalTitle").innerText = q.title;
+            document.getElementById("modalGoalLabel").innerText =
+                `GOAL ${String(goal).padStart(2, "0")} / 17 Sustainable Development Goals`;
+            document.getElementById("modalImg").src =
+                `https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-${goal}.png`;
+            // 更新故事內容
+            document.getElementById("storyNote").innerText   = q.storyNote;
+            document.getElementById("storyMain").innerText   = q.storyMain;
+            document.getElementById("storyBridge").innerText = translations[currentLang].storyBridge;
+            document.getElementById("storySub").innerText    = q.storySub;
+            document.getElementById("questionText").innerText = q.question;
+            // 更新四個選項文字
+            document.getElementById("optionTextA").innerText = q.options.A;
+            document.getElementById("optionTextB").innerText = q.options.B;
+            document.getElementById("optionTextC").innerText = q.options.C;
+            document.getElementById("optionTextD").innerText = q.options.D;
+        }
+ 
+        /* ============================================================
+           八、renderLearnPage(goal)
+           ------------------------------------------------------------
+           生成延伸學習頁的動態 HTML：
+           - SDG 圖示與標題
+           - 目標背景說明
+           - 細項目標卡片列表
+        ============================================================ */
+        function renderLearnPage(goal) {
+            const data = learnBanks[currentLang][String(goal)];
+            if (!data) return;
+            currentGoal = String(goal);
+ 
+            // 更新圖示與標題
+            document.getElementById("learnPageIcon").src = `https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-${goal}.png`;
+            document.getElementById("learnPageIcon").alt = data.title;
+            document.getElementById("learnPageTitle").innerText = data.title;
+ 
+            // 更新背景介紹
+            document.getElementById("learnPageIntro").innerText = data.intro;
+ 
+            // 動態生成細項目標卡片 HTML
+            document.getElementById("learnTargetGrid").innerHTML = data.targets.map((target) => {
+                const code = typeof target === "object" ? target.code : `${String(goal).padStart(2,"0")}`;
+                const text = typeof target === "object" ? target.text : target;
+                return `<div class="target-card">
+                    <div class="target-number">${code}</div>
+                    <p>${text}</p>
+                </div>`;
+            }).join("");
+        }
+ 
+        /* ============================================================
+           九、renderActionPage(goal)
+           ------------------------------------------------------------
+           生成行動建議頁的動態 HTML：
+           將 learnBanks.actions 陣列轉為帶序號的行動卡片。
+        ============================================================ */
+        function renderActionPage(goal) {
+            const data = learnBanks[currentLang][String(goal)];
+            if (!data) return;
+            currentGoal = String(goal);
+ 
+            // 更新圖示
+            document.getElementById("actionPageIcon").src = `https://sustainable.thu.edu.tw/wp-content/uploads/2022/09/SDGs-${goal}.png`;
+            document.getElementById("actionPageIcon").alt = data.title;
+ 
+            // 更新頁面標題文字（依語言）
+            document.querySelector("#actionPage .overlay-title").innerText =
+                translations[currentLang].whatCanWeDo;
+ 
+            // 動態生成行動建議卡片 HTML
+            document.getElementById("actionGrid").innerHTML =
+                data.actions.map(action => `<div class="action-card">${action}</div>`).join("");
+        }
+ 
+        /* ============================================================
+           十、openLearnPage(goal, source)
+           ------------------------------------------------------------
+           開啟延伸學習全頁覆蓋層。
+           source 參數用於決定按下「返回」時要回到哪裡：
+           - "intro"  → 回到 SDGs 介紹頁
+           - "modal"  → 回到情境彈窗
+        ============================================================ */
+        function openLearnPage(goal, source = "intro") {
+            learnSource = source;
+            renderLearnPage(goal);
+            modal.style.display = "none";   // 關閉彈窗（若開著）
+            actionPage.classList.add("hidden");
+            learnPage.classList.remove("hidden");
+            learnPage.scrollTop = 0;        // 捲到頂部
+        }
+ 
+        /* ============================================================
+           十一、applyLanguage(lang)
+           ------------------------------------------------------------
+           語言切換核心函式，執行以下動作：
+           1. 更新 currentLang 與 <html> 的 lang 屬性
+           2. 替換所有帶有 data-i18n 屬性元素的文字
+           3. 同步更新按鈕文字
+           4. 若彈窗或覆蓋層正在顯示，同步重新渲染其內容
+        ============================================================ */
+        function applyLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang === "zh" ? "zh-TW" : "en";
+ 
+            // 批次替換所有靜態介面文字
+            document.querySelectorAll("[data-i18n]").forEach((el) => {
+                const key = el.dataset.i18n;
+                if (translations[lang][key]) el.innerText = translations[lang][key];
+            });
+ 
+            // 同步語言選擇器的顯示值
+            const langSelect = document.getElementById("langSelect");
+            if (langSelect) langSelect.value = lang;
+ 
+            // 更新各頁按鈕文字
+            nextBtn.innerText       = translations[lang].submit;
+            learnBackBtn.innerText  = translations[lang].back;
+            actionBtn.innerText     = translations[lang].takeAction;
+            learnHomeBtn.innerText  = translations[lang].home;
+            actionBackBtn.innerText = translations[lang].back;
+            actionHomeBtn.innerText = translations[lang].home;
+            document.querySelector("#actionPage .overlay-title").innerText =
+                translations[lang].whatCanWeDo;
+ 
+            // 若彈窗正在顯示，重新載入題目並清空回饋
+            if (modal.style.display === "flex") {
+                loadQuestion(currentGoal);
+                resultBox.innerHTML = "";
+                selectedOption = null;
+                optionCards.forEach(card => card.classList.remove("active"));
+            }
+ 
+            // 若延伸學習頁正在顯示，重新渲染
+            if (!learnPage.classList.contains("hidden")) renderLearnPage(currentGoal);
+ 
+            // 若行動建議頁正在顯示，重新渲染
+            if (!actionPage.classList.contains("hidden")) renderActionPage(currentGoal);
+        }
+ 
+        // 綁定語言選擇器的 change 事件
+        const langSelectEl = document.getElementById("langSelect");
+        if (langSelectEl) {
+            langSelectEl.addEventListener("change", () => applyLanguage(langSelectEl.value));
+        }
+ 
+        // 頁面載入時套用預設語言（繁體中文）
+        applyLanguage("zh");
+ 
+        /* ============================================================
+           十二、頁面顯示控制（Single-Page Navigation）
+           ------------------------------------------------------------
+           將各主要區塊視為「頁面」，由 showPage() 控制顯示與隱藏。
+           同時管理導覽列 active 狀態的切換。
+        ============================================================ */
+        // 建立頁面名稱與 DOM 元素的對應表
+        const pageSections = {
+            home:     document.querySelector("main > section.hero-panel"),
+            intro:    document.getElementById("intro"),
+            interact: document.getElementById("interact"),
+            about:    document.getElementById("about")
+        };
+ 
+        // 為每個頁面區塊加上 page-view 類別（CSS 控制顯示用）
+        Object.values(pageSections).forEach(section => {
+            if (section) section.classList.add("page-view");
+        });
+ 
+        // 取得所有導覽連結與內部錨點連結
+        const navLinks    = document.querySelectorAll(".nav-link");
+        const pageTriggers = document.querySelectorAll('a[href^="#"]');
+ 
+        /**
+         * showPage(pageName)
+         * 顯示指定頁面，隱藏其他主要區塊，並更新導覽列的 active 狀態。
+         * 同時關閉所有彈窗與覆蓋層，並捲動到頁面頂部。
+         */
+        function showPage(pageName) {
+            // 切換每個頁面區塊的顯示狀態
+            Object.entries(pageSections).forEach(([name, section]) => {
+                if (!section) return;
+                section.classList.toggle("active-page", name === pageName);
+            });
+ 
+            // 更新導覽列 active 樣式
+            navLinks.forEach(link => {
+                const href = link.getAttribute("href");
+                if (!href) return;
+                link.classList.toggle("active", href.replace("#", "") === pageName);
+            });
+ 
+            // 關閉所有覆蓋層與彈窗
+            modal.style.display = "none";
+            learnPage.classList.add("hidden");
+            actionPage.classList.add("hidden");
+ 
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+ 
+        // 為所有內部錨點連結綁定 click 事件（防止預設錨點行為）
+        pageTriggers.forEach(link => {
+            const target = link.getAttribute("href").replace("#", "");
+            if (pageSections[target]) {
+                link.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    showPage(target);
+                });
+            }
+        });
+ 
+        // 初始顯示首頁
+        showPage("home");
+ 
+        /* ============================================================
+           十三、事件綁定 — SDGs 介紹區圖示卡片
+           ------------------------------------------------------------
+           點選任一 SDG 圖示 → 直接開啟該目標的延伸學習頁（不經過彈窗）。
+        ============================================================ */
+        introSdgCards.forEach(card => {
+            card.addEventListener("click", () => {
+                openLearnPage(card.dataset.learnGoal, "intro");
+            });
+        });
+ 
+        /* ============================================================
+           十四、事件綁定 — 情境互動區圖示卡片
+           ------------------------------------------------------------
+           點選任一 SDG 圖示 → 載入對應情境題並顯示彈窗。
+        ============================================================ */
+        sdgCards.forEach(card => {
+            card.addEventListener("click", () => {
+                currentGoal = card.dataset.goal;
+                loadQuestion(currentGoal);
+                resetModal();           // 清空選取狀態與回饋
+                modal.style.display = "flex";
+            });
+        });
+ 
+        /* ============================================================
+           十五、事件綁定 — 選項卡片
+           ------------------------------------------------------------
+           點選選項卡片：
+           - 移除所有卡片的 active 樣式
+           - 為被點選的卡片加上 active 樣式
+           - 記錄使用者選取的選項字母
+           - 清空上一次的回饋訊息
+        ============================================================ */
+        optionCards.forEach(card => {
+            card.addEventListener("click", () => {
+                optionCards.forEach(item => item.classList.remove("active"));
+                card.classList.add("active");
+                selectedOption = card.dataset.option;
+                resultBox.innerHTML = ""; // 清空舊回饋，避免干擾
+            });
+        });
+ 
+        /* ============================================================
+           十六、事件綁定 — 送出按鈕
+           ------------------------------------------------------------
+           使用者點下「送出選擇」後：
+           1. 若未選答案 → 顯示提示訊息
+           2. 選了正確答案 → 顯示正確回饋 + 延伸學習按鈕
+           3. 選了錯誤答案 → 顯示引導式回饋，鼓勵重新思考
+        ============================================================ */
+        nextBtn.addEventListener("click", () => {
+            // 未選答案的錯誤提示
+            if (!selectedOption) {
+                resultBox.innerHTML = `<div class="result-error">${translations[currentLang].selectFirst}</div>`;
+                return;
+            }
+ 
+            const q = questionBanks[currentLang][currentGoal];
+ 
+            if (selectedOption === q.answer) {
+                // ✅ 正確答案：顯示回饋 + 延伸學習按鈕
+                resultBox.innerHTML = `
+                    <div class="result-correct">
+                        <h4 class="font-bold text-xl mb-2" style="color:var(--accent-green);">
+                            ${translations[currentLang].excellent}
+                        </h4>
+                        <p style="color:rgba(255,255,255,0.88);line-height:1.65;">${q.correctFeedback}</p>
+                        <button id="learnMoreBtn" class="btn-learn-more">
+                            ${translations[currentLang].learnMore}
+                        </button>
+                    </div>`;
+                // 延伸學習按鈕的點擊事件
+                document.getElementById("learnMoreBtn").addEventListener("click", () => {
+                    openLearnPage(currentGoal, "modal");
+                });
+            } else {
+                // ⚠️ 錯誤答案：顯示引導回饋
+                resultBox.innerHTML = `
+                    <div class="result-wrong">
+                        <h4 class="font-bold text-xl mb-2" style="color:var(--accent-red);">
+                            ${translations[currentLang].thinkAgain}
+                        </h4>
+                        <p style="color:rgba(255,255,255,0.85);line-height:1.65;">${q.wrongFeedback}</p>
+                    </div>`;
+            }
+        });
+ 
+        /* ============================================================
+           十七、事件綁定 — 關閉彈窗
+           ------------------------------------------------------------
+           支援兩種關閉方式：
+           1. 點擊右上角 × 按鈕
+           2. 點擊彈窗背景遮罩（不是彈窗本體）
+        ============================================================ */
+        closeBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+
+ backStepBtn.addEventListener("click", () => {
+    resetModal();
+    modal.style.display = "none";
+});
+        modal.addEventListener("click", (e) => {
+            if (e.target.id === "modal") modal.style.display = "none";
+        });
+ 
+        /* ============================================================
+           十八、覆蓋層導航事件綁定
+           ------------------------------------------------------------
+           控制延伸學習頁、行動建議頁與首頁之間的流向。
+        ============================================================ */
+ 
+        // 延伸學習頁「返回」按鈕
+        learnBackBtn.addEventListener("click", () => {
+            learnPage.classList.add("hidden");
+            actionPage.classList.add("hidden");
+            learnPage.scrollTop = 0;
+            if (learnSource === "modal") {
+                // 若由情境彈窗進入，返回彈窗
+                modal.style.display = "flex";
+            } else {
+                // 若由 SDGs 介紹頁進入，返回介紹頁
+                showPage("intro");
+            }
+        });
+ 
+        // 延伸學習頁「行動建議」按鈕 → 跳轉行動建議頁
+        actionBtn.addEventListener("click", () => {
+            renderActionPage(currentGoal);
+            learnPage.classList.add("hidden");
+            actionPage.classList.remove("hidden");
+            actionPage.scrollTop = 0;
+        });
+ 
+        // 行動建議頁「返回」按鈕 → 回到延伸學習頁
+        actionBackBtn.addEventListener("click", () => {
+            actionPage.classList.add("hidden");
+            learnPage.classList.remove("hidden");
+            learnPage.scrollTop = 0;
+        });
+ 
+        // 各頁「首頁」按鈕
+        learnHomeBtn.addEventListener("click",  goHome);
+        actionHomeBtn.addEventListener("click", goHome);
+ 
+        /* ============================================================
+           goHome()
+           ------------------------------------------------------------
+           關閉所有覆蓋層與彈窗，並將主頁面切換到 home（首頁）。
+        ============================================================ */
+        function goHome() {
+            modal.style.display = "none";
+            learnPage.classList.add("hidden");
+            actionPage.classList.add("hidden");
+            showPage("home");
+        }
+ 
+        /* ============================================================
+           resetModal()
+           ------------------------------------------------------------
+           重置彈窗狀態，清空選取標記與回饋訊息，
+           確保下一個題目不會保留上一題的操作痕跡。
+        ============================================================ */
+        function resetModal() {
+            selectedOption = null;
+            optionCards.forEach(card => card.classList.remove("active"));
+            resultBox.innerHTML = "";
+        }
+ 
+    }); // End DOMContentLoaded
+    </script>
+ 
+    <!-- ================================================================
+         頁面顯示控制 CSS
+         ----------------------------------------------------------------
+         page-view：預設隱藏所有頁面區塊（display:none）。
+         active-page：顯示當前頁面（display:block）。
+         JS 的 showPage() 函式透過切換這兩個類別控制頁面顯示。
+    ================================================================ -->
+    <style>
+        main > section.page-view {
+            display: none;
+        }
+        main > section.page-view.active-page {
+            display: block;
+        }
+    </style>
+ 
+</body>
+</html>
