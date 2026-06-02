@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
     ======================================================================
-    SDGs 情境學習平台｜Morandi Dark Edition（美化重製版）
+    SDGs 情境學習平台
     ----------------------------------------------------------------------
     功能摘要：
     1. 首頁介紹 17 項永續發展目標，含視覺化統計卡。
@@ -1277,15 +1277,13 @@
          所有頁面區塊都放在此 main 內。
          顯示邏輯由 JS 的 showPage() 控制——每次只顯示一個區塊。
     ================================================================ -->
-    <main id="home" class="max-w-[1120px] mx-auto pb-40">
+    <main id="home" class="max-w-[1050px] mx-auto pb-40">
  
         <!-- ============================================================
              Hero Section — 首頁主視覺
-             ------------------------------------------------------------
-             第一眼印象：平台標語、說明文字、CTA 按鈕、數字統計卡片。
         ============================================================ -->
         <section class="hero-panel mb-14">
-            <div class="grid lg:grid-cols-[1.3fr_0.7fr] gap-10 items-center relative z-10">
+            <div class="grid lg:grid-cols-[1fr_auto] gap-2 items-center relative z-10">
  
                 <!-- 左側文字區 -->
                 <div>
@@ -1314,24 +1312,15 @@
                         <a href="#intro"    class="secondary-cta" data-i18n="heroCta2">瀏覽 SDGs 介紹</a>
                     </div>
                 </div>
- 
-                <!-- 右側統計卡片 -->
-                <div class="grid grid-cols-2 gap-4">
-                    <!-- 17 項目標（橫跨兩欄）-->
-                    <div class="hero-stat col-span-2">
-                        <div class="hero-stat-number">17</div>
-                        <p class="text-lg mt-2 text-white/75" data-i18n="heroStat1">項全球共同目標</p>
-                    </div>
-                    <!-- 2030 議程 -->
-                    <div class="hero-stat">
-                        <div class="hero-stat-number text-3xl">2030</div>
-                        <p class="text-sm mt-2 text-white/65" data-i18n="heroStat2">永續發展議程</p>
-                    </div>
-                    <!-- 學習模式數量 -->
-                    <div class="hero-stat">
-                        <div class="hero-stat-number text-3xl">2</div>
-                        <p class="text-sm mt-2 text-white/65" data-i18n="heroStat3">種學習模式</p>
-                    </div>
+                <!-- 右側圖片 -->
+                    <div class="flex justify-end items-center">
+                    <img
+                        src="https://feb.unpad.ac.id/wp-content/uploads/2025/09/image.png"
+                        class="-ml-10"
+                        alt="SDGs Wheel"
+                        transform: translateX(20px)
+                        style="width:500px;filter:saturate(0.65);"
+                    >
                 </div>
             </div>
         </section>
