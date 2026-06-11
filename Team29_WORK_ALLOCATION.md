@@ -48,7 +48,7 @@
 |--------|-------------|---------------------|
 | 林昀希 | 33.3% | 負責 PostgreSQL 相關工作，包括 schema、ER diagram、seeding、relational queries、booking/cancellation，以及 authentication functions。 |
 | 李盈萱 | 33.3% | 負責 Neo4j 相關工作，包括 route graph design、`seed.cypher`、`seed_neo4j.py`、graph queries，以及 shortest-path testing。 |
-| 陳思宇 | 33.4% | 負責 integration testing、RAG/vector preparation 與 final verification，包括 mock JSON data 檢查、policy chunks、`seed_vectors.py`、embedding model setup、pgvector verification、pgAdmin 檢查、UI / agent 測試，以及 booking / cancellation / seat availability 測試。 |
+| 陳思宇 | 33.3% | 負責 integration testing、RAG/vector preparation 與 final verification，包括 mock JSON data 檢查、policy chunks、`seed_vectors.py`、embedding model setup、pgvector verification、pgAdmin 檢查、UI / agent 測試，以及 booking / cancellation / seat availability 測試。 |
 | **Total** | **100%** | |
 
 ---
