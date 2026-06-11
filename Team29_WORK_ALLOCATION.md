@@ -1,4 +1,4 @@
-# Work Allocation Report — [Team ID]
+# Work Allocation Report — [Team 29]
 
 ## 1. Team Members
 
@@ -46,9 +46,9 @@
 
 | Member | Estimated % | Brief justification |
 |--------|-------------|---------------------|
-| 林昀希 | 38% | 主要負責 PostgreSQL 核心部分，包括 relational schema design、PostgreSQL seeding、relational query functions、booking/cancellation logic 與 authentication queries。這些內容構成系統主要交易資料庫功能，因此工作量比例最高。 |
-| 李盈萱 | 32% | 主要負責 Neo4j graph database 部分，包括 route graph design、graph seeding、graph query functions，以及 shortest-path / Dijkstra 查詢驗證。同時也協助 review PostgreSQL query logic。 |
-| 陳思宇 | 30% | 主要負責整合、測試、RAG/vector preparation、policy data verification、pgAdmin 檢查、UI 端到端測試、debug panel 驗證與 demo 流程統整。 |
+| 林昀希 | % | 主要負責 PostgreSQL 核心部分，包括 relational schema design、PostgreSQL seeding、relational query functions、booking/cancellation logic 與 authentication queries。這些內容構成系統主要交易資料庫功能，因此工作量比例最高。 |
+| 李盈萱 | % | 主要負責 Neo4j graph database 部分，包括 route graph design、graph seeding、graph query functions，以及 shortest-path / Dijkstra 查詢驗證。同時也協助 review PostgreSQL query logic。 |
+| 陳思宇 | % | 主要負責整合、測試、RAG/vector preparation、policy data verification、pgAdmin 檢查、UI 端到端測試、debug panel 驗證與 demo 流程統整。 |
 | **Total** | **100%** | |
 
 ---
