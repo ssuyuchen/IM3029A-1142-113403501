@@ -38,59 +38,59 @@
 
 > *Your answer:*
 
-- **閱讀與確認 JSON mock data**  
-  閱讀專案提供的 JSON 資料，確認使用者、車站、班次、訂票、付款、feedback 和 policy 相關資料的欄位與關係，作為後續資料庫設計與測試的基礎。
+- **Reviewed and verified the JSON mock data**  
+  I reviewed the JSON data provided in the project and checked the fields and relationships related to users, stations, schedules, bookings, payments, feedback, and policy data. This provided the foundation for later database design and testing.
 
-- **整理 policy 相關資料**  
-  分析 `refund_policy.json`、`booking_rules.json`、`travel_policies.json`、`ticket_types.json`，確認這些檔案如何對應退款、訂票、票種、行李、腳踏車、寵物與乘車規範等問題。
+- **Organized policy-related data**  
+  I analyzed `refund_policy.json`, `booking_rules.json`, `travel_policies.json`, and `ticket_types.json` to understand how these files correspond to refund rules, booking rules, ticket types, luggage policies, bicycle policies, pet policies, and travel regulations.
 
-- **新增與調整 policy JSON 內容**  
-  協助補充 policy 內容，讓系統能回答更多實際使用情境，例如 metro 和 national rail 在退款、改票、day pass、腳踏車、寵物與行李規範上的差異。
+- **Added and adjusted policy JSON content**  
+  I helped supplement the policy content so that the system could answer more realistic user scenarios, such as differences between metro and national rail rules for refunds, ticket changes, day passes, bicycles, pets, and luggage.
 
-- **設計 policy chunk strategy**  
-  規劃 policy 文件如何切成適合 RAG 檢索的 chunks，包含 chunk 範圍、命名方式與 metadata，讓使用者用自然語言提問時能找到正確規則。
+- **Designed the policy chunk strategy**  
+  I planned how the policy documents should be divided into chunks suitable for RAG retrieval, including chunk scope, naming rules, and metadata. This helped the system retrieve the correct rules when users asked questions in natural language.
 
-- **建立與修改 `policy_chunks.json`**  
-  協助將 policy JSON 整理成可匯入 pgvector 的 `policy_chunks.json`，並檢查每個 chunk 的內容與 metadata 是否清楚、可檢索。
+- **Created and modified `policy_chunks.json`**  
+  I helped convert the policy JSON data into `policy_chunks.json`, which could be imported into pgvector, and checked whether each chunk had clear content and useful metadata for retrieval.
 
-- **確認 `seed_vectors.py` 執行流程**  
-  確認 `seed_vectors.py` 如何讀取 policy chunks、產生 embedding，並將資料寫入 pgvector，確保 policy 資料能進入 RAG 流程。
+- **Verified the `seed_vectors.py` workflow**  
+  I checked how `seed_vectors.py` reads policy chunks, generates embeddings, and writes the data into pgvector to ensure that policy data could enter the RAG workflow correctly.
 
-- **確認 embedding model 可正常使用**  
-  協助確認 `nomic-embed-text` 已正確 pull，並確認它能用於 policy chunks 的向量化。
+- **Verified that the embedding model worked properly**  
+  I helped confirm that `nomic-embed-text` was correctly pulled and could be used to vectorize the policy chunks.
 
-- **確認 pgvector 寫入正常**  
-  協助檢查 policy chunks 轉成 embedding 後是否成功寫入 pgvector，讓後續 policy search 可以正常取得資料。
+- **Verified that pgvector insertion worked properly**  
+  I helped check whether policy chunks were successfully converted into embeddings and inserted into pgvector, so that later policy search could retrieve the correct data.
 
-- **協助 PostgreSQL 測試與 pgAdmin 驗證**  
-  使用 pgAdmin 協助檢查資料表、資料匯入狀態與查詢結果，確認 PostgreSQL 部分能支援訂票、付款、班次與使用者紀錄等功能。
+- **Assisted with PostgreSQL testing and pgAdmin verification**  
+  I used pgAdmin to help inspect tables, imported data, and query results, confirming that the PostgreSQL part could support bookings, payments, schedules, and user records.
 
-- **協助 review `schema.sql`**  
-  協助檢查 schema 是否符合專案需求，包含 primary key、foreign key、constraints，以及每個 foreign key 的 `ON DELETE` 行為是否合理。
+- **Assisted in reviewing `schema.sql`**  
+  I helped check whether the schema met the project requirements, including primary keys, foreign keys, constraints, and whether each foreign key had an appropriate `ON DELETE` behavior.
 
-- **協助 review `queries.py` / relational queries**  
-  協助檢查 relational query functions 是否符合 task requirements，例如查詢班次、訂票紀錄、建立 booking、付款、取消與退款等功能。
+- **Assisted in reviewing `queries.py` / relational queries**  
+  I helped check whether the relational query functions met the task requirements, such as querying schedules, retrieving user booking records, creating bookings, processing payments, cancellations, and refunds.
 
-- **協助確認 Task 4 查詢功能**  
-  協助測試 Task 4 相關查詢，確認 relational database 查詢與 agent tool 回傳的結果是否符合 mock data 與使用者問題。
+- **Assisted in verifying Task 4 query functions**  
+  I helped test Task 4 related queries and checked whether the relational database query results and agent tool outputs matched the mock data and user questions.
 
-- **協助端到端整合測試**  
-  測試使用者從 UI 輸入問題後，系統是否能透過 agent 正確呼叫 PostgreSQL、Neo4j 或 RAG policy search，並回傳合理答案。
+- **Assisted with end-to-end integration testing**  
+  I tested whether the system could correctly call PostgreSQL, Neo4j, or RAG policy search through the agent after a user entered a question in the UI, and whether the final answer was reasonable.
 
-- **協助檢查 UI.py 與回報問題**  
-  在 UI 測試時協助確認問題是否能觸發正確流程，並回報可能來自 UI、agent、database query 或 RAG retrieval 的錯誤。
+- **Assisted in checking `UI.py` and reporting issues**  
+  During UI testing, I helped check whether user questions triggered the correct workflow and reported issues that might come from the UI, agent, database queries, or RAG retrieval.
 
-- **使用 debug panel 驗證 agent 流程**  
-  透過 debug panel 檢查 agent 呼叫的 tool、資料庫回傳結果與最後回答，協助定位整合問題。
+- **Used the debug panel to verify the agent workflow**  
+  I used the debug panel to inspect the tools called by the agent, the raw database results, and the final answer, which helped identify integration problems.
 
-- **協助整體需求符合度檢查**  
-  在後期協助對照 project requirements，確認 schema、queries、agent、policy chunks、seed vectors、UI 測試與文件內容沒有明顯遺漏。
+- **Assisted in checking overall requirement compliance**  
+  In the later stage, I helped compare the implementation against the project requirements to confirm that the schema, queries, agent, policy chunks, seed vectors, UI testing, and related functions did not have obvious omissions.
 
-- **全組共同完成 git sync 與 reseed 確認**  
-  收尾階段全組一起確認 git 版本同步、資料庫 reseed 結果，以及 PostgreSQL、Neo4j、pgvector 是否能正常重建。
+- **Jointly completed git sync and reseed verification**  
+  In the final stage, the team jointly checked git synchronization, database reseeding results, and whether PostgreSQL, Neo4j, and pgvector could be rebuilt correctly.
 
-- **全組共同完成 demo 排練**  
-  Demo 前全組一起確認展示流程，測試各自負責的 database、query、agent、RAG 和 UI 功能是否能順利展示。
+- **Jointly completed demo rehearsal**  
+  Before the demo, the team jointly confirmed the presentation flow and tested whether each database, query, agent, RAG, and UI function could be demonstrated smoothly.
 
 ---
 
@@ -98,23 +98,23 @@
 
 > *Your answer:*
 
-- **理解 RAG、embedding、pgvector 和 policy JSON 的關係**  
-  一開始需要花時間釐清原始 policy JSON、policy chunks、embedding model、pgvector 和 semantic search 之間的資料流。後來透過整理流程，確認資料會從 policy JSON 轉成 chunks，再產生 embedding 並寫入 pgvector，最後提供 agent 查詢使用。
+- **Understanding the relationship between RAG, embeddings, pgvector, and policy JSON**  
+  At first, I needed time to clarify the data flow among the original policy JSON files, policy chunks, the embedding model, pgvector, and semantic search. I resolved this by organizing the workflow: policy JSON is converted into chunks, embeddings are generated, the vectors are inserted into pgvector, and the agent later uses them for policy retrieval.
 
-- **設計適合自然語言查詢的 policy chunks**  
-  Policy chunks 不能只照 JSON 結構切分，還需要考慮使用者實際會怎麼問問題。因此在整理 chunks 時，特別注意退款、改票、票種、腳踏車、寵物、行李、day pass 等常見情境，讓檢索結果更準確。
+- **Designing policy chunks suitable for natural language queries**  
+  Policy chunks could not simply follow the original JSON structure. They also needed to consider how users would ask questions in real scenarios. Therefore, I paid special attention to common topics such as refunds, ticket changes, ticket types, bicycles, pets, luggage, and day passes to improve retrieval accuracy.
 
-- **確認 pgvector 寫入與 embedding model 正常**  
-  在處理 `seed_vectors.py` 時，需要確認 `nomic-embed-text` 是否已經 pull，embedding 是否能產生，以及資料是否成功寫入 pgvector。透過重新執行 seed 流程與檢查資料庫內容來確認結果。
+- **Verifying pgvector insertion and the embedding model**  
+  While working with `seed_vectors.py`, I needed to confirm whether `nomic-embed-text` had been pulled correctly, whether embeddings could be generated, and whether the data was inserted into pgvector successfully. I verified this by rerunning the seed process and checking the database content.
 
-- **判斷 schema 中 foreign key 的 `ON DELETE` 行為**  
-  檢查 `schema.sql` 時，不能只把所有 foreign key 都套用同一種刪除規則，而是需要依照 users、bookings、payments、feedback、stations、schedules 等資料關係判斷合理行為。透過逐一檢查 foreign key 與 business logic 來修正或確認。
+- **Determining appropriate `ON DELETE` behavior for foreign keys in the schema**  
+  When reviewing `schema.sql`, it was not appropriate to apply the same delete rule to every foreign key. The behavior needed to match the business logic of users, bookings, payments, feedback, stations, and schedules. I checked the foreign keys one by one and evaluated them according to their relationships.
 
-- **端到端測試時需要定位錯誤來源**  
-  UI 回答錯誤時，問題可能來自 UI、agent intent、database query、RAG retrieval 或資料本身。透過 debug panel 檢查 tool calling、資料庫回傳結果與最後回答，逐步定位問題。
+- **Locating errors during end-to-end testing**  
+  When the UI produced an incorrect answer, the issue could come from the UI, agent intent detection, database query, RAG retrieval, or the underlying data. I used the debug panel to inspect tool calls, raw database results, and the final answer to locate problems step by step.
 
-- **Git 與版本同步需要反覆確認**  
-  專案後期需要多次 pull、commit、push 和確認 branch 狀態。透過檢查目前修改檔案、commit 狀態與 push 結果，降低漏推或覆蓋他人修改的風險。
+- **Managing git and version synchronization**  
+  In the later stage of the project, the team needed to pull, commit, push, and check branch status multiple times. I reduced the risk of missing changes or overwriting teammates' work by checking modified files, commit status, and push results carefully.
 
 ---
 
@@ -122,11 +122,11 @@
 
 | Criterion | Rating (1–5) | Justification (1–2 sentences) |
 |-----------|-------------|-------------------------------|
-| I delivered the tasks assigned to me in the work allocation | 4 | 完成了 policy JSON、policy chunk strategy、`policy_chunks.json`、`seed_vectors.py` 流程確認、pgvector 寫入確認、PostgreSQL 測試、UI 整合測試與 demo 前確認等工作。 |
-| The quality of my work was satisfactory | 4 | 工作過程中有反覆檢查資料格式、RAG 檢索流程、pgvector 寫入結果、schema 設計、query functions 與 agent 回答是否符合專案需求。 |
-| I communicated well and kept the team informed | 4 | 有整理修改內容、測試結果、commit / push 狀態與發現的問題，讓隊友能了解目前進度與需要確認的部分。 |
-| I met deadlines agreed within the team | 4 | 按照團隊進度完成 policy 整理、RAG 準備、資料庫測試、整合測試與 demo 前確認，並配合收尾階段的同步與檢查。 |
-| **Overall self-rating** | 4 | 完成分配到的整合與測試相關工作，也額外協助 schema、queries、agent、RAG 與需求符合度檢查。 |
+| I delivered the tasks assigned to me in the work allocation | 4 | I completed the policy JSON work, policy chunk strategy, `policy_chunks.json`, `seed_vectors.py` workflow verification, pgvector insertion verification, PostgreSQL testing, UI integration testing, and demo preparation tasks. |
+| The quality of my work was satisfactory | 4 | I repeatedly checked the data format, RAG retrieval workflow, pgvector insertion results, schema design, query functions, and agent responses against the project requirements. |
+| I communicated well and kept the team informed | 4 | I organized and reported modification details, testing results, commit / push status, and discovered issues so that teammates could understand the current progress and items requiring confirmation. |
+| I met deadlines agreed within the team | 4 | I completed policy organization, RAG preparation, database testing, integration testing, and demo preparation according to the team schedule, and cooperated with the final synchronization and checking process. |
+| **Overall self-rating** | 4 | I completed my assigned integration and testing-related work and also helped check the schema, queries, agent, RAG workflow, and requirement compliance. |
 
 ---
 
@@ -149,33 +149,33 @@
 
 > *Your answer:*
 
-- **主要負責 PostgreSQL relational database 相關工作**  
-  負責或主要參與 `schema.sql`、PostgreSQL seed scripts、relational query functions，以及資料表設計與資料匯入流程。
+- **Mainly responsible for PostgreSQL relational database work**  
+  This teammate was mainly responsible for or participated in `schema.sql`, PostgreSQL seed scripts, relational query functions, table design, and the data import workflow.
 
-- **設計 relational schema**  
-  建立 users、bookings、payments、feedback、stations、schedules、ticket types、seat layouts 等資料表關係，並處理 primary key、foreign key、constraints 與 indexes。
+- **Designed the relational schema**  
+  This teammate built the relationships among users, bookings, payments, feedback, stations, schedules, ticket types, and seat layouts, and handled primary keys, foreign keys, constraints, and indexes.
 
-- **實作 relational query functions**  
-  實作或協助實作查詢班次、查詢使用者訂票紀錄、查詢 national rail availability、建立 booking、付款、取消與退款等功能。
+- **Implemented relational query functions**  
+  This teammate implemented or helped implement functions for querying schedules, retrieving user booking records, checking national rail availability, creating bookings, processing payments, cancellations, and refunds.
 
-- **協助資料庫整合與測試**  
-  在整合階段協助確認 PostgreSQL query results 是否能被 agent 正確呼叫與使用。
+- **Assisted with database integration and testing**  
+  During integration, this teammate helped confirm whether PostgreSQL query results could be correctly called and used by the agent.
 
 #### Did their actual contribution match the agreed work allocation?
 
 > *Your answer (Yes / Mostly / Partially / No — with explanation):*
 
-是。林昀希完成了 work allocation 中 PostgreSQL 相關的主要工作，包含 schema、seed workflow 和 relational query implementation，也有參與後續整合與修正。整體貢獻符合原本的分工。
+Yes. 林昀希 completed the main PostgreSQL-related work in the work allocation, including the schema, seed workflow, and relational query implementation. They also participated in later integration and revision. Overall, their contribution matched the original division of work.
 
 #### Peer rating for this teammate
 
 | Criterion | Rating (1–5) | Justification (1–2 sentences) |
 |-----------|-------------|-------------------------------|
-| Delivered the tasks assigned in the work allocation | 4 | 完成了分配到的 PostgreSQL 相關實作工作，符合團隊原本的分工。 |
-| Quality of their work was satisfactory | 4 | 實作內容大致能支援最終資料庫與 agent 流程，經過 review 和測試後可正常整合。 |
-| Communicated well and kept the team informed | 4 | 在 schema、query 或整合問題需要討論時，有與組員進行溝通。 |
-| Met deadlines agreed within the team | 4 | 大致依照團隊時程完成負責的工作。 |
-| **Overall rating for this teammate** | 4 | 對 relational database 部分有明確且重要的貢獻。 |
+| Delivered the tasks assigned in the work allocation | 4 | They completed the assigned PostgreSQL-related implementation work according to the team’s original division of tasks. |
+| Quality of their work was satisfactory | 4 | Their implementation generally supported the final database and agent workflow, and it could be integrated properly after review and testing. |
+| Communicated well and kept the team informed | 4 | They communicated with the team when schema, query, or integration issues needed discussion. |
+| Met deadlines agreed within the team | 4 | They generally completed their assigned work according to the team schedule. |
+| **Overall rating for this teammate** | 4 | They made a clear and important contribution to the relational database part of the project. |
 
 #### Estimated contribution percentage for this teammate
 
@@ -194,33 +194,33 @@
 
 > *Your answer:*
 
-- **主要負責 Neo4j graph database 與 route 相關工作**  
-  負責或主要參與 Neo4j graph model、graph seed scripts、station nodes、route relationships，以及 shortest path / route query logic。
+- **Mainly responsible for Neo4j graph database and route-related work**  
+  This teammate was mainly responsible for or participated in the Neo4j graph model, graph seed scripts, station nodes, route relationships, and shortest path / route query logic.
 
-- **建立 graph nodes 與 relationships**  
-  將 metro stations、national rail stations、interchange stations 與相鄰站點關係整理成 graph database 結構，支援路線查詢與轉乘分析。
+- **Created graph nodes and relationships**  
+  This teammate organized metro stations, national rail stations, interchange stations, and adjacent station relationships into a graph database structure to support route search and transfer analysis.
 
-- **實作 graph query functions**  
-  實作或協助實作 route search、shortest path、station adjacency、metro / national rail interchange 等查詢功能。
+- **Implemented graph query functions**  
+  This teammate implemented or helped implement route search, shortest path, station adjacency, and metro / national rail interchange query functions.
 
-- **協助 agent integration 與測試**  
-  協助確認 agent 能正確呼叫 graph query tools，並將 Neo4j 查詢結果轉成使用者能理解的路線回答。
+- **Assisted with agent integration and testing**  
+  This teammate helped confirm whether the agent could correctly call graph query tools and convert Neo4j query results into route answers that users could understand.
 
 #### Did their actual contribution match the agreed work allocation?
 
 > *Your answer (Yes / Mostly / Partially / No — with explanation):*
 
-是。李盈萱完成了 work allocation 中 Neo4j 與 route query 相關的主要工作，也有參與系統整合與測試。整體貢獻符合原本的分工。
+Yes. 李盈萱 completed the main Neo4j and route query-related work in the work allocation, and also participated in system integration and testing. Overall, their contribution matched the original division of work.
 
 #### Peer rating for this teammate
 
 | Criterion | Rating (1–5) | Justification (1–2 sentences) |
 |-----------|-------------|-------------------------------|
-| Delivered the tasks assigned in the work allocation | 4 | 完成了分配到的 graph database 與 route query 相關工作。 |
-| Quality of their work was satisfactory | 4 | 實作內容能支援 route search 和 shortest path 等功能，經過測試後能整合進最終系統。 |
-| Communicated well and kept the team informed | 4 | 在 graph query 或整合問題需要確認時，有與組員進行溝通。 |
-| Met deadlines agreed within the team | 4 | 大致依照團隊時程完成負責的工作。 |
-| **Overall rating for this teammate** | 4 | 對 graph database 與 route search 部分有明確且重要的貢獻。 |
+| Delivered the tasks assigned in the work allocation | 4 | They completed the assigned graph database and route query-related work. |
+| Quality of their work was satisfactory | 4 | Their implementation supported route search and shortest path functions, and it could be integrated into the final system after testing. |
+| Communicated well and kept the team informed | 4 | They communicated with the team when graph query or integration issues needed confirmation. |
+| Met deadlines agreed within the team | 4 | They generally completed their assigned work according to the team schedule. |
+| **Overall rating for this teammate** | 4 | They made a clear and important contribution to the graph database and route search part of the project. |
 
 #### Estimated contribution percentage for this teammate
 
@@ -232,10 +232,10 @@
 
 | Member | Your estimated % | Notes |
 |--------|----------------|-------|
-| 陳思宇 | 33.333333% | 負責 policy data、RAG chunks、pgvector / `seed_vectors.py` 流程確認、PostgreSQL 測試、UI 整合測試、debug 驗證與需求符合度檢查。整體分工平均。 |
-| 林昀希 | 33.333333% | 主要負責 PostgreSQL schema、seed scripts、relational queries 與 relational database 相關功能。整體分工平均。 |
-| 李盈萱 | 33.333333% | 主要負責 Neo4j graph database、route / shortest path query、interchange relationship 與 graph integration。整體分工平均。 |
-| **Total** | **100%** | 三位成員分工平均。 |
+| 陳思宇 | 33.333333% | Responsible for policy data, RAG chunks, pgvector / `seed_vectors.py` workflow verification, PostgreSQL testing, UI integration testing, debug verification, and requirement compliance checking. The workload was evenly divided among the three members. |
+| 林昀希 | 33.333333% | Mainly responsible for PostgreSQL schema, seed scripts, relational queries, and relational database-related functions. The workload was evenly divided among the three members. |
+| 李盈萱 | 33.333333% | Mainly responsible for Neo4j graph database, route / shortest path queries, interchange relationships, and graph integration. The workload was evenly divided among the three members. |
+| **Total** | **100%** | The three members contributed equally. |
 
 ---
 
@@ -245,7 +245,7 @@
 
 > *Your answer (2–4 sentences):*
 
-團隊有將 TransitFlow 專案分成清楚的工作區塊，包含 PostgreSQL relational database、Neo4j graph database、RAG policy data、AI agent integration、UI testing 等部分。每位成員都有完成自己負責的區域，並在需要時協助整合與測試。整體來說，三位成員的工作量平均，最後也有一起確認主要功能能否正常運作。
+The team divided the TransitFlow project into clear work areas, including the PostgreSQL relational database, Neo4j graph database, RAG policy data, AI agent integration, and UI testing. Each member completed their own assigned area and assisted with integration and testing when needed. Overall, the workload was balanced among the three members, and the team checked the main functions together before the final submission.
 
 ---
 
@@ -253,7 +253,7 @@
 
 > *Your answer (2–4 sentences):*
 
-如果重新做一次，會希望更早定義每個檔案的負責人，以及 branch、merge、commit 和 push 的規則，減少後期整合時的混亂。也會在專案初期建立更完整的 task checklist，包含 schema constraints、foreign keys、query functions、RAG chunks、seed scripts、agent tools 和 UI testing。這樣最後檢查時會更有系統，也能減少接近 deadline 時重複修改的情況。
+If we had more time, I would expand the testing coverage and try more user scenarios before the final submission. Although the main functions were completed successfully, testing more natural language questions, booking cases, route queries, and policy-related questions could make the system even more reliable. I would also keep more detailed testing notes so that the final verification process would be easier to review.中文
 
 ---
 
