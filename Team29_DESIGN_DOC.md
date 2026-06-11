@@ -1,7 +1,6 @@
 # Database Design Document — Team 29
 
-TransitFlow final project design document  
-IM2002 Database Management
+TransitFlow final project design document (IM2002 Database Management)
 
 ---
 
