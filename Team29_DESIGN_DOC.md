@@ -1,6 +1,7 @@
 # Database Design Document — Team 29
 
-TransitFlow final project design document (IM2002 Database Management).
+TransitFlow final project design document  
+IM2002 Database Management
 
 ---
 
@@ -8,20 +9,20 @@ TransitFlow final project design document (IM2002 Database Management).
 
 ### 1.1 System overview
 
-TransitFlow 是一個雙網路交通系統，包含 **City Metro** 與 **National Rail** 兩種服務。City Metro 是都會捷運系統，乘客購買當日票或 day pass，不涉及 advance booking 或 reserved seats；National Rail 是城際鐵路系統，支援 advance booking、fare class、reserved seat、coach 與 seat layout。
+TransitFlow is a dual-network public transport system consisting of **City Metro** and **National Rail** services. City Metro represents an urban metro network where passengers purchase same-day single tickets or day passes. It does not involve advance booking or reserved seating. National Rail represents an intercity rail network that supports advance booking, fare classes, reserved seats, coaches, and seat layouts.
 
-本專案採用三種資料庫技術，各自負責不同類型的資料與查詢需求：
+This project uses three database technologies, each responsible for a different type of data and query workload:
 
 1. **PostgreSQL relational database**  
-   儲存結構化與交易型資料，例如使用者、驗證資料、車站、時刻表、票種、票價、座位、訂票、metro trip、付款與 feedback。Relational model 負責 foreign key integrity、transaction consistency、seat booking validation 與 audit trail。
+   Stores structured and transactional data, including users, authentication records, stations, schedules, ticket types, fares, seats, bookings, metro trips, payments, and feedback. The relational model is responsible for foreign key integrity, transaction consistency, seat booking validation, and audit history.
 
 2. **Neo4j graph database**  
-   儲存交通網路拓樸，例如 metro station、national rail station、track adjacency 與 interchange links。Graph model 負責 shortest route、cheapest route、interchange route、alternative route 與 delay ripple traversal。
+   Stores the physical transport network topology, including metro stations, national rail stations, track adjacency, and interchange links. The graph model supports shortest-route search, cheapest-route search, interchange routing, alternative routing, and delay ripple traversal.
 
 3. **PostgreSQL + pgvector**  
-   儲存政策文件的 embedding，例如 refund policy、booking rules、ticket types 與 travel policies。Vector search 負責自然語言政策查詢，例如 delay compensation、bicycle policy、refund eligibility。
+   Stores embedded policy documents, including refund policies, booking rules, ticket type rules, and travel policies. Vector search supports natural-language policy questions, such as delay compensation, bicycle policy, refund eligibility, and ticket-change rules.
 
-這樣的資料庫分工讓 relational database 專注於資料一致性與交易完整性，Neo4j 專注於網路路徑搜尋，pgvector 專注於語意檢索。
+This separation allows the relational database to focus on data consistency and transactional correctness, Neo4j to focus on path traversal, and pgvector to focus on semantic retrieval.
 
 ---
 
@@ -301,17 +302,17 @@ erDiagram
 | `national_rail_station_lines` | Resolves station-to-line membership for national rail. | Allows stations such as `NR01` to belong to multiple rail lines. |
 | `metro_schedules` | Stores metro timetable and fare parameters. | Metro uses base fare plus per-stop rate. |
 | `national_rail_schedules` | Stores national rail timetable and service type. | Service type distinguishes normal and express services. |
-| `national_rail_schedule_fares` | Stores national rail fare rates by schedule and class. | Avoids columns such as `standard_fare` and `first_fare` in schedule table. |
+| `national_rail_schedule_fares` | Stores national rail fare rates by schedule and class. | Avoids columns such as `standard_fare` and `first_fare` in the schedule table. |
 | `metro_schedule_stops` | Stores ordered metro stops. | Composite key `(schedule_id, stop_order)` preserves stop sequence. |
 | `national_rail_schedule_stops` | Stores ordered national rail stops and pass-through stations. | `is_stopping` distinguishes actual stops from express pass-through stations. |
 | `seat_layouts` | Links a national rail schedule to a seat map. | One schedule uses one seat layout. |
 | `coaches` | Stores coach-level fare class. | Coach `A` may be first class; coach `B` may be standard. |
 | `seats` | Stores physical seats in each coach. | Composite key `(layout_id, coach, seat_id)` uniquely identifies each seat. |
 | `ticket_types` | Stores ticket type definitions. | Includes single, return, and day pass. |
-| `ticket_type_networks` | Stores which network supports which ticket type. | Prevents invalid combinations such as national rail day pass if not supported. |
+| `ticket_type_networks` | Stores which network supports each ticket type. | Prevents invalid combinations such as national rail day pass if not supported. |
 | `journeys` | Supertype for all passenger journeys. | Shared parent for both national rail bookings and metro trips. |
-| `bookings` | National rail booking subtype. | Includes reserved seat, fare class, travel date and departure time. |
-| `metro_trips` | Metro trip subtype. | Includes metro journey and optional day-pass parent reference. |
+| `bookings` | National rail booking subtype. | Includes reserved seat, fare class, travel date, and departure time. |
+| `metro_trips` | Metro trip subtype. | Includes metro journey details and optional day-pass parent reference. |
 | `payments` | Payment records for all journeys. | References `journeys`, not only one transaction subtype. |
 | `feedback` | Passenger feedback after travel. | References `journeys` and `users`; rating is constrained to 1–5. |
 | `policy_documents` | Embedded policy chunks for semantic retrieval. | Uses `vector(768)` for pgvector similarity search. |
@@ -366,6 +367,7 @@ The relational schema uses explicit constraints to protect core business rules:
 5. **Subtype consistency**  
    `bookings.booking_id` and `metro_trips.trip_id` reference `journeys.journey_id`. This ensures every booking or metro trip has a parent journey row before payment and feedback can refer to it.
 
+---
 
 ## Section 2 — Normalisation Justification
 
@@ -375,7 +377,7 @@ The relational schema is designed to satisfy third normal form (3NF) for the mai
 
 The main normalisation goals are:
 
-1. remove repeating groups from station, schedule and ticket data;
+1. remove repeating groups from station, schedule, and ticket data;
 2. preserve referential integrity through primary and foreign keys;
 3. avoid transitive dependencies in transactional records;
 4. separate authentication data from user profile data;
@@ -484,7 +486,7 @@ This removes repeating groups from schedule rows and allows queries such as “w
 
 ---
 
-### 2.6 3NF decision: seat hierarchy decomposed into layout, coach and seat tables
+### 2.6 3NF decision: seat hierarchy decomposed into layout, coach, and seat tables
 
 National rail seat data is hierarchical:
 
@@ -605,10 +607,11 @@ The trade-off is that the stored value must be correct when the journey is inser
 
 The design does not physically delete cancelled journeys. Instead, cancellation updates `journeys.status` to `cancelled` and updates payment status as needed.
 
-This protects auditability. Payments, feedback, refund logic and historical booking records remain available after cancellation. Physical deletion would make it harder to explain why a payment was refunded or why a seat became available again.
+This protects auditability. Payments, feedback, refund logic, and historical booking records remain available after cancellation. Physical deletion would make it harder to explain why a payment was refunded or why a seat became available again.
 
 The trade-off is that seat availability and booking history queries must explicitly exclude cancelled journeys where appropriate. This is reflected in the SQL logic, where bookings are joined with `journeys` and filtered by status.
 
+---
 
 ## Section 3 — Graph Database Design Rationale
 
@@ -832,12 +835,12 @@ This is a graph-native use case because “affected by a nearby station” is a 
 
 Neo4j does not store transactional facts such as:
 
-- passenger accounts,
-- bookings,
-- metro trips,
-- payments,
-- feedback,
-- password hashes,
+- passenger accounts;
+- bookings;
+- metro trips;
+- payments;
+- feedback;
+- password hashes;
 - seat reservations.
 
 These remain in PostgreSQL. Neo4j stores only the transport topology and routing weights. This boundary avoids duplicating operational truth across databases.
@@ -849,6 +852,7 @@ The agent combines them at application level. For example:
 3. Neo4j answers how to route across the network.
 4. pgvector answers the policy rule behind refunds or travel restrictions.
 
+---
 
 ## Section 4 — Vector / RAG Design
 
@@ -1044,6 +1048,7 @@ For example:
 
 This keeps each database responsible for the type of problem it is best suited to solve.
 
+---
 
 ## Section 5 — AI Tool Usage Evidence
 
@@ -1110,6 +1115,7 @@ This keeps each database responsible for the type of problem it is best suited t
 - **Outcome:**  
   The policy content was reorganised into `policy_chunks.json` and embedded through `seed_vectors.py`. The seeding script checks vector dimension before storing documents. This improved policy retrieval because user questions like “Can I bring my bike?” or “My train was delayed 45 minutes” can match semantically relevant policy chunks even if the exact wording differs.
 
+---
 
 ## Section 6 — Reflection & Trade-offs
 
@@ -1152,7 +1158,7 @@ The trade-off is that application code must understand subtype logic. For exampl
 
 ---
 
-### 6.3 Design decision 3: separating relational, graph and vector responsibilities
+### 6.3 Design decision 3: separating relational, graph, and vector responsibilities
 
 The system deliberately uses different databases for different access patterns.
 
@@ -1172,7 +1178,7 @@ The trade-off is operational complexity. Developers must seed and maintain three
 
 ### 6.4 Design decision 4: soft cancellation and audit preservation
 
-The booking cancellation flow updates status instead of deleting booking rows. This keeps the original transaction available for audit, refund explanation and user history.
+The booking cancellation flow updates status instead of deleting booking rows. This keeps the original transaction available for audit, refund explanation, and user history.
 
 The benefit is historical accuracy. The system can still show that a booking existed, how much was paid, and what refund rule was applied. This is important for customer service and payment traceability.
 
@@ -1182,7 +1188,7 @@ The trade-off is that availability queries must filter out cancelled journeys. T
 
 ### 6.5 Production difference 1: schema migrations
 
-In this project, the schema is stored in a single `schema.sql` file. For production, this should be replaced by migration tooling such as Flyway, Liquibase or Alembic.
+In this project, the schema is stored in a single `schema.sql` file. For production, this should be replaced by migration tooling such as Flyway, Liquibase, or Alembic.
 
 A production database should not be rebuilt from scratch whenever the schema changes. Migrations allow the team to apply incremental changes while preserving existing data. They also provide version control for schema evolution.
 
@@ -1192,7 +1198,7 @@ A production database should not be rebuilt from scratch whenever the schema cha
 
 The project uses environment configuration for database and provider settings. In production, secrets should not be stored in plain `.env` files on developer machines or servers.
 
-A production system should use a secret manager such as AWS Secrets Manager, Google Secret Manager, HashiCorp Vault or a Kubernetes secret system. This reduces the risk of leaking database passwords, API keys or LLM credentials.
+A production system should use a secret manager such as AWS Secrets Manager, Google Secret Manager, HashiCorp Vault, or a Kubernetes secret system. This reduces the risk of leaking database passwords, API keys, or LLM credentials.
 
 ---
 
@@ -1209,7 +1215,7 @@ The booking flow also requires strong transaction management. In production, the
 A production version should add:
 
 1. automated unit tests for fare and refund calculations;
-2. integration tests for PostgreSQL, Neo4j and pgvector queries;
+2. integration tests for PostgreSQL, Neo4j, and pgvector queries;
 3. end-to-end UI tests for booking and cancellation;
 4. monitoring for database latency and failed tool calls;
 5. alerting for vector dimension mismatch or failed seeding.
@@ -1219,3 +1225,7 @@ The current design is suitable for course demonstration, but production reliabil
 ---
 
 ## Section 7 — Optional Extension
+
+This section is intentionally left pending in this version.
+
+The optional Task 6 extension should be completed after the implementation details, `TASK6.md`, test output, and screenshots are confirmed.
