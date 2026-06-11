@@ -38,59 +38,56 @@
 
 > *Your answer:*
 
-- **Reviewed and verified the JSON mock data**  
-  I reviewed the JSON data provided in the project and checked the fields and relationships related to users, stations, schedules, bookings, payments, feedback, and policy data. This provided the foundation for later database design and testing.
+* **Reviewed and verified the JSON mock data**  
+  I reviewed the JSON mock data used in the project, including users, stations, schedules, bookings, payments, feedback, refund policies, booking rules, travel policies, and ticket types. This helped ensure that the later database design, seed workflow, policy retrieval, and UI testing were based on consistent data.
 
-- **Organized policy-related data**  
-  I analyzed `refund_policy.json`, `booking_rules.json`, `travel_policies.json`, and `ticket_types.json` to understand how these files correspond to refund rules, booking rules, ticket types, luggage policies, bicycle policies, pet policies, and travel regulations.
+* **Organized and supplemented policy-related data**  
+  I analyzed `refund_policy.json`, `booking_rules.json`, `travel_policies.json`, and `ticket_types.json` to understand how the policies corresponded to realistic user questions. I also helped supplement policy content related to refunds, booking rules, ticket changes, day passes, bicycles, pets, luggage, and other travel regulations.
 
-- **Added and adjusted policy JSON content**  
-  I helped supplement the policy content so that the system could answer more realistic user scenarios, such as differences between metro and national rail rules for refunds, ticket changes, day passes, bicycles, pets, and luggage.
+* **Designed the policy chunk strategy for RAG retrieval**  
+  I planned how the policy documents should be divided into retrieval-friendly chunks, including chunk scope, naming rules, metadata, and content structure. The goal was to make the RAG system retrieve the most relevant policy rule when users asked natural language questions.
 
-- **Designed the policy chunk strategy**  
-  I planned how the policy documents should be divided into chunks suitable for RAG retrieval, including chunk scope, naming rules, and metadata. This helped the system retrieve the correct rules when users asked questions in natural language.
+* **Created and modified `policy_chunks.json`**  
+  I helped convert the original policy JSON data into `policy_chunks.json`, which could be imported into pgvector. I checked whether each chunk had clear content, appropriate metadata, and enough semantic context for retrieval.
 
-- **Created and modified `policy_chunks.json`**  
-  I helped convert the policy JSON data into `policy_chunks.json`, which could be imported into pgvector, and checked whether each chunk had clear content and useful metadata for retrieval.
+* **Verified the `seed_vectors.py` and pgvector workflow**  
+  I checked how `seed_vectors.py` reads policy chunks, generates embeddings, and writes them into the `policy_documents` table. I also helped confirm that the `nomic-embed-text` embedding model was available and that the policy chunks could be inserted into pgvector correctly.
 
-- **Verified the `seed_vectors.py` workflow**  
-  I checked how `seed_vectors.py` reads policy chunks, generates embeddings, and writes the data into pgvector to ensure that policy data could enter the RAG workflow correctly.
+* **Assisted with PostgreSQL testing and pgAdmin verification**  
+  I used pgAdmin to inspect tables, imported data, query results, and relational records. This included checking whether PostgreSQL supported users, bookings, payments, schedules, feedback, policy documents, and related database operations correctly.
 
-- **Verified that the embedding model worked properly**  
-  I helped confirm that `nomic-embed-text` was correctly pulled and could be used to vectorize the policy chunks.
+* **Assisted in reviewing `schema.sql`**  
+  I helped review whether the schema met the project requirements, including primary keys, foreign keys, constraints, indexes, and `ON DELETE` behavior. I also checked whether the delete behavior matched the business logic of users, bookings, payments, feedback, stations, schedules, and related records.
 
-- **Verified that pgvector insertion worked properly**  
-  I helped check whether policy chunks were successfully converted into embeddings and inserted into pgvector, so that later policy search could retrieve the correct data.
+* **Assisted in reviewing and testing `queries.py` relational functions**  
+  I helped check whether the relational query functions supported the required tasks, including schedule queries, national rail availability, user booking retrieval, booking creation, payment records, cancellation handling, and refund-related logic.
 
-- **Assisted with PostgreSQL testing and pgAdmin verification**  
-  I used pgAdmin to help inspect tables, imported data, and query results, confirming that the PostgreSQL part could support bookings, payments, schedules, and user records.
+* **Assisted in debugging login authentication issues**  
+  I helped identify and verify login-related problems by checking whether the UI correctly passed user input to the authentication function and whether PostgreSQL user credential data matched the expected login workflow. I also helped confirm the need to handle password input consistently during login testing.
 
-- **Assisted in reviewing `schema.sql`**  
-  I helped check whether the schema met the project requirements, including primary keys, foreign keys, constraints, and whether each foreign key had an appropriate `ON DELETE` behavior.
+* **Assisted in improving PostgreSQL reseeding behavior for user credentials**  
+  I helped check the PostgreSQL seed workflow and identified that existing user credential records should be updated during reseeding when password hashes need to match the mock user data. This improved the reliability of repeated database setup and login testing.
 
-- **Assisted in reviewing `queries.py` / relational queries**  
-  I helped check whether the relational query functions met the task requirements, such as querying schedules, retrieving user booking records, creating bookings, processing payments, cancellations, and refunds.
+* **Assisted in improving booking display logic**  
+  I helped test the `show my booking` workflow and identified that cancelled national rail bookings should not appear in the active booking list. I assisted in adjusting the query logic so that bookings with `cancelled` status are excluded from normal booking display results.
 
-- **Assisted in verifying Task 4 query functions**  
-  I helped test Task 4 related queries and checked whether the relational database query results and agent tool outputs matched the mock data and user questions.
+* **Assisted in testing booking cancellation and seat availability behavior**  
+  I tested the booking cancellation flow and checked whether cancelled bookings were correctly treated as no longer occupying seats. This helped identify the difference between application-level booking status logic and database-level seat uniqueness constraints.
 
-- **Assisted with end-to-end integration testing**  
-  I tested whether the system could correctly call PostgreSQL, Neo4j, or RAG policy search through the agent after a user entered a question in the UI, and whether the final answer was reasonable.
+* **Assisted with end-to-end integration testing**  
+  I tested whether the system could correctly call PostgreSQL, Neo4j, or RAG policy search through the agent after a user entered a question in the UI. I also checked whether the final natural language answers were reasonable and consistent with the database results.
 
-- **Assisted in checking `UI.py` and reporting issues**  
-  During UI testing, I helped check whether user questions triggered the correct workflow and reported issues that might come from the UI, agent, database queries, or RAG retrieval.
+* **Used the debug panel to verify the agent workflow**  
+  I used the debug panel to inspect the tools called by the agent, the raw database results, and the final answer. This helped locate whether an issue came from the UI, agent intent detection, database query, RAG retrieval, or the underlying data.
 
-- **Used the debug panel to verify the agent workflow**  
-  I used the debug panel to inspect the tools called by the agent, the raw database results, and the final answer, which helped identify integration problems.
+* **Assisted in final functional verification after code changes**  
+  After modifying login, booking display, and cancellation-related logic, I helped verify the expected user flow: login, create booking, show booking, cancel booking, and confirm that cancelled bookings no longer appeared in active booking results.
 
-- **Assisted in checking overall requirement compliance**  
+* **Assisted in checking overall requirement compliance**  
   In the later stage, I helped compare the implementation against the project requirements to confirm that the schema, queries, agent, policy chunks, seed vectors, UI testing, and related functions did not have obvious omissions.
 
-- **Jointly completed git sync and reseed verification**  
-  In the final stage, the team jointly checked git synchronization, database reseeding results, and whether PostgreSQL, Neo4j, and pgvector could be rebuilt correctly.
-
-- **Jointly completed demo rehearsal**  
-  Before the demo, the team jointly confirmed the presentation flow and tested whether each database, query, agent, RAG, and UI function could be demonstrated smoothly.
+* **Jointly completed git synchronization, reseed verification, and demo rehearsal**  
+  In the final stage, the team jointly checked git synchronization, database reseeding results, PostgreSQL, Neo4j, pgvector rebuild workflows, and demo flow. I also helped confirm that the main database, query, agent, RAG, and UI functions could be demonstrated smoothly.
 
 ---
 
@@ -98,22 +95,25 @@
 
 > *Your answer:*
 
-- **Understanding the relationship between RAG, embeddings, pgvector, and policy JSON**  
-  At first, I needed time to clarify the data flow among the original policy JSON files, policy chunks, the embedding model, pgvector, and semantic search. I resolved this by organizing the workflow: policy JSON is converted into chunks, embeddings are generated, the vectors are inserted into pgvector, and the agent later uses them for policy retrieval.
+* **Understanding the full RAG and pgvector workflow**  
+  At first, I needed time to clarify the relationship among policy JSON files, policy chunks, embeddings, pgvector, and semantic search. I resolved this by organizing the workflow step by step: policy JSON is converted into chunks, embeddings are generated, vectors are inserted into pgvector, and the agent later uses semantic search to retrieve relevant policy rules.
 
-- **Designing policy chunks suitable for natural language queries**  
-  Policy chunks could not simply follow the original JSON structure. They also needed to consider how users would ask questions in real scenarios. Therefore, I paid special attention to common topics such as refunds, ticket changes, ticket types, bicycles, pets, luggage, and day passes to improve retrieval accuracy.
+* **Designing policy chunks suitable for natural language questions**  
+  The policy chunks could not simply copy the original JSON structure. They also needed to match how users would ask questions in realistic situations. Therefore, I focused on common user topics such as refunds, ticket changes, ticket types, bicycles, pets, luggage, and day passes to improve retrieval accuracy.
 
-- **Verifying pgvector insertion and the embedding model**  
-  While working with `seed_vectors.py`, I needed to confirm whether `nomic-embed-text` had been pulled correctly, whether embeddings could be generated, and whether the data was inserted into pgvector successfully. I verified this by rerunning the seed process and checking the database content.
+* **Verifying database setup and repeated seeding behavior**  
+  During testing, I needed to confirm whether PostgreSQL, pgvector, and the seed scripts could be rerun reliably. One challenge was identifying when reseeding did not overwrite existing credential records, which could cause login testing to fail even when the mock JSON account information was correct.
 
-- **Determining appropriate `ON DELETE` behavior for foreign keys in the schema**  
-  When reviewing `schema.sql`, it was not appropriate to apply the same delete rule to every foreign key. The behavior needed to match the business logic of users, bookings, payments, feedback, stations, and schedules. I checked the foreign keys one by one and evaluated them according to their relationships.
+* **Determining appropriate schema constraints and delete behavior**  
+  When reviewing `schema.sql`, it was not appropriate to apply the same rule to every foreign key or constraint. I needed to check the business meaning of each relationship and consider whether records such as bookings, payments, feedback, schedules, and users should be restricted, preserved, or removed under different conditions.
 
-- **Locating errors during end-to-end testing**  
-  When the UI produced an incorrect answer, the issue could come from the UI, agent intent detection, database query, RAG retrieval, or the underlying data. I used the debug panel to inspect tool calls, raw database results, and the final answer to locate problems step by step.
+* **Debugging booking cancellation and active booking display**  
+  During end-to-end testing, I found that cancelled bookings could still affect later testing if the query logic or database constraint did not match the intended business rule. I had to distinguish between keeping cancelled booking records for history and excluding them from active booking display or seat occupancy logic.
 
-- **Managing git and version synchronization**  
+* **Locating errors across UI, agent, database, and RAG layers**  
+  When the UI produced an incorrect result, the source of the issue could be the UI input handling, agent intent detection, PostgreSQL query, Neo4j route query, RAG retrieval, or the mock data itself. I used the debug panel and database inspection to narrow down the source of problems step by step.
+
+* **Managing git and version synchronization**  
   In the later stage of the project, the team needed to pull, commit, push, and check branch status multiple times. I reduced the risk of missing changes or overwriting teammates' work by checking modified files, commit status, and push results carefully.
 
 ---
@@ -122,11 +122,11 @@
 
 | Criterion | Rating (1–5) | Justification (1–2 sentences) |
 |-----------|-------------|-------------------------------|
-| I delivered the tasks assigned to me in the work allocation | 4 | I completed the policy JSON work, policy chunk strategy, `policy_chunks.json`, `seed_vectors.py` workflow verification, pgvector insertion verification, PostgreSQL testing, UI integration testing, and demo preparation tasks. |
-| The quality of my work was satisfactory | 4 | I repeatedly checked the data format, RAG retrieval workflow, pgvector insertion results, schema design, query functions, and agent responses against the project requirements. |
+| I delivered the tasks assigned to me in the work allocation | 4 | I completed the policy JSON work, policy chunk strategy, `policy_chunks.json`, `seed_vectors.py` workflow verification, pgvector insertion verification, PostgreSQL testing, UI integration testing, and final functional verification tasks. |
+| The quality of my work was satisfactory | 4 | I repeatedly checked the data format, RAG retrieval workflow, pgvector insertion results, schema design, query functions, login flow, booking cancellation behavior, and agent responses against the project requirements. |
 | I communicated well and kept the team informed | 4 | I organized and reported modification details, testing results, commit / push status, and discovered issues so that teammates could understand the current progress and items requiring confirmation. |
-| I met deadlines agreed within the team | 4 | I completed policy organization, RAG preparation, database testing, integration testing, and demo preparation according to the team schedule, and cooperated with the final synchronization and checking process. |
-| **Overall self-rating** | 4 | I completed my assigned integration and testing-related work and also helped check the schema, queries, agent, RAG workflow, and requirement compliance. |
+| I met deadlines agreed within the team | 4 | I completed policy organization, RAG preparation, database testing, integration testing, debugging, and demo preparation according to the team schedule, and cooperated with the final synchronization and checking process. |
+| **Overall self-rating** | 4 | I completed my assigned integration and testing-related work and also helped check the schema, queries, agent, RAG workflow, login behavior, booking cancellation logic, and requirement compliance. |
 
 ---
 
