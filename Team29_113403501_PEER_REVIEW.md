@@ -253,7 +253,7 @@ The team divided the TransitFlow project into clear work areas, including the Po
 
 > *Your answer (2–4 sentences):*
 
-If we had more time, I would expand the testing coverage and try more user scenarios before the final submission. Although the main functions were completed successfully, testing more natural language questions, booking cases, route queries, and policy-related questions could make the system even more reliable. I would also keep more detailed testing notes so that the final verification process would be easier to review.中文
+If we had more time, I would expand the testing coverage and try more user scenarios before the final submission. Although the main functions were completed successfully, testing more natural language questions, booking cases, route queries, and policy-related questions could make the system even more reliable. I would also keep more detailed testing notes so that the final verification process would be easier to review.
 
 ---
 
