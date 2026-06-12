@@ -2902,7 +2902,7 @@ The following screenshots were captured from the Task 6 UI.
 
 **Expected:** The agent returns a formatted seat-occupancy answer showing total seats, booked seats, and available seats.
 
-![Task 6 — Agent seat-capacity query](https://cdn.phototourl.com/free/2026-06-12-0d4a26e2-397e-4669-8fcf-dde95378c9b3.png)
+![Task 6 — Agent seat-capacity query](https://cdn.phototourl.com/free/2026-06-12-b7450d20-d95f-4c4d-af1e-9cfc4aaaf6fc.jpg)
 
 ---
 
