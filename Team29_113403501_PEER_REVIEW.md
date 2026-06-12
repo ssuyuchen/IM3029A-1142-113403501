@@ -16,7 +16,7 @@
 | Full Name | 陳思宇 |
 | Student ID | 113403501 |
 | Team ID | 29 |
-| Date submitted | 2026/06/11 |
+| Date submitted | 2026/06/12 |
 
 ---
 
@@ -232,7 +232,7 @@ Yes. 李盈萱 completed the main Neo4j and route query-related work in the work
 | 陳思宇 | 35% | Responsible for policy data, RAG chunks, pgvector / `seed_vectors.py` workflow verification, PostgreSQL testing, UI integration testing, debug verification, design document writing, and requirement compliance checking. |
 | 林昀希 | 35% | Mainly responsible for PostgreSQL schema, seed scripts, relational queries, merge support, and relational database integration. |
 | 李盈萱 | 30% | Mainly responsible for Neo4j graph database, route / shortest path queries, interchange relationships, Task 6 optional extension, and UI extension testing. |
-| **Total** | **100%** | The three members contributed equally. |
+| **Total** | **100%** | The contribution percentages were estimated based on each member’s actual completed work. |
 
 ---
 
@@ -267,4 +267,4 @@ Nothing to add.
 I confirm that this peer review reflects my honest and independent assessment.  
 I understand it will be kept confidential from my teammates.
 
-**Signed:** 陳思宇 **Date:** 2026/06/11
+**Signed:** 陳思宇 **Date:** 2026/06/12
