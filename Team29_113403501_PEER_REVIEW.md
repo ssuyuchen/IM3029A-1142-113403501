@@ -39,55 +39,43 @@
 > *Your answer:*
 
 * **Reviewed and verified the JSON mock data**  
-  I reviewed the JSON mock data used in the project, including users, stations, schedules, bookings, payments, feedback, refund policies, booking rules, travel policies, and ticket types. This helped ensure that the later database design, seed workflow, policy retrieval, and UI testing were based on consistent data.
+  I reviewed the JSON mock data used in the project, including users, stations, schedules, bookings, payments, feedback, refund policies, booking rules, travel policies, and ticket types. This helped ensure that the database design, seed workflow, RAG retrieval, and UI testing were based on consistent data.
 
-* **Organized and supplemented policy-related data**  
-  I analyzed `refund_policy.json`, `booking_rules.json`, `travel_policies.json`, and `ticket_types.json` to understand how the policies corresponded to realistic user questions. I also helped supplement policy content related to refunds, booking rules, ticket changes, day passes, bicycles, pets, luggage, and other travel regulations.
+* **Organized policy-related data for RAG retrieval**  
+  I reviewed and organized `refund_policy.json`, `booking_rules.json`, `travel_policies.json`, and `ticket_types.json`. I checked that policy content about refunds, booking rules, ticket changes, day passes, bicycles, pets, luggage, and passenger rules could support realistic user questions.
 
-* **Designed the policy chunk strategy for RAG retrieval**  
-  I planned how the policy documents should be divided into retrieval-friendly chunks, including chunk scope, naming rules, metadata, and content structure. The goal was to make the RAG system retrieve the most relevant policy rule when users asked natural language questions.
-
-* **Created and modified `policy_chunks.json`**  
-  I helped convert the original policy JSON data into `policy_chunks.json`, which could be imported into pgvector. I checked whether each chunk had clear content, appropriate metadata, and enough semantic context for retrieval.
+* **Created and reviewed `policy_chunks.json`**  
+  I helped convert the original policy JSON files into retrieval-friendly policy chunks. I checked whether each chunk had clear content, appropriate metadata, and enough semantic context for natural language retrieval.
 
 * **Verified the `seed_vectors.py` and pgvector workflow**  
-  I checked how `seed_vectors.py` reads policy chunks, generates embeddings, and writes them into the `policy_documents` table. I also helped confirm that the `nomic-embed-text` embedding model was available and that the policy chunks could be inserted into pgvector correctly.
+  I checked how `seed_vectors.py` reads policy chunks, generates embeddings, and inserts them into the `policy_documents` table. I also helped confirm that the policy chunks could be imported into pgvector correctly.
 
 * **Assisted with PostgreSQL testing and pgAdmin verification**  
-  I used pgAdmin to inspect tables, imported data, query results, and relational records. This included checking whether PostgreSQL supported users, bookings, payments, schedules, feedback, policy documents, and related database operations correctly.
+  I used pgAdmin to inspect seeded tables, imported records, and query results. This included checking users, bookings, payments, schedules, feedback, policy documents, and related relational records.
 
 * **Assisted in reviewing `schema.sql`**  
-  I helped review whether the schema met the project requirements, including primary keys, foreign keys, constraints, indexes, and `ON DELETE` behavior. I also checked whether the delete behavior matched the business logic of users, bookings, payments, feedback, stations, schedules, and related records.
+  I helped review whether the schema met the project requirements, including primary keys, foreign keys, constraints, indexes, and `ON DELETE` behavior. I also checked whether the delete behavior matched the business logic of users, bookings, payments, feedback, stations, and schedules.
 
-* **Assisted in reviewing and testing `queries.py` relational functions**  
-  I helped check whether the relational query functions supported the required tasks, including schedule queries, national rail availability, user booking retrieval, booking creation, payment records, cancellation handling, and refund-related logic.
+* **Assisted in reviewing and testing `queries.py` functions**  
+  I helped test relational functions for schedule queries, national rail availability, user booking retrieval, booking creation, payment handling, cancellation logic, refund calculation, and seat availability.
 
-* **Assisted in debugging login authentication issues**  
-  I helped identify and verify login-related problems by checking whether the UI correctly passed user input to the authentication function and whether PostgreSQL user credential data matched the expected login workflow. I also helped confirm the need to handle password input consistently during login testing.
+* **Debugged login and reseeding issues**  
+  I helped check whether the UI login input matched the authentication logic and PostgreSQL user credential data. I also helped confirm that reseeding should update existing credential records so that test accounts remained usable.
 
-* **Assisted in improving PostgreSQL reseeding behavior for user credentials**  
-  I helped check the PostgreSQL seed workflow and identified that existing user credential records should be updated during reseeding when password hashes need to match the mock user data. This improved the reliability of repeated database setup and login testing.
+* **Tested booking display, cancellation, and seat availability behavior**  
+  I tested the `show my booking` and cancellation workflows. I helped confirm that cancelled bookings should not appear in the active booking list and should not continue occupying seats.
 
-* **Assisted in improving booking display logic**  
-  I helped test the `show my booking` workflow and identified that cancelled national rail bookings should not appear in the active booking list. I assisted in adjusting the query logic so that bookings with `cancelled` status are excluded from normal booking display results.
-
-* **Assisted in testing booking cancellation and seat availability behavior**  
-  I tested the booking cancellation flow and checked whether cancelled bookings were correctly treated as no longer occupying seats. This helped identify the difference between application-level booking status logic and database-level seat uniqueness constraints.
-
-* **Assisted with end-to-end integration testing**  
-  I tested whether the system could correctly call PostgreSQL, Neo4j, or RAG policy search through the agent after a user entered a question in the UI. I also checked whether the final natural language answers were reasonable and consistent with the database results.
+* **Performed end-to-end UI and agent testing**  
+  I tested whether the UI and agent could correctly call PostgreSQL, Neo4j, or RAG policy search based on user questions. I also checked whether the final answers were reasonable and consistent with the database or policy results.
 
 * **Used the debug panel to verify the agent workflow**  
-  I used the debug panel to inspect the tools called by the agent, the raw database results, and the final answer. This helped locate whether an issue came from the UI, agent intent detection, database query, RAG retrieval, or the underlying data.
+  I used the debug panel to inspect tool calls, raw database results, and final responses. This helped identify whether an issue came from the UI, agent intent detection, database query, RAG retrieval, or the data itself.
 
-* **Assisted in final functional verification after code changes**  
-  After modifying login, booking display, and cancellation-related logic, I helped verify the expected user flow: login, create booking, show booking, cancel booking, and confirm that cancelled bookings no longer appeared in active booking results.
+* **Completed and revised the design document**  
+  I helped complete `Team29_DESIGN_DOC.md`, including sections related to project structure, database design, RAG workflow, testing results, Task 6 extension, and final integration. I also revised the document to make the explanation more consistent with the actual implementation.
 
-* **Assisted in checking overall requirement compliance**  
-  In the later stage, I helped compare the implementation against the project requirements to confirm that the schema, queries, agent, policy chunks, seed vectors, UI testing, and related functions did not have obvious omissions.
-
-* **Jointly completed git synchronization, reseed verification, and demo rehearsal**  
-  In the final stage, the team jointly checked git synchronization, database reseeding results, PostgreSQL, Neo4j, pgvector rebuild workflows, and demo flow. I also helped confirm that the main database, query, agent, RAG, and UI functions could be demonstrated smoothly.
+* **Assisted with final functional verification and submission preparation**  
+  In the final stage, I helped verify login, booking, show bookings, cancellation, refund handling, policy retrieval, reseeding, git synchronization, and demo flow. This helped confirm that the main functions could be demonstrated smoothly.
 
 ---
 
@@ -96,25 +84,28 @@
 > *Your answer:*
 
 * **Understanding the full RAG and pgvector workflow**  
-  At first, I needed time to clarify the relationship among policy JSON files, policy chunks, embeddings, pgvector, and semantic search. I resolved this by organizing the workflow step by step: policy JSON is converted into chunks, embeddings are generated, vectors are inserted into pgvector, and the agent later uses semantic search to retrieve relevant policy rules.
+  At first, I needed time to clarify the relationship between policy JSON files, policy chunks, embeddings, pgvector, and semantic search. I handled this by breaking the workflow into smaller parts and checking each step separately.
 
 * **Designing policy chunks suitable for natural language questions**  
-  The policy chunks could not simply copy the original JSON structure. They also needed to match how users would ask questions in realistic situations. Therefore, I focused on common user topics such as refunds, ticket changes, ticket types, bicycles, pets, luggage, and day passes to improve retrieval accuracy.
+  The policy chunks could not simply copy the original JSON structure. They needed enough semantic context to match realistic user questions about refunds, ticket changes, day passes, bicycles, pets, luggage, and travel rules.
 
-* **Verifying database setup and repeated seeding behavior**  
-  During testing, I needed to confirm whether PostgreSQL, pgvector, and the seed scripts could be rerun reliably. One challenge was identifying when reseeding did not overwrite existing credential records, which could cause login testing to fail even when the mock JSON account information was correct.
+* **Verifying database setup and reseeding behavior**  
+  During testing, I needed to confirm whether PostgreSQL and pgvector could be rebuilt reliably. One issue was that existing credential records could affect login testing if they were not updated correctly during reseeding.
 
 * **Determining appropriate schema constraints and delete behavior**  
-  When reviewing `schema.sql`, it was not appropriate to apply the same rule to every foreign key or constraint. I needed to check the business meaning of each relationship and consider whether records such as bookings, payments, feedback, schedules, and users should be restricted, preserved, or removed under different conditions.
+  When reviewing `schema.sql`, it was not appropriate to apply the same `ON DELETE` rule to every relationship. I needed to consider the business meaning of each relationship and decide whether related records should be restricted, preserved, or removed.
 
 * **Debugging booking cancellation and active booking display**  
-  During end-to-end testing, I found that cancelled bookings could still affect later testing if the query logic or database constraint did not match the intended business rule. I had to distinguish between keeping cancelled booking records for history and excluding them from active booking display or seat occupancy logic.
+  Cancelled bookings needed to remain in the database for history and refund records, but they should not appear as active bookings or continue occupying seats. This required checking both query logic and database constraints.
 
 * **Locating errors across UI, agent, database, and RAG layers**  
-  When the UI produced an incorrect result, the source of the issue could be the UI input handling, agent intent detection, PostgreSQL query, Neo4j route query, RAG retrieval, or the mock data itself. I used the debug panel and database inspection to narrow down the source of problems step by step.
+  When the UI produced an incorrect answer, the issue could come from several layers, including UI input handling, agent intent detection, PostgreSQL queries, Neo4j queries, RAG retrieval, or mock data. I used the debug panel, pgAdmin, and repeated testing to narrow down the source.
+
+* **Writing the design document based on the actual implementation**  
+  While completing the design document, I needed to make sure the content matched the real project instead of adding unsupported descriptions. This required checking the schema, query functions, RAG workflow, Task 6 extension, and testing process carefully.
 
 * **Managing git and version synchronization**  
-  In the later stage of the project, the team needed to pull, commit, push, and check branch status multiple times. I reduced the risk of missing changes or overwriting teammates' work by checking modified files, commit status, and push results carefully.
+  Near the end of the project, the team needed to pull, commit, push, and check branch status several times. I helped reduce the risk of testing an old version or missing changes by checking modified files, commit status, push results, and reseeding steps.
 
 ---
 
@@ -122,17 +113,17 @@
 
 | Criterion | Rating (1–5) | Justification (1–2 sentences) |
 |-----------|-------------|-------------------------------|
-| I delivered the tasks assigned to me in the work allocation | 4 | I completed the policy JSON work, policy chunk strategy, `policy_chunks.json`, `seed_vectors.py` workflow verification, pgvector insertion verification, PostgreSQL testing, UI integration testing, and final functional verification tasks. |
-| The quality of my work was satisfactory | 4 | I repeatedly checked the data format, RAG retrieval workflow, pgvector insertion results, schema design, query functions, login flow, booking cancellation behavior, and agent responses against the project requirements. |
-| I communicated well and kept the team informed | 4 | I organized and reported modification details, testing results, commit / push status, and discovered issues so that teammates could understand the current progress and items requiring confirmation. |
-| I met deadlines agreed within the team | 4 | I completed policy organization, RAG preparation, database testing, integration testing, debugging, and demo preparation according to the team schedule, and cooperated with the final synchronization and checking process. |
-| **Overall self-rating** | 4 | I completed my assigned integration and testing-related work and also helped check the schema, queries, agent, RAG workflow, login behavior, booking cancellation logic, and requirement compliance. |
+| I delivered the tasks assigned to me in the work allocation | 4 | I completed the policy data work, RAG chunks, `policy_chunks.json`, `seed_vectors.py` and pgvector workflow checking, PostgreSQL testing, UI testing, design document work, and final functional verification. |
+| The quality of my work was satisfactory | 4 | I repeatedly checked the data format, RAG retrieval workflow, pgvector insertion, schema design, query functions, login flow, booking cancellation behavior, design document content, and agent responses against the project requirements. |
+| I communicated well and kept the team informed | 4 | I reported testing results, modification details, reseeding steps, git status, document progress, and discovered issues so that teammates could understand the current progress. |
+| I met deadlines agreed within the team | 4 | I completed my assigned policy, RAG, testing, debugging, documentation, and final verification work according to the team schedule. |
+| **Overall self-rating** | 4 | I completed my assigned integration and testing-related work and also helped with schema checking, RAG workflow, login behavior, booking cancellation logic, design document writing, and final requirement verification. |
 
 ---
 
 ### A4. Estimated contribution percentage
 
-> My estimated contribution: **33.333333%**
+> My estimated contribution: **35%**
 
 ---
 
@@ -149,37 +140,40 @@
 
 > *Your answer:*
 
-- **Mainly responsible for PostgreSQL relational database work**  
-  This teammate was mainly responsible for or participated in `schema.sql`, PostgreSQL seed scripts, relational query functions, table design, and the data import workflow.
+* **Mainly responsible for PostgreSQL relational database work**  
+  This teammate was mainly responsible for `schema.sql`, PostgreSQL seed scripts, relational query functions, table design, and the data import workflow.
 
-- **Designed the relational schema**  
-  This teammate built the relationships among users, bookings, payments, feedback, stations, schedules, ticket types, and seat layouts, and handled primary keys, foreign keys, constraints, and indexes.
+* **Designed and implemented the relational schema**  
+  This teammate built the relationships among users, bookings, payments, feedback, stations, schedules, ticket types, and seat layouts. She also handled primary keys, foreign keys, constraints, indexes, and related schema logic.
 
-- **Implemented relational query functions**  
-  This teammate implemented or helped implement functions for querying schedules, retrieving user booking records, checking national rail availability, creating bookings, processing payments, cancellations, and refunds.
+* **Implemented relational query functions**  
+  This teammate implemented or helped implement functions for schedule queries, user booking records, national rail availability, booking creation, payment processing, cancellation, and refund-related logic.
 
-- **Assisted with database integration and testing**  
-  During integration, this teammate helped confirm whether PostgreSQL query results could be correctly called and used by the agent.
+* **Handled PostgreSQL integration and testing**  
+  During integration, this teammate helped confirm whether PostgreSQL query results could be correctly called by the agent and displayed through the UI.
+
+* **Merged and integrated team members’ work**  
+  This teammate also helped merge different parts completed by team members and handled version synchronization or integration issues when combining PostgreSQL, Neo4j, RAG, agent, and UI work.
 
 #### Did their actual contribution match the agreed work allocation?
 
-> *Your answer (Yes / Mostly / Partially / No — with explanation):*
+> *Your answer:*
 
-Yes. 林昀希 completed the main PostgreSQL-related work in the work allocation, including the schema, seed workflow, and relational query implementation. They also participated in later integration and revision. Overall, their contribution matched the original division of work.
+Yes. 林昀希 completed the main PostgreSQL-related work in the work allocation, including schema design, seed workflow, and relational query implementation. She also helped merge and integrate different team members’ parts and participated in final testing. Overall, her contribution matched the original division of work and supported the final integration stage.
 
 #### Peer rating for this teammate
 
 | Criterion | Rating (1–5) | Justification (1–2 sentences) |
 |-----------|-------------|-------------------------------|
-| Delivered the tasks assigned in the work allocation | 4 | They completed the assigned PostgreSQL-related implementation work according to the team’s original division of tasks. |
-| Quality of their work was satisfactory | 4 | Their implementation generally supported the final database and agent workflow, and it could be integrated properly after review and testing. |
-| Communicated well and kept the team informed | 4 | They communicated with the team when schema, query, or integration issues needed discussion. |
-| Met deadlines agreed within the team | 4 | They generally completed their assigned work according to the team schedule. |
-| **Overall rating for this teammate** | 4 | They made a clear and important contribution to the relational database part of the project. |
+| Delivered the tasks assigned in the work allocation | 4 | She completed the assigned PostgreSQL-related implementation work and also helped merge team members’ work. |
+| Quality of their work was satisfactory | 4 | Her implementation supported the relational database, booking workflow, payment records, cancellation logic, and final integration. |
+| Communicated well and kept the team informed | 4 | She communicated with the team when schema, query, merge, or integration issues needed discussion. |
+| Met deadlines agreed within the team | 4 | She generally completed her assigned PostgreSQL and integration work according to the team schedule. |
+| **Overall rating for this teammate** | 4 | She made a clear contribution to the relational database part and helped with final merge and integration. |
 
 #### Estimated contribution percentage for this teammate
 
-> My estimate of their contribution: **33.333333%**
+> My estimate of their contribution: **35%**
 
 ---
 
@@ -194,47 +188,50 @@ Yes. 林昀希 completed the main PostgreSQL-related work in the work allocation
 
 > *Your answer:*
 
-- **Mainly responsible for Neo4j graph database and route-related work**  
-  This teammate was mainly responsible for or participated in the Neo4j graph model, graph seed scripts, station nodes, route relationships, and shortest path / route query logic.
+* **Mainly responsible for Neo4j graph database and route-related work**  
+  This teammate was mainly responsible for the Neo4j graph model, graph seed scripts, station nodes, route relationships, interchange stations, and shortest path / route query logic.
 
-- **Created graph nodes and relationships**  
+* **Created graph nodes and relationships**  
   This teammate organized metro stations, national rail stations, interchange stations, and adjacent station relationships into a graph database structure to support route search and transfer analysis.
 
-- **Implemented graph query functions**  
+* **Implemented graph query functions**  
   This teammate implemented or helped implement route search, shortest path, station adjacency, and metro / national rail interchange query functions.
 
-- **Assisted with agent integration and testing**  
-  This teammate helped confirm whether the agent could correctly call graph query tools and convert Neo4j query results into route answers that users could understand.
+* **Completed Task 6 optional extension**  
+  This teammate completed the Task 6 extension, including the seat occupancy query, trip history UI, Seat Capacity tab, My Bookings tab, and related integration testing.
+
+* **Assisted with agent and UI integration testing**  
+  This teammate helped confirm whether the agent could correctly call graph query tools and Task 6 seat occupancy functions, and whether the results could be shown clearly through the UI.
 
 #### Did their actual contribution match the agreed work allocation?
 
-> *Your answer (Yes / Mostly / Partially / No — with explanation):*
+> *Your answer:*
 
-Yes. 李盈萱 completed the main Neo4j and route query-related work in the work allocation, and also participated in system integration and testing. Overall, their contribution matched the original division of work.
+Yes. 李盈萱 completed the main Neo4j and route query-related work in the work allocation. She also completed the Task 6 optional extension, including seat occupancy lookup, trip history UI, Seat Capacity tab, My Bookings tab, and related integration testing. Overall, her contribution matched the original division of work and supported the final project extension.
 
 #### Peer rating for this teammate
 
 | Criterion | Rating (1–5) | Justification (1–2 sentences) |
 |-----------|-------------|-------------------------------|
-| Delivered the tasks assigned in the work allocation | 4 | They completed the assigned graph database and route query-related work. |
-| Quality of their work was satisfactory | 4 | Their implementation supported route search and shortest path functions, and it could be integrated into the final system after testing. |
-| Communicated well and kept the team informed | 4 | They communicated with the team when graph query or integration issues needed confirmation. |
-| Met deadlines agreed within the team | 4 | They generally completed their assigned work according to the team schedule. |
-| **Overall rating for this teammate** | 4 | They made a clear and important contribution to the graph database and route search part of the project. |
+| Delivered the tasks assigned in the work allocation | 4 | She completed the assigned Neo4j route query work and the Task 6 optional extension, including seat occupancy and trip history UI features. |
+| Quality of their work was satisfactory | 4 | Her work supported route search, seat capacity lookup, user booking display, and final UI integration after testing. |
+| Communicated well and kept the team informed | 4 | She communicated with the team when graph query, Task 6, UI extension, or integration issues needed confirmation. |
+| Met deadlines agreed within the team | 4 | She completed the assigned graph database work and Task 6 extension within the project schedule. |
+| **Overall rating for this teammate** | 4 | She made a clear contribution to the graph database part and the optional Task 6 extension. |
 
 #### Estimated contribution percentage for this teammate
 
-> My estimate of their contribution: **33.333333%**
+> My estimate of their contribution: **30%**
 
 ---
 
 ## Section C — Contribution Percentage Summary
 
 | Member | Your estimated % | Notes |
-|--------|----------------|-------|
-| 陳思宇 | 33.333333% | Responsible for policy data, RAG chunks, pgvector / `seed_vectors.py` workflow verification, PostgreSQL testing, UI integration testing, debug verification, and requirement compliance checking. The workload was evenly divided among the three members. |
-| 林昀希 | 33.333333% | Mainly responsible for PostgreSQL schema, seed scripts, relational queries, and relational database-related functions. The workload was evenly divided among the three members. |
-| 李盈萱 | 33.333333% | Mainly responsible for Neo4j graph database, route / shortest path queries, interchange relationships, and graph integration. The workload was evenly divided among the three members. |
+|--------|------------------|-------|
+| 陳思宇 | 35% | Responsible for policy data, RAG chunks, pgvector / `seed_vectors.py` workflow verification, PostgreSQL testing, UI integration testing, debug verification, design document writing, and requirement compliance checking. |
+| 林昀希 | 35% | Mainly responsible for PostgreSQL schema, seed scripts, relational queries, merge support, and relational database integration. |
+| 李盈萱 | 30% | Mainly responsible for Neo4j graph database, route / shortest path queries, interchange relationships, Task 6 optional extension, and UI extension testing. |
 | **Total** | **100%** | The three members contributed equally. |
 
 ---
@@ -243,23 +240,23 @@ Yes. 李盈萱 completed the main Neo4j and route query-related work in the work
 
 ### D1. What went well in the team's collaboration?
 
-> *Your answer (2–4 sentences):*
+> *Your answer:*
 
-The team divided the TransitFlow project into clear work areas, including the PostgreSQL relational database, Neo4j graph database, RAG policy data, AI agent integration, and UI testing. Each member completed their own assigned area and assisted with integration and testing when needed. Overall, the workload was balanced among the three members, and the team checked the main functions together before the final submission.
+The team divided the TransitFlow project into clear work areas, including PostgreSQL relational database, Neo4j graph database, RAG policy data, UI testing, Task 6 extension, and final documentation. Each member completed their assigned area and helped with integration or testing when needed. Overall, the workload was balanced among the three members, and the team checked the main functions together before final submission.
 
 ---
 
 ### D2. What would you do differently if you did this project again?
 
-> *Your answer (2–4 sentences):*
+> *Your answer:*
 
-If we had more time, I would expand the testing coverage and try more user scenarios before the final submission. Although the main functions were completed successfully, testing more natural language questions, booking cases, route queries, and policy-related questions could make the system even more reliable. I would also keep more detailed testing notes so that the final verification process would be easier to review.
+If we had more time, I would start integration testing earlier and keep more detailed testing notes during development. Although the main functions were completed successfully, testing more natural language questions, booking cases, route queries, cancellation cases, and policy-related questions could make the system more reliable. I would also organize the final documentation earlier so that the final checking process would be smoother.
 
 ---
 
 ### D3. Is there anything else the markers should know about team dynamics or individual contributions?
 
-> *Your answer (or "Nothing to add"):*
+> *Your answer:*
 
 Nothing to add.
 
