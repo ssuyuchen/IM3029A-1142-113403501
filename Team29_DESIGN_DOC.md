@@ -6,74 +6,77 @@ TransitFlow final project design document (IM2002 Database Management)
 
 ## Section 1 — Entity-Relationship Diagram
 
-### 1.1 System overview
+### 1.1 Overview
 
-TransitFlow is a dual-network public transport system consisting of **City Metro** and **National Rail** services. City Metro represents an urban metro network where passengers purchase same-day single tickets or day passes. It does not involve advance booking or reserved seating. National Rail represents an intercity rail network that supports advance booking, fare classes, reserved seats, coaches, and seat layouts.
+The relational layer of TransitFlow models the structured data required for a dual-network transport system. The project contains two transport networks:
 
-This project uses three database technologies, each responsible for a different type of data and query workload:
+1. **City Metro**, where tickets are purchased for same-day travel and no reserved seat is assigned.
+2. **National Rail**, where passengers can make advance bookings with fare classes and reserved seats.
 
-1. **PostgreSQL relational database**  
-   Stores structured and transactional data, including users, authentication records, stations, schedules, ticket types, fares, seats, bookings, metro trips, payments, and feedback. The relational model is responsible for foreign key integrity, transaction consistency, seat booking validation, and audit history.
+The relational database stores users, authentication records, stations, schedules, schedule stops, ticket types, journeys, national rail bookings, metro trips, payments, feedback, and policy documents for the pgvector RAG layer.
 
-2. **Neo4j graph database**  
-   Stores the physical transport network topology, including metro stations, national rail stations, track adjacency, and interchange links. The graph model supports shortest-route search, cheapest-route search, interchange routing, alternative routing, and delay ripple traversal.
+The most important design decision in the relational schema is the use of `journeys` as a shared supertype table. Both national rail bookings and metro trips are treated as journeys:
 
-3. **PostgreSQL + pgvector**  
-   Stores embedded policy documents, including refund policies, booking rules, ticket type rules, and travel policies. Vector search supports natural-language policy questions, such as delay compensation, bicycle policy, refund eligibility, and ticket-change rules.
+- A national rail journey has a corresponding row in `bookings`.
+- A metro journey has a corresponding row in `metro_trips`.
 
-This separation allows the relational database to focus on data consistency and transactional correctness, Neo4j to focus on path traversal, and pgvector to focus on semantic retrieval.
+This design allows shared transaction tables such as `payments` and `feedback` to reference `journeys(journey_id)` directly, instead of needing separate nullable foreign keys for `bookings` and `metro_trips`.
+
+The schema also keeps the two networks structurally separate where their business rules differ. National rail supports reserved seats and fare classes, so it has seat layout, coach, seat, and fare-class tables. Metro does not support reserved seating, so metro trips only store route, date, and purchase/travel timestamps.
+
+`policy_documents` is included in this section because it is stored in PostgreSQL, but it is not part of the core booking transaction model. It supports the vector/RAG component through pgvector and is discussed further in Section 4.
 
 ---
 
-### 1.2 ER diagram
+### 1.2 Entity-Relationship Diagram
 
 ```mermaid
 erDiagram
-    users ||--|| user_credentials : "has"
-    users ||--o{ user_security_questions : "has"
+    users ||--o| user_credentials : "has credentials"
+    users ||--o{ user_security_questions : "has recovery questions"
     users ||--o{ journeys : "creates"
+    users ||--o{ feedback : "submits"
 
-    ticket_types ||--o{ ticket_type_networks : "available_on"
-    ticket_types ||--o{ journeys : "classifies"
+    ticket_types ||--o{ ticket_type_networks : "valid on networks"
+    ticket_types ||--o{ journeys : "used by"
 
-    journeys ||--o| bookings : "national_rail_subtype"
-    journeys ||--o| metro_trips : "metro_subtype"
-    journeys ||--o{ payments : "paid_by"
-    journeys ||--o{ feedback : "receives"
+    journeys ||--o| bookings : "national rail subtype"
+    journeys ||--o| metro_trips : "metro subtype"
+    journeys ||--o{ payments : "has payments"
+    journeys ||--o{ feedback : "receives feedback"
+    journeys ||--o{ metro_trips : "day pass reference"
 
-    metro_stations ||--o{ metro_station_lines : "serves_lines"
-    national_rail_stations ||--o{ national_rail_station_lines : "serves_lines"
+    metro_stations |o--o| national_rail_stations : "interchange mapping"
 
-    metro_stations ||--o{ metro_schedules : "origin"
-    metro_stations ||--o{ metro_schedules : "destination"
-    national_rail_stations ||--o{ national_rail_schedules : "origin"
-    national_rail_stations ||--o{ national_rail_schedules : "destination"
+    metro_stations ||--o{ metro_station_lines : "served by"
+    national_rail_stations ||--o{ national_rail_station_lines : "served by"
 
-    metro_schedules ||--o{ metro_schedule_stops : "has_ordered_stops"
-    metro_stations ||--o{ metro_schedule_stops : "appears_in"
+    metro_stations ||--o{ metro_schedules : "origin station"
+    metro_stations ||--o{ metro_schedules : "destination station"
+    national_rail_stations ||--o{ national_rail_schedules : "origin station"
+    national_rail_stations ||--o{ national_rail_schedules : "destination station"
 
-    national_rail_schedules ||--o{ national_rail_schedule_stops : "has_ordered_stops"
-    national_rail_stations ||--o{ national_rail_schedule_stops : "appears_in"
+    metro_schedules ||--o{ metro_schedule_stops : "has ordered stops"
+    metro_schedules ||--o{ metro_schedule_operates_on : "operates on"
+    metro_schedules ||--o{ metro_trips : "used by trips"
 
-    metro_schedules ||--o{ metro_schedule_operates_on : "operates_on"
-    national_rail_schedules ||--o{ national_rail_schedule_operates_on : "operates_on"
+    national_rail_schedules ||--o{ national_rail_schedule_stops : "has ordered stops"
+    national_rail_schedules ||--o{ national_rail_schedule_operates_on : "operates on"
+    national_rail_schedules ||--o{ national_rail_schedule_fares : "has fare classes"
+    national_rail_schedules ||--o| seat_layouts : "may have seat layout"
+    national_rail_schedules ||--o{ bookings : "used by bookings"
 
-    national_rail_schedules ||--o{ national_rail_schedule_fares : "defines_fares"
-    national_rail_schedules ||--|| seat_layouts : "uses"
+    metro_stations ||--o{ metro_schedule_stops : "appears in"
+    national_rail_stations ||--o{ national_rail_schedule_stops : "appears in"
+
+    national_rail_stations ||--o{ bookings : "origin station"
+    national_rail_stations ||--o{ bookings : "destination station"
+    metro_stations ||--o{ metro_trips : "origin station"
+    metro_stations ||--o{ metro_trips : "destination station"
+
     seat_layouts ||--o{ coaches : "contains"
     coaches ||--o{ seats : "contains"
-
-    national_rail_schedules ||--o{ bookings : "booked_service"
-    national_rail_stations ||--o{ bookings : "booking_origin"
-    national_rail_stations ||--o{ bookings : "booking_destination"
-    seats ||--o{ bookings : "reserved_by"
-
-    metro_schedules ||--o{ metro_trips : "used_by"
-    metro_stations ||--o{ metro_trips : "trip_origin"
-    metro_stations ||--o{ metro_trips : "trip_destination"
-    journeys ||--o{ metro_trips : "day_pass_parent"
-
-    users ||--o{ feedback : "submits"
+    seats ||--o{ bookings : "reserved by"
 
     users {
         varchar user_id PK
@@ -87,7 +90,7 @@ erDiagram
     }
 
     user_credentials {
-        varchar user_id PK,FK
+        varchar user_id PK_FK
         text password_hash
         bytea password_salt
         text hash_algorithm
@@ -102,6 +105,8 @@ erDiagram
         text secret_answer_hash
         bytea secret_answer_salt
         text hash_algorithm
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     metro_stations {
@@ -109,7 +114,7 @@ erDiagram
         varchar name
         boolean is_interchange_metro
         boolean is_interchange_national_rail
-        varchar interchange_national_rail_station_id
+        varchar interchange_national_rail_station_id FK
     }
 
     national_rail_stations {
@@ -117,16 +122,16 @@ erDiagram
         varchar name
         boolean is_interchange_national_rail
         boolean is_interchange_metro
-        varchar interchange_metro_station_id
+        varchar interchange_metro_station_id FK
     }
 
     metro_station_lines {
-        varchar station_id PK,FK
+        varchar station_id PK_FK
         varchar line PK
     }
 
     national_rail_station_lines {
-        varchar station_id PK,FK
+        varchar station_id PK_FK
         varchar line PK
     }
 
@@ -138,7 +143,7 @@ erDiagram
         varchar destination_station_id FK
         time first_train_time
         time last_train_time
-        integer frequency_min
+        int frequency_min
         numeric base_fare_usd
         numeric per_stop_rate_usd
     }
@@ -146,110 +151,111 @@ erDiagram
     national_rail_schedules {
         varchar schedule_id PK
         varchar line
-        service_type service_type
+        enum service_type
         varchar direction
         varchar origin_station_id FK
         varchar destination_station_id FK
         time first_train_time
         time last_train_time
-        integer frequency_min
-    }
-
-    national_rail_schedule_fares {
-        varchar schedule_id PK,FK
-        fare_class fare_class PK
-        numeric base_fare_usd
-        numeric per_stop_rate_usd
+        int frequency_min
     }
 
     metro_schedule_stops {
-        varchar schedule_id PK,FK
-        integer stop_order PK
+        varchar schedule_id PK_FK
         varchar station_id FK
-        integer travel_time_from_origin_min
+        int stop_order PK
+        int travel_time_from_origin_min
     }
 
     national_rail_schedule_stops {
-        varchar schedule_id PK,FK
-        integer stop_order PK
+        varchar schedule_id PK_FK
         varchar station_id FK
-        integer travel_time_from_origin_min
+        int stop_order PK
+        int travel_time_from_origin_min
         boolean is_stopping
     }
 
     metro_schedule_operates_on {
-        varchar schedule_id PK,FK
-        day_of_week day_of_week PK
+        varchar schedule_id PK_FK
+        enum day_of_week PK
     }
 
     national_rail_schedule_operates_on {
-        varchar schedule_id PK,FK
-        day_of_week day_of_week PK
+        varchar schedule_id PK_FK
+        enum day_of_week PK
+    }
+
+    national_rail_schedule_fares {
+        varchar schedule_id PK_FK
+        enum fare_class PK
+        numeric base_fare_usd
+        numeric per_stop_rate_usd
     }
 
     seat_layouts {
         varchar layout_id PK
-        varchar schedule_id FK,UK
+        varchar schedule_id FK_UK
     }
 
     coaches {
-        varchar layout_id PK,FK
+        varchar layout_id PK_FK
         varchar coach PK
-        fare_class fare_class
+        enum fare_class
     }
 
     seats {
-        varchar layout_id PK,FK
-        varchar coach PK,FK
+        varchar layout_id PK_FK
+        varchar coach PK_FK
         varchar seat_id PK
-        integer seat_row
+        int seat_row
         varchar seat_column
     }
 
     ticket_types {
-        ticket_type ticket_type PK
+        enum ticket_type PK
         text display_name
         text description
     }
 
     ticket_type_networks {
-        ticket_type ticket_type PK,FK
-        network_type network PK
+        enum ticket_type PK_FK
+        enum network PK
     }
 
     journeys {
         varchar journey_id PK
-        network_type network
+        enum network
         varchar user_id FK
-        ticket_type ticket_type FK
+        enum ticket_type FK
         numeric amount_usd
-        journey_status status
+        enum status
     }
 
     bookings {
-        varchar booking_id PK,FK
+        varchar booking_id PK_FK
         varchar schedule_id FK
         varchar origin_station_id FK
         varchar destination_station_id FK
         date travel_date
         time departure_time
-        fare_class fare_class
+        enum fare_class
         varchar layout_id FK
         varchar coach FK
         varchar seat_id FK
-        integer stops_travelled
+        int stops_travelled
         timestamptz booked_at
         timestamptz travelled_at
+        boolean seat_occupies_slot
     }
 
     metro_trips {
-        varchar trip_id PK,FK
+        varchar trip_id PK_FK
         varchar schedule_id FK
         varchar origin_station_id FK
         varchar destination_station_id FK
         date travel_date
         varchar day_pass_ref FK
-        integer stops_travelled
+        int stops_travelled
         timestamptz purchased_at
         timestamptz travelled_at
     }
@@ -258,8 +264,8 @@ erDiagram
         varchar payment_id PK
         varchar journey_id FK
         numeric amount_usd
-        payment_method method
-        payment_status status
+        enum method
+        enum status
         timestamptz paid_at
     }
 
@@ -267,7 +273,7 @@ erDiagram
         varchar feedback_id PK
         varchar journey_id FK
         varchar user_id FK
-        integer rating
+        int rating
         text comment
         timestamptz submitted_at
     }
@@ -283,88 +289,272 @@ erDiagram
         jsonb metadata
         vector embedding
         varchar source_file
+        timestamptz created_at
     }
 ```
 
 ---
 
-### 1.3 Main entities and design roles
+### 1.3 Entity Design Explanation
 
-| Entity | Purpose | Important design point |
-|---|---|---|
-| `users` | Stores passenger profile data. | Separates user identity from authentication secrets. |
-| `user_credentials` | Stores password hash information. | Uses Argon2id hash output; credentials are not stored as plaintext. |
-| `user_security_questions` | Stores password recovery question and hashed answer. | Supports account recovery without storing raw secret answers. |
-| `metro_stations` | Stores metro station master data. | Station ids use `MSxx`, shared with JSON data and graph nodes. |
-| `national_rail_stations` | Stores national rail station master data. | Station ids use `NRxx`, shared with JSON data and graph nodes. |
-| `metro_station_lines` | Resolves station-to-line membership for metro. | Avoids storing repeated line arrays inside station rows. |
-| `national_rail_station_lines` | Resolves station-to-line membership for national rail. | Allows stations such as `NR01` to belong to multiple rail lines. |
-| `metro_schedules` | Stores metro timetable and fare parameters. | Metro uses base fare plus per-stop rate. |
-| `national_rail_schedules` | Stores national rail timetable and service type. | Service type distinguishes normal and express services. |
-| `national_rail_schedule_fares` | Stores national rail fare rates by schedule and class. | Avoids columns such as `standard_fare` and `first_fare` in the schedule table. |
-| `metro_schedule_stops` | Stores ordered metro stops. | Composite key `(schedule_id, stop_order)` preserves stop sequence. |
-| `national_rail_schedule_stops` | Stores ordered national rail stops and pass-through stations. | `is_stopping` distinguishes actual stops from express pass-through stations. |
-| `seat_layouts` | Links a national rail schedule to a seat map. | One schedule uses one seat layout. |
-| `coaches` | Stores coach-level fare class. | Coach `A` may be first class; coach `B` may be standard. |
-| `seats` | Stores physical seats in each coach. | Composite key `(layout_id, coach, seat_id)` uniquely identifies each seat. |
-| `ticket_types` | Stores ticket type definitions. | Includes single, return, and day pass. |
-| `ticket_type_networks` | Stores which network supports each ticket type. | Prevents invalid combinations such as national rail day pass if not supported. |
-| `journeys` | Supertype for all passenger journeys. | Shared parent for both national rail bookings and metro trips. |
-| `bookings` | National rail booking subtype. | Includes reserved seat, fare class, travel date, and departure time. |
-| `metro_trips` | Metro trip subtype. | Includes metro journey details and optional day-pass parent reference. |
-| `payments` | Payment records for all journeys. | References `journeys`, not only one transaction subtype. |
-| `feedback` | Passenger feedback after travel. | References `journeys` and `users`; rating is constrained to 1–5. |
-| `policy_documents` | Embedded policy chunks for semantic retrieval. | Uses `vector(768)` for pgvector similarity search. |
+#### Users, credentials, and security questions
+
+The `users` table stores the passenger profile. It contains the stable user identifier, name, email, phone number, date of birth, registration time, and active status.
+
+Sensitive authentication data is not stored directly in `users`. Instead, the schema separates it into:
+
+- `user_credentials`
+- `user_security_questions`
+
+`user_credentials.user_id` is both the primary key and a foreign key to `users(user_id)`. This means each credential row belongs to exactly one user, and each user can have at most one credential row in the schema.
+
+`user_security_questions` stores password-recovery data. Each security question belongs to one user through `user_id`. The table allows multiple security-question rows per user because `security_question_id` is the primary key and `user_id` is a foreign key rather than a unique key.
+
+Both credential-related tables store Argon2id hash data through `password_hash` / `secret_answer_hash`, separate salt columns, and `hash_algorithm`.
 
 ---
 
-### 1.4 Cardinality explanation
+#### Stations and interchange data
 
-| Relationship | Cardinality | Explanation |
+The project uses separate station tables for the two networks:
+
+- `metro_stations`
+- `national_rail_stations`
+
+This separation matches the mock data and keeps station identifiers clear: metro stations use IDs such as `MS01`, while national rail stations use IDs such as `NR01`.
+
+Each station table also stores interchange fields:
+
+- `metro_stations.interchange_national_rail_station_id`
+- `national_rail_stations.interchange_metro_station_id`
+
+These fields are nullable foreign keys. Therefore, not every station is an interchange station. Only stations with a non-null interchange reference are connected to a station in the other network.
+
+Line membership is stored in separate junction tables:
+
+- `metro_station_lines`
+- `national_rail_station_lines`
+
+This is necessary because a station can be served by more than one line. The composite primary key `(station_id, line)` prevents duplicate line membership rows for the same station.
+
+---
+
+#### Schedules and ordered stops
+
+The schema stores metro and national rail schedules separately:
+
+- `metro_schedules`
+- `national_rail_schedules`
+
+This matches the project’s business rules because metro and national rail have different fare structures. Metro schedules store `base_fare_usd` and `per_stop_rate_usd` directly in `metro_schedules`. National rail stores fare rates in `national_rail_schedule_fares`, because national rail fares depend on `fare_class`.
+
+Ordered stops are stored in:
+
+- `metro_schedule_stops`
+- `national_rail_schedule_stops`
+
+Both stop tables use `(schedule_id, stop_order)` as the primary key. This preserves the order of stations within a schedule. The schema also has `UNIQUE (schedule_id, station_id)`, preventing the same station from being repeated within the same schedule.
+
+The national rail stop table includes `is_stopping`. This allows the schema to represent express services where a train may pass through a station but not stop there for passenger boarding or alighting.
+
+Operating days are stored in:
+
+- `metro_schedule_operates_on`
+- `national_rail_schedule_operates_on`
+
+Both use `(schedule_id, day_of_week)` as a composite primary key. This avoids storing operating days as a list inside the schedule table.
+
+---
+
+#### National rail seat inventory
+
+Reserved seating is modelled only for national rail. The seat inventory is represented through three tables:
+
+1. `seat_layouts`
+2. `coaches`
+3. `seats`
+
+`seat_layouts.schedule_id` is a unique foreign key to `national_rail_schedules(schedule_id)`. This means one national rail schedule can have at most one seat layout, and one seat layout belongs to exactly one schedule.
+
+However, the relationship is written as optional from schedule to layout because the schema does not force every schedule to have a row in `seat_layouts`. This is also consistent with the seeding code, which looks up a layout by `schedule_id` before inserting booking rows.
+
+`coaches` uses `(layout_id, coach)` as a composite primary key. `seats` uses `(layout_id, coach, seat_id)` as a composite primary key and references `coaches(layout_id, coach)`.
+
+The `bookings` table stores `layout_id`, `coach`, and `seat_id`, and references the composite primary key of `seats`. This ensures that a booking can only reserve a real seat that exists in the relevant seat layout.
+
+---
+
+#### Journeys supertype and booking/trip subtypes
+
+The `journeys` table is the shared transaction supertype. It stores fields common to both networks:
+
+- `journey_id`
+- `network`
+- `user_id`
+- `ticket_type`
+- `amount_usd`
+- `status`
+
+The schema enforces the journey ID pattern with a `CHECK` constraint:
+
+- Metro journeys must have an ID beginning with `MT`.
+- National rail journeys must have an ID beginning with `BK`.
+
+The subtype tables are:
+
+- `bookings`
+- `metro_trips`
+
+`bookings.booking_id` is both the primary key and a foreign key to `journeys(journey_id)`. Therefore, each national rail booking row corresponds to exactly one journey row.
+
+`metro_trips.trip_id` is also both the primary key and a foreign key to `journeys(journey_id)`. Therefore, each metro trip row corresponds to exactly one journey row.
+
+This design solves the polymorphic transaction problem. Shared transaction tables such as `payments` and `feedback` do not need to guess whether an ID belongs to a booking or a metro trip. They reference `journeys(journey_id)` directly.
+
+---
+
+#### National rail bookings
+
+The `bookings` table stores national rail booking details. It includes the selected schedule, origin station, destination station, travel date, departure time, fare class, seat reference, number of stops travelled, booking timestamp, travel timestamp, and seat occupation flag.
+
+The seat reference is enforced through:
+
+```sql
+FOREIGN KEY (layout_id, coach, seat_id)
+REFERENCES seats(layout_id, coach, seat_id)
+```
+
+The schema also prevents invalid routes using:
+
+```sql
+CHECK (origin_station_id <> destination_station_id)
+```
+
+Seat rebooking after cancellation is handled through `seat_occupies_slot`. The partial unique index only blocks active seat holds:
+
+```sql
+CREATE UNIQUE INDEX idx_bookings_active_seat_unique
+ON bookings (schedule_id, travel_date, departure_time, coach, seat_id)
+WHERE seat_occupies_slot = TRUE;
+```
+
+This means historical cancelled bookings can remain in the database, while the cancelled seat becomes available for future booking.
+
+---
+
+#### Metro trips
+
+The `metro_trips` table stores metro journey details. It references a metro schedule, origin station, destination station, and the shared `journeys` table.
+
+Metro trips do not reference seats, coaches, or seat layouts because the mock data and booking rules define metro travel as non-reserved seating.
+
+`day_pass_ref` is an optional foreign key to `journeys(journey_id)`. This allows additional metro trips to be linked to a parent day-pass journey. The foreign key uses `ON DELETE SET NULL`, so if the parent journey is deleted, the child trip record can remain while losing the parent reference.
+
+---
+
+#### Payments and feedback
+
+`payments` references `journeys(journey_id)`. This allows one payment structure to support both national rail bookings and metro trips.
+
+The schema also contains a partial unique index:
+
+```sql
+CREATE UNIQUE INDEX idx_payments_one_paid_per_journey
+ON payments(journey_id)
+WHERE status = 'paid';
+```
+
+This means a journey can have payment records, but it can have at most one payment whose status is currently `paid`.
+
+`feedback` references both `journeys(journey_id)` and `users(user_id)`. It also has:
+
+```sql
+UNIQUE (journey_id, user_id)
+```
+
+This prevents the same user from submitting multiple feedback rows for the same journey.
+
+---
+
+#### Ticket types and ticket-network mapping
+
+The `ticket_types` table stores the ticket catalogue. The schema also includes `ticket_type_networks`, which maps ticket types to the networks where they are valid.
+
+The primary key of `ticket_type_networks` is `(ticket_type, network)`. This allows the same ticket type to be associated with more than one network when appropriate, while still preventing duplicate mappings.
+
+`journeys.ticket_type` references `ticket_types(ticket_type)`, so every journey must use a valid ticket type from the ticket catalogue.
+
+---
+
+#### Policy documents for pgvector RAG
+
+The `policy_documents` table stores policy chunks for semantic retrieval. It includes:
+
+- `chunk_id`
+- `title`
+- `category`
+- `document_type`
+- `policy_id`
+- `content`
+- `metadata`
+- `embedding`
+- `source_file`
+
+The `embedding` column uses pgvector. In the submitted schema, the vector dimension is `vector(768)`, matching the default Ollama `nomic-embed-text` embedding configuration.
+
+The table has an HNSW index on `embedding vector_cosine_ops`, supporting cosine-similarity search for policy lookup. This table is part of PostgreSQL, but it is logically separate from the transactional booking model.
+
+---
+
+### 1.4 Cardinality Notes
+
+| Relationship | Cardinality | Basis in schema |
 |---|---:|---|
-| `users` → `user_credentials` | 1:1 | Each user has one credential record. `user_credentials.user_id` is both PK and FK. |
-| `users` → `user_security_questions` | 1:N | A user may have one or more security question records. |
-| `users` → `journeys` | 1:N | One user can create many journeys over time. |
-| `ticket_types` → `journeys` | 1:N | Each journey uses one ticket type; the same ticket type can be used by many journeys. |
-| `ticket_types` → `ticket_type_networks` | 1:N | A ticket type may be valid on one or more networks. |
-| `journeys` → `bookings` | 1:0..1 | A journey can be a national rail booking. `booking_id` equals `journey_id`. |
-| `journeys` → `metro_trips` | 1:0..1 | A journey can be a metro trip. `trip_id` equals `journey_id`. |
-| `journeys` → `payments` | 1:N | A journey can have payment-related records. |
-| `journeys` → `feedback` | 1:N | A journey can receive feedback records, while uniqueness prevents duplicate feedback from the same user for the same journey. |
-| `metro_stations` → `metro_station_lines` | 1:N | A station may serve multiple metro lines. |
-| `national_rail_stations` → `national_rail_station_lines` | 1:N | A rail station may serve multiple rail lines. |
-| `metro_schedules` → `metro_schedule_stops` | 1:N | A schedule contains many ordered stops. |
-| `national_rail_schedules` → `national_rail_schedule_stops` | 1:N | A schedule contains many ordered stops and may include pass-through entries. |
-| `metro_schedules` → `metro_schedule_operates_on` | 1:N | A schedule operates on multiple days of week. |
-| `national_rail_schedules` → `national_rail_schedule_operates_on` | 1:N | A rail schedule operates on multiple days of week. |
-| `national_rail_schedules` → `national_rail_schedule_fares` | 1:N | A rail schedule has fare rates for each fare class. |
-| `national_rail_schedules` → `seat_layouts` | 1:1 | Each national rail schedule has one seat layout. |
-| `seat_layouts` → `coaches` | 1:N | One layout contains multiple coaches. |
-| `coaches` → `seats` | 1:N | One coach contains multiple physical seats. |
-| `seats` → `bookings` | 1:N over time | A physical seat may appear in many bookings across different dates, but not as an active duplicate for the same schedule/date. |
-| `metro_schedules` → `metro_trips` | 1:N | Many metro trips may use the same metro schedule. |
-| `national_rail_schedules` → `bookings` | 1:N | Many bookings may use the same rail schedule. |
+| `users` → `user_credentials` | 1:0..1 | `user_credentials.user_id` is PK and FK to `users(user_id)`. |
+| `users` → `user_security_questions` | 1:N | `user_security_questions.user_id` is a non-unique FK. |
+| `users` → `journeys` | 1:N | `journeys.user_id` references `users(user_id)`. |
+| `users` → `feedback` | 1:N | `feedback.user_id` references `users(user_id)`. |
+| `ticket_types` → `ticket_type_networks` | 1:N | `ticket_type_networks.ticket_type` references `ticket_types(ticket_type)`. |
+| `ticket_types` → `journeys` | 1:N | `journeys.ticket_type` references `ticket_types(ticket_type)`. |
+| `journeys` → `bookings` | 1:0..1 | `bookings.booking_id` is PK and FK to `journeys(journey_id)`. |
+| `journeys` → `metro_trips` | 1:0..1 | `metro_trips.trip_id` is PK and FK to `journeys(journey_id)`. |
+| `journeys` → `payments` | 1:N | `payments.journey_id` references `journeys(journey_id)`. |
+| `journeys` → `feedback` | 1:N | `feedback.journey_id` references `journeys(journey_id)`. |
+| `metro_stations` → `metro_station_lines` | 1:N | `(station_id, line)` is the PK in `metro_station_lines`. |
+| `national_rail_stations` → `national_rail_station_lines` | 1:N | `(station_id, line)` is the PK in `national_rail_station_lines`. |
+| `metro_schedules` → `metro_schedule_stops` | 1:N | `(schedule_id, stop_order)` is the PK in `metro_schedule_stops`. |
+| `national_rail_schedules` → `national_rail_schedule_stops` | 1:N | `(schedule_id, stop_order)` is the PK in `national_rail_schedule_stops`. |
+| `metro_schedules` → `metro_schedule_operates_on` | 1:N | `(schedule_id, day_of_week)` is the PK. |
+| `national_rail_schedules` → `national_rail_schedule_operates_on` | 1:N | `(schedule_id, day_of_week)` is the PK. |
+| `national_rail_schedules` → `national_rail_schedule_fares` | 1:N | `(schedule_id, fare_class)` is the PK. |
+| `national_rail_schedules` → `seat_layouts` | 1:0..1 | `seat_layouts.schedule_id` is a unique FK. |
+| `seat_layouts` → `coaches` | 1:N | `coaches.layout_id` references `seat_layouts(layout_id)`. |
+| `coaches` → `seats` | 1:N | `seats(layout_id, coach)` references `coaches(layout_id, coach)`. |
+| `seats` → `bookings` | 1:N over time | Bookings reference `(layout_id, coach, seat_id)`; active duplicates are blocked by partial unique index. |
+| `metro_schedules` → `metro_trips` | 1:N | `metro_trips.schedule_id` references `metro_schedules(schedule_id)`. |
+| `national_rail_schedules` → `bookings` | 1:N | `bookings.schedule_id` references `national_rail_schedules(schedule_id)`. |
+| `metro_trips.day_pass_ref` → `journeys` | N:0..1 | `day_pass_ref` is nullable and references `journeys(journey_id)`. |
 
 ---
 
-### 1.5 Key constraints and integrity design
+### 1.5 Key Constraints Supporting the ER Design
 
-The relational schema uses explicit constraints to protect core business rules:
+The schema uses the following constraints to enforce data correctness:
 
-1. **Primary keys and composite keys**  
-   The design uses natural business identifiers such as `RU01`, `MS01`, `NR01`, `NR_SCH01`, `BK001`, and `MT001`. Junction tables use composite primary keys, for example `(schedule_id, stop_order)` and `(ticket_type, network)`.
+1. **Primary keys** identify all major entities, including users, stations, schedules, journeys, bookings, metro trips, payments, feedback, and policy documents.
+2. **Foreign keys** enforce references between users, journeys, schedules, stations, seats, payments, and feedback.
+3. **Composite primary keys** are used where the identifier is only meaningful in context, such as:
+   - `(schedule_id, stop_order)`
+   - `(schedule_id, day_of_week)`
+   - `(schedule_id, fare_class)`
+   - `(layout_id, coach)`
+   - `(layout_id, coach, seat_id)`
+4. **Unique constraints** prevent duplicate business records, such as duplicate station appearances in the same schedule and duplicate active paid payments.
+5. **Partial unique indexes** are used for active seat reservations. Cancelled bookings can remain in the database without blocking the same seat from being booked again.
+6. **CHECK constraints** enforce valid business values, such as positive fare values, positive stop counts, valid travel timestamps, different origin and destination stations, and correct `journey_id` prefixes for metro and national rail.
+7. **Enumerated types** restrict controlled values such as network type, ticket type, service type, fare class, journey status, payment method, payment status, and day of week.
 
-2. **Foreign keys with explicit deletion behavior**  
-   Dependent metadata such as station-line membership cascades when a station is deleted. Transaction records such as payments and feedback use restrictive behavior to protect audit history. Bookings and metro trips cascade from `journeys` because they are subtype records.
-
-3. **CHECK constraints**  
-   Examples include positive `frequency_min`, positive `stop_order`, non-negative fare amounts, valid rating range between 1 and 5, and journey id pattern checks where metro journeys use `MT%` and national rail journeys use `BK%`.
-
-4. **Unique constraints**  
-   Schedule stop tables prevent duplicate station entries within the same schedule. `seat_layouts.schedule_id` is unique because each national rail schedule uses one layout.
-
-5. **Subtype consistency**  
-   `bookings.booking_id` and `metro_trips.trip_id` reference `journeys.journey_id`. This ensures every booking or metro trip has a parent journey row before payment and feedback can refer to it.
+Overall, the ER design follows the project’s actual implementation: common transaction fields are stored in `journeys`, network-specific details are stored in `bookings` and `metro_trips`, national rail seat reservations are enforced through composite keys and a partial unique index, and policy RAG data is stored separately in `policy_documents`.
 
 ---
 
@@ -372,136 +562,239 @@ The relational schema uses explicit constraints to protect core business rules:
 
 ### 2.1 Overview
 
-The relational schema is designed to satisfy third normal form (3NF) for the main operational data. The design avoids storing repeating groups, JSON arrays, and nested structures directly in transactional tables. Instead, many nested JSON fields are decomposed into separate relation tables.
+The PostgreSQL schema was designed to keep the transactional part of TransitFlow mostly in Third Normal Form (3NF). The main goal was to avoid storing repeated lists or nested JSON structures directly inside relational tables. Instead, multi-valued attributes from the mock JSON files were decomposed into separate relation tables with primary keys, foreign keys, and uniqueness constraints.
 
-The main normalisation goals are:
+This is especially important because the source mock data contains nested structures such as:
 
-1. remove repeating groups from station, schedule, and ticket data;
-2. preserve referential integrity through primary and foreign keys;
-3. avoid transitive dependencies in transactional records;
-4. separate authentication data from user profile data;
-5. keep shared journey attributes in one parent table instead of duplicating them across national rail and metro tables.
+- station line arrays,
+- schedule stop arrays,
+- schedule operating-day arrays,
+- national rail fare-class objects,
+- seat layouts with coaches and seats,
+- different transaction types for metro and national rail.
 
----
-
-### 2.2 3NF decision: station lines stored in separate relation tables
-
-In the source data, each station has a list of lines. For example, a metro station may serve `M1` and `M2`, while a national rail station may serve `NR1` and `NR2`.
-
-Instead of storing line lists as array-like text inside `metro_stations` or `national_rail_stations`, the schema uses:
-
-```text
-metro_station_lines(station_id, line)
-national_rail_station_lines(station_id, line)
-```
-
-The functional dependency is:
-
-```text
-(station_id, line) → membership fact
-```
-
-The station name and interchange attributes depend only on `station_id`, while line membership is a separate many-valued fact. Separating station-line membership avoids first normal form violations because each row stores one atomic line value rather than a list of values.
-
-This also makes queries easier. For example, the system can find all stations on `M2` by filtering `metro_station_lines.line = 'M2'` without parsing an array column.
+The relational schema converts these nested structures into normalized tables so that each fact is stored once, every non-key attribute depends on the key of its own table, and foreign keys can enforce referential integrity.
 
 ---
 
-### 2.3 3NF decision: schedule stops stored in junction tables
+### 2.2 3NF Decision: Schedule Stops Stored in Separate Stop Tables
 
-The mock schedule data contains ordered stop lists. A direct but weaker design would store these stops as arrays inside `metro_schedules` and `national_rail_schedules`. That would make stop-order queries, station validation, and origin-before-destination checks difficult.
+#### Problem
 
-The implemented design uses:
+The mock schedule data contains ordered stop lists inside each schedule record. If those stops were stored as an array column inside `metro_schedules` or `national_rail_schedules`, the design would violate first normal form because the stop list would be a repeating group inside one row.
 
-```text
-metro_schedule_stops(schedule_id, station_id, stop_order, travel_time_from_origin_min)
-national_rail_schedule_stops(schedule_id, station_id, stop_order, travel_time_from_origin_min, is_stopping)
+For example, a schedule has multiple stations, and each station has its own order and travel time from origin. Storing this as a single list would make it difficult to:
+
+- enforce that each station exists in the station table,
+- query trains serving a specific station,
+- compare origin and destination stop order,
+- prevent duplicate station appearances in the same schedule,
+- calculate stops travelled using relational queries.
+
+#### Implemented design
+
+The schema decomposes schedule stops into separate tables:
+
+```sql
+metro_schedule_stops(
+    schedule_id,
+    station_id,
+    stop_order,
+    travel_time_from_origin_min
+)
+
+national_rail_schedule_stops(
+    schedule_id,
+    station_id,
+    stop_order,
+    travel_time_from_origin_min,
+    is_stopping
+)
 ```
 
-The main candidate key is:
+Both stop tables use `(schedule_id, stop_order)` as the primary key. They also keep `station_id` as a foreign key to the relevant station table.
+
+#### Functional dependency
+
+For metro schedule stops, the relevant dependency is:
 
 ```text
-(schedule_id, stop_order)
+(schedule_id, stop_order) → station_id, travel_time_from_origin_min
 ```
 
-The functional dependency is:
+For national rail schedule stops, the relevant dependency is:
 
 ```text
 (schedule_id, stop_order) → station_id, travel_time_from_origin_min, is_stopping
 ```
 
-This means that within one schedule, each stop order determines one station and one elapsed travel time. The station name and station metadata are not duplicated in the schedule stop table; they remain in the station master tables.
+This means that the station at a specific position in a specific schedule is determined by the composite key. The non-key attributes depend on the whole key, not only part of the key.
 
-This design satisfies 3NF because non-key attributes depend on the full key and not on another non-key attribute. It also supports SQL logic such as:
+This satisfies 2NF because there is no partial dependency on only `schedule_id` or only `stop_order`. It also satisfies 3NF because the non-key attributes do not depend on another non-key attribute.
 
-```text
+#### Practical consequence
+
+This design directly supports the implemented availability query. To find trains from an origin station to a destination station, the query can join the same stop table twice and enforce:
+
+```sql
 origin_stop.stop_order < destination_stop.stop_order
 ```
 
-This condition is used to ensure that availability queries return only trains travelling in the correct direction.
+This makes direction-sensitive schedule lookup possible. A train is only valid if it serves both stations and the origin appears before the destination.
 
 ---
 
-### 2.4 3NF decision: national rail fare classes separated from schedules
+### 2.3 3NF Decision: Operating Days Stored in Junction Tables
 
-National rail supports fare classes such as `standard` and `first`. Fare calculation depends on both schedule and fare class:
+#### Problem
 
-```text
-fare = base_fare_usd + (stops_travelled × per_stop_rate_usd)
+The mock schedule data stores operating days as a list such as `["mon", "tue", "wed"]`. Storing these days as an array in the schedule table would create a multi-valued attribute.
+
+That design would make it harder to filter schedules by a single weekday and would prevent the database from enforcing valid day values through a relational key.
+
+#### Implemented design
+
+The schema stores operating days in separate junction tables:
+
+```sql
+metro_schedule_operates_on(
+    schedule_id,
+    day_of_week
+)
+
+national_rail_schedule_operates_on(
+    schedule_id,
+    day_of_week
+)
 ```
 
-Instead of placing columns such as `standard_base_fare`, `standard_per_stop_rate`, `first_base_fare`, and `first_per_stop_rate` in `national_rail_schedules`, the design uses:
+Each table uses `(schedule_id, day_of_week)` as the primary key.
+
+#### Functional dependency
+
+The relation represents one fact:
 
 ```text
-national_rail_schedule_fares(schedule_id, fare_class, base_fare_usd, per_stop_rate_usd)
+(schedule_id, day_of_week) exists
 ```
 
-The functional dependency is:
+There are no additional non-key attributes in these tables. This is a clean junction-table design because the table represents the many-to-many relationship between schedules and days of operation.
+
+#### Normalisation benefit
+
+This avoids a repeating group inside `metro_schedules` or `national_rail_schedules`. It also lets queries filter by weekday using a normal join instead of array parsing.
+
+---
+
+### 2.4 3NF Decision: National Rail Fare Classes Stored Separately
+
+#### Problem
+
+National rail schedules have multiple fare classes. In the mock data, each national rail schedule has fare-class information such as standard and first class. If these values were stored directly as columns in `national_rail_schedules`, the schema would become less flexible and would mix schedule identity with fare-class-specific data.
+
+For example, this design would be weaker:
+
+```text
+national_rail_schedules(
+    schedule_id,
+    standard_base_fare,
+    standard_per_stop_rate,
+    first_base_fare,
+    first_per_stop_rate
+)
+```
+
+That structure hard-codes the fare classes into columns and repeats the same attribute pattern for each class.
+
+#### Implemented design
+
+The schema stores national rail fares in:
+
+```sql
+national_rail_schedule_fares(
+    schedule_id,
+    fare_class,
+    base_fare_usd,
+    per_stop_rate_usd
+)
+```
+
+The primary key is:
+
+```text
+(schedule_id, fare_class)
+```
+
+#### Functional dependency
+
+The dependency is:
 
 ```text
 (schedule_id, fare_class) → base_fare_usd, per_stop_rate_usd
 ```
 
-This is a 3NF design because fare values depend on the full composite key. It also makes the schema extensible: a new fare class could be added as a row rather than requiring new columns.
+The fare rate is determined by both the schedule and the fare class. It is not determined by `schedule_id` alone, because the same schedule can have more than one fare class. It is also not determined by `fare_class` alone, because different schedules can have different fare rates.
+
+This satisfies 2NF because `base_fare_usd` and `per_stop_rate_usd` depend on the full composite key. It also satisfies 3NF because there is no transitive dependency between non-key attributes.
+
+#### Practical consequence
+
+The implemented national rail fare query can calculate fare by joining on `schedule_id` and `fare_class`, then applying:
+
+```text
+total_fare = base_fare_usd + per_stop_rate_usd × stops_travelled
+```
+
+This keeps fare-class logic in relational data instead of hard-coding it in the application.
 
 ---
 
-### 2.5 3NF decision: operating days separated from schedules
+### 2.5 3NF Decision: Seat Layout Decomposition
 
-Both metro and national rail schedules contain `operates_on` lists. These are decomposed into:
-
-```text
-metro_schedule_operates_on(schedule_id, day_of_week)
-national_rail_schedule_operates_on(schedule_id, day_of_week)
-```
-
-The key is:
-
-```text
-(schedule_id, day_of_week)
-```
-
-This removes repeating groups from schedule rows and allows queries such as “which schedules operate on Monday?” without text parsing.
-
----
-
-### 2.6 3NF decision: seat hierarchy decomposed into layout, coach, and seat tables
+#### Problem
 
 National rail seat data is hierarchical:
 
 ```text
-seat_layout → coaches → seats
+schedule → seat layout → coaches → seats
 ```
 
-The schema decomposes this into:
+If all seat information were stored directly in `bookings`, the database would repeat coach and seat metadata every time a passenger made a reservation. That would create update anomalies. For example, if a coach layout changed, every related booking row would need to be checked or updated.
 
-```text
-seat_layouts(layout_id, schedule_id)
-coaches(layout_id, coach, fare_class)
-seats(layout_id, coach, seat_id, seat_row, seat_column)
+#### Implemented design
+
+The schema decomposes seat inventory into:
+
+```sql
+seat_layouts(
+    layout_id,
+    schedule_id
+)
+
+coaches(
+    layout_id,
+    coach,
+    fare_class
+)
+
+seats(
+    layout_id,
+    coach,
+    seat_id,
+    seat_row,
+    seat_column
+)
 ```
 
-The functional dependencies are:
+The `bookings` table then references a real seat using:
+
+```sql
+(layout_id, coach, seat_id)
+```
+
+#### Functional dependencies
+
+The main dependencies are:
 
 ```text
 layout_id → schedule_id
@@ -509,510 +802,1826 @@ layout_id → schedule_id
 (layout_id, coach, seat_id) → seat_row, seat_column
 ```
 
-This avoids storing repeated coach and fare-class information in every booking row. A booking only needs to reference the physical seat by `(layout_id, coach, seat_id)`. The seat’s row, column, and fare-class membership remain in the seat inventory tables.
+This design keeps coach-level attributes in `coaches` and seat-level attributes in `seats`. The booking row only stores the selected seat reference, not the full seat definition.
 
-This structure also protects seat selection logic. The booking function can verify that a requested seat exists and belongs to the requested fare class before inserting the booking.
+#### Normalisation benefit
 
----
-
-### 2.7 3NF decision: credentials separated from user profile
-
-The `users` table stores profile fields such as name, email, phone number, date of birth, registration time, and active status. It does not store raw passwords or raw security answers.
-
-Authentication data is stored in:
-
-```text
-user_credentials(user_id, password_hash, hash_algorithm, created_at, updated_at)
-user_security_questions(security_question_id, user_id, secret_question, secret_answer_hash, hash_algorithm)
-```
-
-This separation avoids mixing profile data with security-sensitive data. It also prevents update anomalies. For example, changing a password only updates `user_credentials`, not the user profile row. Similarly, updating a security answer does not duplicate user identity information.
+This avoids repeating seat inventory data across many bookings. It also allows the database to enforce that a booking can only reserve a seat that exists in the seat inventory.
 
 ---
 
-### 2.8 Polymorphic supertype: `journeys`
+### 2.6 3NF Decision: Authentication Data Separated from User Profile Data
 
-A major design decision is the `journeys` supertype. The system supports two different transaction subtypes:
+#### Problem
 
-1. National rail booking (`bookings`)
-2. Metro trip (`metro_trips`)
+User profile data and authentication data have different security and update requirements. A passenger’s name, phone, and date of birth are profile attributes. Password hashes and security-answer hashes are sensitive authentication attributes.
 
-Both share common fields:
+If password fields were stored directly in `users`, the user table would mix general profile data with credential-management data. This would also make it harder to rotate credentials independently.
 
-```text
-journey_id, network, user_id, ticket_type, amount_usd, status
+#### Implemented design
+
+The schema separates these concerns:
+
+```sql
+users(
+    user_id,
+    first_name,
+    last_name,
+    email,
+    phone,
+    date_of_birth,
+    registered_at,
+    is_active
+)
+
+user_credentials(
+    user_id,
+    password_hash,
+    password_salt,
+    hash_algorithm,
+    created_at,
+    updated_at
+)
+
+user_security_questions(
+    security_question_id,
+    user_id,
+    secret_question,
+    secret_answer_hash,
+    secret_answer_salt,
+    hash_algorithm,
+    created_at,
+    updated_at
+)
 ```
 
-Instead of duplicating these fields in both `bookings` and `metro_trips`, the schema stores them once in `journeys`. The subtype tables then reference the parent:
+`user_credentials.user_id` is both the primary key and a foreign key to `users(user_id)`. This creates a one-to-zero-or-one relationship from users to credentials in the schema.
+
+#### Functional dependencies
+
+For `users`:
 
 ```text
-bookings.booking_id → journeys.journey_id
-metro_trips.trip_id → journeys.journey_id
+user_id → first_name, last_name, email, phone, date_of_birth, registered_at, is_active
 ```
 
-This design avoids nullable foreign keys in `payments` and `feedback`. Without the supertype, `payments` might need both `booking_id` and `trip_id`, with one always null. That would weaken data integrity and complicate application logic.
-
-With the supertype, the dependencies are cleaner:
+For `user_credentials`:
 
 ```text
-journeys.journey_id → network, user_id, ticket_type, amount_usd, status
-payments.payment_id → journey_id, amount_usd, method, status, paid_at
-feedback.feedback_id → journey_id, user_id, rating, comment, submitted_at
+user_id → password_hash, password_salt, hash_algorithm, created_at, updated_at
 ```
 
-Payments and feedback can reference all journey types through one foreign key.
+For `user_security_questions`:
+
+```text
+security_question_id → user_id, secret_question, secret_answer_hash, secret_answer_salt, hash_algorithm
+```
+
+Each table stores attributes that depend on its own key. This avoids mixing unrelated dependencies in a single table.
+
+#### Normalisation benefit
+
+Separating credentials from profiles reduces the risk of accidental exposure when querying user profile data. It also avoids update anomalies when authentication records change but profile data does not.
 
 ---
 
-### 2.9 Password hashing: Argon2id and salt handling
+### 2.7 Supertype/Subtype Design for Journeys
 
-The implementation uses Argon2id through `argon2-cffi`. In the relational query layer, password hashing is handled by a shared `PasswordHasher` instance. The seed script also hashes user passwords before inserting them into `user_credentials`.
+#### Problem
 
-Argon2id is appropriate because password hashing requires an adaptive and deliberately expensive algorithm. General-purpose hash functions such as MD5, SHA-1, and SHA-256 are fast by design. Their speed is a disadvantage for password storage because attackers can test many guesses quickly, especially with GPUs or specialised hardware.
+The mock data contains two transaction types:
 
-Argon2id improves password storage security in two main ways:
+1. National rail bookings.
+2. Metro travel history.
 
-1. **Time cost**  
-   The algorithm can be configured to require multiple computation passes, making each password guess slower.
+Both transaction types have common attributes such as user, ticket type, amount, and status. However, they also have different details:
 
-2. **Memory cost**  
-   Argon2id is memory-hard, meaning each guess requires a significant amount of memory. This makes large-scale parallel guessing more expensive.
+- National rail bookings have fare class, departure time, coach, and seat.
+- Metro trips have no reserved seat and may reference a day pass.
 
-The implementation stores Argon2id output in PHC string format. This format includes algorithm information, cost parameters, salt, and hash output. Therefore, each call to the hashing function automatically produces a unique salted hash. Two users using the same password will still have different stored password hash strings because their salts differ.
-
-This prevents common rainbow-table attacks. A rainbow table maps known plaintext passwords to hash values. If two users with the same password had the same stored hash, an attacker could recognise password reuse. With per-hash random salt, the same plaintext produces different hash outputs, so precomputed unsalted hash tables are ineffective.
-
-The schema still includes optional salt columns (`password_salt`, `secret_answer_salt`), but the actual implementation stores the salt inside the Argon2 PHC-format hash string. This is acceptable because PHC format is the standard way to store Argon2 parameters and salt together with the digest.
-
----
-
-### 2.10 Deliberate de-normalisation: `stops_travelled`
-
-The attribute `stops_travelled` is stored in both `bookings` and `metro_trips`, even though it can be derived from schedule stop tables.
-
-For example, for a national rail booking, stops travelled can be computed as:
+If `payments` and `feedback` referenced both `bookings` and `metro_trips` separately, the schema would need nullable foreign keys such as:
 
 ```text
-destination_stop_order - origin_stop_order
+payment.booking_id
+payment.trip_id
 ```
 
-However, storing `stops_travelled` is a deliberate de-normalisation. The value is used repeatedly in fare calculation, booking display, cancellation output, and historical transaction records. Once a booking is created, the historical fare should reflect the route at the time of purchase, even if the schedule definition changes later.
+That would create a polymorphic association problem. The database would need extra constraints to ensure exactly one of those columns is populated.
 
-The trade-off is that the stored value must be correct when the journey is inserted. This is handled by application logic in the booking function, which computes stop difference before inserting the booking. The benefit is faster and clearer access to historical transaction details.
+#### Implemented design
+
+The schema uses `journeys` as a shared supertype:
+
+```sql
+journeys(
+    journey_id,
+    network,
+    user_id,
+    ticket_type,
+    amount_usd,
+    status
+)
+```
+
+Network-specific details are stored in subtype tables:
+
+```sql
+bookings(
+    booking_id,
+    ...
+)
+
+metro_trips(
+    trip_id,
+    ...
+)
+```
+
+Both `bookings.booking_id` and `metro_trips.trip_id` are primary keys that also reference `journeys(journey_id)`.
+
+`payments` and `feedback` reference the common parent table:
+
+```sql
+payments.journey_id → journeys.journey_id
+feedback.journey_id → journeys.journey_id
+```
+
+#### Functional dependency
+
+For common journey data:
+
+```text
+journey_id → network, user_id, ticket_type, amount_usd, status
+```
+
+For national rail-specific booking data:
+
+```text
+booking_id → schedule_id, origin_station_id, destination_station_id, travel_date,
+             departure_time, fare_class, layout_id, coach, seat_id,
+             stops_travelled, booked_at, travelled_at, seat_occupies_slot
+```
+
+For metro-specific trip data:
+
+```text
+trip_id → schedule_id, origin_station_id, destination_station_id, travel_date,
+          day_pass_ref, stops_travelled, purchased_at, travelled_at
+```
+
+The common attributes are stored once in `journeys`, and the subtype attributes are stored only in the relevant subtype table.
+
+#### Normalisation benefit
+
+This removes duplicated transaction columns from `bookings` and `metro_trips`. It also gives `payments` and `feedback` one consistent foreign key target.
 
 ---
 
-### 2.11 Soft cancellation instead of physical delete
+### 2.8 Deliberate De-normalisation: `bookings.stops_travelled`
 
-The design does not physically delete cancelled journeys. Instead, cancellation updates `journeys.status` to `cancelled` and updates payment status as needed.
+The main deliberate de-normalisation in the schema is:
 
-This protects auditability. Payments, feedback, refund logic, and historical booking records remain available after cancellation. Physical deletion would make it harder to explain why a payment was refunded or why a seat became available again.
+```sql
+bookings.stops_travelled
+```
 
-The trade-off is that seat availability and booking history queries must explicitly exclude cancelled journeys where appropriate. This is reflected in the SQL logic, where bookings are joined with `journeys` and filtered by status.
+This value can be derived from the schedule stop table:
+
+```text
+destination_stop.stop_order - origin_stop.stop_order
+```
+
+Therefore, storing it in `bookings` duplicates a value that could be calculated by joining `bookings` to `national_rail_schedule_stops`.
+
+#### Reason for storing it
+
+The value is stored because it is part of the booking transaction at the time the booking is made. It is used for fare calculation, booking display, and cancellation/refund-related logic. Storing it also matches the mock booking records, where `stops_travelled` is already included.
+
+#### Trade-off
+
+The trade-off is that the value could become inconsistent if schedule stop orders were later changed. In this project, that risk is acceptable because schedules are treated as seeded reference data, while bookings are transactional records.
+
+The value is inserted when the booking is created, after the system verifies the route order and calculates the number of stops. In other words, the stored value acts as a transaction snapshot rather than the only source of route truth.
+
+---
+
+### 2.9 Deliberate De-normalisation / Audit Trade-off: Cancelled Bookings Keep Seat History
+
+The schema does not delete a booking row when a passenger cancels. Instead, cancellation changes the journey status and releases the seat slot through:
+
+```sql
+bookings.seat_occupies_slot = FALSE
+```
+
+The schema then uses a partial unique index:
+
+```sql
+CREATE UNIQUE INDEX idx_bookings_active_seat_unique
+ON bookings (schedule_id, travel_date, departure_time, coach, seat_id)
+WHERE seat_occupies_slot = TRUE;
+```
+
+#### Reason for this design
+
+This keeps cancelled bookings as historical records while allowing the same physical seat to be booked again after cancellation.
+
+#### Trade-off
+
+This design stores historical booking rows that no longer occupy seats. A fully normalized inventory-only approach could delete or separate cancelled seat reservations, but that would lose auditability. For this project, keeping cancellation history is more important because payments, refunds, and feedback are linked to journey records.
+
+---
+
+### 2.10 Password Hashing Design
+
+#### Algorithm used
+
+The project uses **Argon2id** for password hashing. The implementation is in `skeleton/password_hash.py`, using:
+
+```python
+argon2.low_level.hash_secret_raw(..., type=Type.ID)
+```
+
+The same hashing function is used for:
+
+- user passwords,
+- security-question answers.
+
+The stored fields are:
+
+```sql
+password_hash TEXT
+password_salt BYTEA
+hash_algorithm TEXT DEFAULT 'argon2id'
+```
+
+and for security answers:
+
+```sql
+secret_answer_hash TEXT
+secret_answer_salt BYTEA
+hash_algorithm TEXT DEFAULT 'argon2id'
+```
+
+#### Why Argon2id is preferred over MD5 or SHA-1
+
+MD5 and SHA-1 are fast general-purpose hash functions. They are not suitable for password storage because attackers can compute large numbers of candidate hashes very quickly using GPUs or precomputed rainbow tables.
+
+Argon2id is more appropriate for password hashing because it is an adaptive, memory-hard password hashing algorithm. The implementation uses configurable parameters such as:
+
+```python
+_TIME_COST
+_MEMORY_COST
+_PARALLELISM
+_HASH_LEN
+_SALT_LEN
+```
+
+This means the hash calculation intentionally requires more computation and memory than a simple MD5 or SHA-1 hash. That slows down brute-force attacks.
+
+#### Salt management
+
+Each password or secret answer uses a randomly generated salt:
+
+```python
+salt = os.urandom(_SALT_LEN)
+```
+
+The salt is stored separately in PostgreSQL as `BYTEA`.
+
+The password verification process recomputes the Argon2id digest using the stored salt and compares the result with the stored hash using constant-time comparison:
+
+```python
+secrets.compare_digest(...)
+```
+
+This prevents two users with the same password from having the same stored hash. For example, if two users both choose the same password, the random salt makes their stored hash values different. This reduces the usefulness of rainbow-table attacks and prevents attackers from immediately identifying shared passwords by comparing hash strings.
+
+---
+
+### 2.11 Summary
+
+The schema applies normalization mainly by decomposing nested JSON structures into relational tables:
+
+- schedule stops are stored in stop tables instead of arrays,
+- operating days are stored in junction tables,
+- national rail fare classes are stored in a separate fare table,
+- station line memberships are stored in line junction tables,
+- seat inventory is decomposed into layouts, coaches, and seats,
+- user credentials are separated from user profile data,
+- shared transaction data is stored in `journeys` with `bookings` and `metro_trips` as subtypes.
+
+The main deliberate de-normalisation is storing `bookings.stops_travelled` as a transaction snapshot. The schema also keeps cancelled booking rows for auditability while using `seat_occupies_slot` and a partial unique index to release seats for rebooking.
+
+Password storage uses Argon2id with per-credential random salts, rather than fast hashes such as MD5 or SHA-1. This matches the security requirement for adaptive password hashing and protects against rainbow-table reuse.
 
 ---
 
 ## Section 3 — Graph Database Design Rationale
 
-### 3.1 Graph database role
+### 3.1 Overview
 
-The graph database models the physical transport network. It is not used for user accounts, bookings, payments, or feedback. Those records belong in PostgreSQL because they require transactional integrity and foreign key constraints.
+TransitFlow uses Neo4j for transport-network routing and disruption analysis. The relational database is suitable for structured booking data, payments, fares, users, and schedules, but route-finding is naturally graph-shaped. Stations are vertices, and physical connections between stations are edges.
 
-Neo4j is used because routing is fundamentally a graph traversal problem. The system needs to answer questions such as:
+The graph database is used for questions such as:
 
-```text
-What is the fastest route from MS01 to MS14?
-How do I get from Central Square (MS01) to Stonehaven (NR05)?
-If NR03 is closed, what alternative route exists from NR01 to NR05?
-Which stations may be affected by a delay at NR03?
-```
+- What is the fastest route between two stations?
+- What is the cheapest route between two stations?
+- How can a passenger travel between the metro and national rail networks?
+- What alternative route exists if a station is closed?
+- Which nearby stations may be affected by a delay or disruption?
 
-These questions involve paths, connected nodes, edge weights, and node exclusion. They are easier to express in a graph database than with repeated SQL self-joins.
+These operations require path traversal across connected stations. In Neo4j, this can be expressed directly as graph traversal over station nodes and relationship edges. The implemented graph layer is separate from the PostgreSQL transactional layer: Neo4j handles routing and connectivity, while PostgreSQL handles bookings, seats, payments, and policy vectors.
 
 ---
 
-### 3.2 Nodes
+### 3.2 Graph Nodes
 
-The graph has two main node labels:
+The Neo4j graph contains two station node labels:
 
 ```text
 MetroStation
 NationalRailStation
 ```
 
-Each station node represents a physical station in the transport network. Important node properties include:
+The project keeps metro and national rail stations as separate labels because the two networks have different station ID prefixes, line structures, fare assumptions, and interchange metadata.
 
-| Property | Purpose |
-|---|---|
-| `station_id` | Stable identity shared with PostgreSQL and mock JSON data. |
-| `name` | Human-readable station name. |
-| `lines` | Lines served by the station. |
-| `is_interchange_metro` | Indicates whether the station is a metro interchange. |
-| `is_interchange_national_rail` | Indicates whether the station connects to national rail. |
-| `interchange_nr_station_id` / `interchange_metro_station_id` | Links corresponding stations across the two networks. |
-| fare-related properties | Used for route cost projection and future fare logic. |
+#### MetroStation
 
-The graph seeding script creates 20 metro station nodes and 10 national rail station nodes from the mock station JSON files.
+`MetroStation` nodes are created from `metro_stations.json`.
+
+Key properties include:
+
+```text
+station_id
+name
+lines
+is_interchange_metro
+interchange_metro_lines
+is_interchange_national_rail
+interchange_nr_station_id
+base_fare_usd
+per_stop_rate_usd
+```
+
+The `station_id` is the stable graph identity for each metro station. In the mock data, metro station IDs use the `MS` prefix, such as `MS01`.
+
+Fare properties are stored on metro station nodes as graph-side defaults. They are used by the graph query layer when estimating route cost. The authoritative transactional fare calculation for bookings remains in PostgreSQL.
+
+#### NationalRailStation
+
+`NationalRailStation` nodes are created from `national_rail_stations.json`.
+
+Key properties include:
+
+```text
+station_id
+name
+lines
+is_interchange_national_rail
+interchange_national_rail_lines
+is_interchange_metro
+interchange_metro_station_id
+base_fare_standard_usd
+per_stop_rate_standard_usd
+base_fare_first_usd
+per_stop_rate_first_usd
+```
+
+The `station_id` is the stable graph identity for each national rail station. In the mock data, national rail station IDs use the `NR` prefix, such as `NR01`.
+
+National rail station nodes store standard and first-class fare defaults for route-cost estimation. The relational database still contains schedule-level fare data in `national_rail_schedule_fares`; the graph fare properties are used only for route projection and approximate cheapest-path calculations.
 
 ---
 
-### 3.3 Relationships
+### 3.3 Graph Relationships
 
-The graph uses three main relationship types:
+The graph uses three relationship types:
 
-| Relationship | Connects | Purpose |
-|---|---|---|
-| `METRO_LINK` | `MetroStation` → `MetroStation` | Represents direct metro track adjacency. |
-| `RAIL_LINK` | `NationalRailStation` → `NationalRailStation` | Represents direct national rail track adjacency. |
-| `INTERCHANGE_TO` | `MetroStation` ↔ `NationalRailStation` | Represents transfer walking links between metro and rail stations. |
+```text
+METRO_LINK
+RAIL_LINK
+INTERCHANGE_TO
+```
 
-Each relationship stores routing weights:
+Each relationship represents a traversable connection between two station nodes.
 
-| Property | Purpose |
-|---|---|
-| `travel_time_min` | Human-readable travel time between two stations. |
-| `time_weight` | Weight used by fastest-path routing. |
-| `fare_weight` | Weight used by cheapest-path routing. |
-| `line` | Identifies the line for metro or rail links. |
-| `walking_time_min` | Used on interchange edges to represent transfer walking time. |
+#### METRO_LINK
 
-Interchange is represented by directed edges in both directions. This avoids assuming undirected semantics and allows traversal from metro to national rail or from national rail to metro.
+`METRO_LINK` relationships connect adjacent metro stations.
+
+Important relationship properties:
+
+```text
+line
+travel_time_min
+time_weight
+fare_weight
+```
+
+`time_weight` is set from the travel time between adjacent metro stations. `fare_weight` is based on the per-stop metro fare rate. These properties allow the graph query layer to optimize routes either by travel time or by cost.
+
+#### RAIL_LINK
+
+`RAIL_LINK` relationships connect adjacent national rail stations.
+
+Important relationship properties:
+
+```text
+line
+travel_time_min
+time_weight
+fare_weight
+```
+
+`time_weight` is set from the travel time between adjacent national rail stations. `fare_weight` is based on the standard national rail per-stop fare rate. First-class fare projection is handled in the query result logic rather than through a separate relationship type.
+
+#### INTERCHANGE_TO
+
+`INTERCHANGE_TO` relationships connect metro stations and national rail stations where an interchange exists.
+
+Important relationship properties:
+
+```text
+walking_time_min
+time_weight
+fare_weight
+```
+
+The graph seeding process creates interchange relationships in both directions:
+
+```text
+MetroStation → NationalRailStation
+NationalRailStation → MetroStation
+```
+
+This bidirectional representation makes cross-network traversal possible without requiring the query to assume undirected semantics. The `time_weight` is set to the interchange walking time. The `fare_weight` is set to `0` because the interchange itself is not an additional ticketed segment in the graph model.
 
 ---
 
-### 3.4 Node identity
+### 3.4 Node Identity Strategy
 
-The unique graph identity is `station_id`.
+The graph uses `station_id` as the logical identity for station nodes.
 
 Examples:
 
 ```text
-MS01 = Central Square
-MS07 = Old Town
-NR01 = Central Station
-NR03 = Old Town Junction
+MS01  = metro station
+NR01  = national rail station
 ```
 
-This property was chosen because the same station ids appear in:
+This matches the PostgreSQL station identifiers and the mock JSON data. The same station IDs are also used by the agent layer and the UI examples, which allows the system to pass station references consistently between:
 
-1. station JSON files;
-2. PostgreSQL station tables;
-3. schedule stop tables;
-4. booking and trip records;
-5. agent parsing logic;
-6. graph nodes.
+- natural-language station parsing,
+- PostgreSQL schedule queries,
+- Neo4j route queries,
+- UI/agent output formatting.
 
-Using the same identifier across all components allows the agent to safely combine PostgreSQL, Neo4j, and pgvector results. For example, a user can ask for a route from `MS01` to `NR05`, and the graph can route using those ids while the relational layer can still retrieve schedule, station, or booking data using the same ids.
+The graph query layer infers the network type from the station ID prefix:
+
+```text
+MS → metro
+NR → national rail
+```
+
+This allows the query functions to decide whether a route is metro-only, rail-only, or cross-network.
 
 ---
 
-### 3.5 Why graph is better than relational for routing
+### 3.5 Why a Graph Database Is Appropriate
 
-Route search requires repeated traversal across station adjacency. In Neo4j, this is direct:
+A transport network is naturally represented as a graph:
 
 ```text
-(station)-[:METRO_LINK|RAIL_LINK|INTERCHANGE_TO*]->(station)
+station → connection → station
 ```
 
-The route is represented as a path of nodes and relationships. The system can then aggregate relationship weights to calculate total travel time or total fare cost.
+In relational form, route-finding would require repeated self-joins or recursive common table expressions over station-connection tables. For a simple one-hop or two-hop query, SQL joins are manageable. However, shortest-route, cheapest-route, alternative-route, and cross-network traversal queries become more complex as the number of possible paths grows.
 
-In relational SQL, the same problem would require a recursive common table expression (recursive CTE). The query would need to:
+Neo4j is more appropriate for these tasks because it can traverse relationships directly. The graph model stores stations as nodes and travel connections as relationships, so pathfinding queries can operate on the network topology without reconstructing the graph from relational joins each time.
 
-1. start from the origin station;
-2. repeatedly join an adjacency table to find neighbouring stations;
-3. accumulate path cost;
-4. store visited stations to avoid cycles;
-5. stop when the destination is found;
-6. rank all possible paths by total cost.
+The implemented graph layer supports both unweighted and weighted routing:
 
-This is possible in SQL but more complex and less natural than graph traversal. Graph databases are specifically designed for this kind of connected-data problem.
+- unweighted shortest-path fallback using `shortestPath`,
+- weighted pathfinding using APOC Dijkstra when available,
+- local fallback weighting if the weighted procedure is unavailable.
 
-For weighted routing, the project uses a Dijkstra-style approach through APOC when available. The weighted path function attempts to use `apoc.algo.dijkstra` with either `time_weight` or `fare_weight`. If APOC is not available, it falls back to shortest path and local weight calculation. This makes routing robust while still preferring a proper weighted graph algorithm.
+This is more suitable than relational recursive CTEs for the routing part of the project because the query intent is path traversal rather than record aggregation.
 
 ---
 
-### 3.6 Query type 1: fastest route
+### 3.6 Pathfinding and Query Algorithms
 
-The fastest route function uses edge `time_weight` to find the minimum-time path:
+#### Fastest route
 
-```text
-query_shortest_route(origin_id, destination_id, network="auto")
+The function `query_shortest_route(origin_id, destination_id, network="auto")` finds the fastest path between two stations.
+
+The graph layer uses `time_weight` as the optimization property. The query first attempts weighted pathfinding through APOC Dijkstra. If that is unavailable, it falls back to an unweighted `shortestPath` and computes the path time locally from relationship weights.
+
+Example query type:
+
+```python
+query_shortest_route("MS01", "MS14")
 ```
 
-Example use case:
+Expected purpose:
 
 ```text
-What is the fastest metro route from MS01 to MS14?
+Find the fastest route between two metro stations.
 ```
 
-The graph enables this because every station connection has a time weight. The output includes:
+The returned result includes:
 
-- whether a path was found,
-- origin and destination ids,
-- total travel time,
-- station path,
-- relationship legs,
-- interchange points if any.
+```text
+found
+origin_id
+destination_id
+total_time_min
+path
+legs
+interchange_points
+```
 
-This query is difficult to model as a simple relational join because the number of hops is not known in advance.
+#### Cheapest route
+
+The function `query_cheapest_route(origin_id, destination_id, network="auto", fare_class="standard")` finds a low-cost route using graph fare weights.
+
+The graph layer uses `fare_weight` for path optimization. The final route projection computes a stops-based fare using the sequence of station IDs. Metro and national rail are charged as separate segments in the result logic.
+
+Example query type:
+
+```python
+query_cheapest_route("NR01", "NR05", fare_class="standard")
+```
+
+Expected purpose:
+
+```text
+Find a route between two national rail stations while minimizing approximate travel cost.
+```
+
+This supports passenger questions where fare is more important than travel time.
+
+#### Interchange path
+
+The function `query_interchange_path(origin_id, destination_id)` handles cross-network routing between metro and national rail stations.
+
+Example query type:
+
+```python
+query_interchange_path("MS01", "NR05")
+```
+
+Expected purpose:
+
+```text
+Find a path that crosses between metro and national rail using INTERCHANGE_TO.
+```
+
+The query requires the path to include at least one `INTERCHANGE_TO` relationship. This ensures that a cross-network answer explicitly includes an interchange point.
+
+#### Alternative routes around a closed station
+
+The function `query_alternative_routes(origin_id, destination_id, avoid_station_id, network="auto", max_routes=3)` finds routes that avoid a disrupted or closed station.
+
+Example query type:
+
+```python
+query_alternative_routes("NR01", "NR05", "NR03")
+```
+
+Expected purpose:
+
+```text
+Find alternative routes from NR01 to NR05 while avoiding NR03.
+```
+
+The query excludes the avoided station from the path. The implementation repeatedly finds a path, records its station sequence, and then blocks intermediate nodes to search for a different route. This is appropriate for the small course graph and supports disruption-handling questions in the agent.
+
+#### Delay ripple analysis
+
+The function `query_delay_ripple(delayed_station_id, hops=2)` finds nearby stations that may be affected by a disruption.
+
+Example query type:
+
+```python
+query_delay_ripple("MS01", hops=2)
+```
+
+Expected purpose:
+
+```text
+Find stations within two graph hops of a delayed station.
+```
+
+The result includes station identity, station name, number of hops away, affected lines, and network type. This supports operational questions about how a local disruption may affect nearby stations.
 
 ---
 
-### 3.7 Query type 2: cheapest route
+### 3.7 Graph Result Projection
 
-The cheapest route function uses `fare_weight` instead of `time_weight`:
+The graph query layer does not return raw Neo4j objects directly to the UI. Instead, it converts paths into JSON-serializable Python dictionaries.
 
-```text
-query_cheapest_route(origin_id, destination_id, network="auto", fare_class="standard")
-```
-
-This supports fare-oriented questions such as:
+For each station node, the graph layer returns a normalized station structure:
 
 ```text
-What is the cheapest route from MS01 to NR05?
+station_id
+name
+lines
+network
 ```
 
-The graph determines the path, then the code projects fare using stop-based rules. Metro and national rail are charged as separate ticket components, while national rail can apply standard or first-class fare assumptions.
+For each relationship, the graph layer returns a leg structure:
+
+```text
+from_station_id
+to_station_id
+relationship
+line
+travel_time_min
+```
+
+For a complete route, the graph layer returns:
+
+```text
+found
+origin_id
+destination_id
+total_time_min
+total_fare_usd
+path
+legs
+interchange_points
+```
+
+This projection is important because the conversational agent and UI need stable plain Python data structures, not Neo4j-native node or path objects.
 
 ---
 
-### 3.8 Query type 3: interchange path
+### 3.8 Relationship Between Neo4j and PostgreSQL
 
-Cross-network travel requires moving between metro and national rail. This is handled by `INTERCHANGE_TO` edges:
+Neo4j and PostgreSQL serve different roles in TransitFlow.
 
-```text
-query_interchange_path(origin_id, destination_id)
-```
+PostgreSQL is used for:
 
-Example:
+- user accounts,
+- authentication,
+- schedules,
+- booking transactions,
+- metro trips,
+- national rail seat reservations,
+- payments,
+- feedback,
+- policy document embeddings.
 
-```text
-How do I get from Central Square (MS01) to Stonehaven (NR05)?
-```
+Neo4j is used for:
 
-The query requires the returned path to contain at least one `INTERCHANGE_TO` relationship. This ensures the path is actually a cross-network route, not just a same-network shortest path.
+- fastest-route queries,
+- cheapest-route queries,
+- cross-network interchange routing,
+- alternative routes around disruptions,
+- delay ripple analysis.
 
-Interchange links allow the graph to keep metro and rail stations as separate node labels while still enabling transfer routes.
-
----
-
-### 3.9 Query type 4: alternative routes avoiding a station
-
-The alternative route function supports disruption scenarios:
-
-```text
-query_alternative_routes(origin_id, destination_id, avoid_station_id)
-```
-
-Example:
-
-```text
-If Old Town station (NR03) is closed, what alternative routes exist from NR01 to NR05?
-```
-
-The Cypher logic finds paths from origin to destination while excluding any path that contains the avoided station. It then ranks routes by total time and returns the best alternatives.
-
-In SQL, this would require path enumeration and cycle prevention inside a recursive CTE. In Neo4j, excluding a node from a path is a natural path predicate.
+This separation avoids forcing PostgreSQL to perform graph traversal and avoids forcing Neo4j to manage transactional booking constraints. For example, seat double-booking is enforced in PostgreSQL through relational constraints and a partial unique index, while route alternatives are handled in Neo4j through graph traversal.
 
 ---
 
-### 3.10 Query type 5: delay ripple
+### 3.9 Design Trade-offs
 
-The delay ripple function identifies nearby stations affected by a disruption:
+#### Duplicate station data
 
-```text
-query_delay_ripple(delayed_station_id, hops=2)
-```
+Station data exists in both PostgreSQL and Neo4j. PostgreSQL stores stations for relational schedule and booking integrity. Neo4j stores stations for route traversal.
 
-This works by expanding relationships up to a given hop distance from the delayed station. It returns affected stations, hop distance, lines affected, and network type.
+This duplication is intentional. The two databases use the same `station_id` values so that the agent can move between relational and graph queries consistently. The trade-off is that both databases must be re-seeded from the same JSON source to remain synchronized.
 
-This is a graph-native use case because “affected by a nearby station” is a neighbourhood traversal problem. Relational modelling would require adjacency tables and recursive expansion logic.
+#### Approximate graph fare projection
+
+The graph database stores fare-related weights for cheapest-route estimation. However, exact fare calculation for national rail bookings belongs to PostgreSQL because national rail fare depends on schedule and fare class.
+
+Therefore, graph fare values are used for route comparison and passenger-facing route estimates, not as the final transactional booking fare.
+
+#### Weighted routing fallback
+
+The graph layer attempts APOC Dijkstra for weighted routing. If APOC is unavailable, it falls back to a shortest-path search and local weight calculation. This makes the project more robust in different local environments, but the fallback is less precise for weighted optimization because it first selects a path by hop count before calculating the weight.
 
 ---
 
-### 3.11 Boundary between Neo4j and PostgreSQL
+### 3.10 Summary
 
-Neo4j does not store transactional facts such as:
+The graph database design models the transport network as stations connected by weighted relationships. The design uses:
 
-- passenger accounts;
-- bookings;
-- metro trips;
-- payments;
-- feedback;
-- password hashes;
-- seat reservations.
+- `MetroStation` and `NationalRailStation` nodes,
+- `METRO_LINK`, `RAIL_LINK`, and `INTERCHANGE_TO` relationships,
+- `time_weight` for fastest-route queries,
+- `fare_weight` for cheapest-route queries,
+- `station_id` as the stable node identity shared with PostgreSQL.
 
-These remain in PostgreSQL. Neo4j stores only the transport topology and routing weights. This boundary avoids duplicating operational truth across databases.
-
-The agent combines them at application level. For example:
-
-1. PostgreSQL answers whether a train schedule exists.
-2. PostgreSQL answers whether a seat is available.
-3. Neo4j answers how to route across the network.
-4. pgvector answers the policy rule behind refunds or travel restrictions.
+Neo4j is used because route finding, interchange traversal, disruption avoidance, and delay ripple analysis are graph traversal problems. These tasks are easier and clearer in a graph database than in relational SQL using repeated joins or recursive CTEs. PostgreSQL remains responsible for transactional integrity, while Neo4j is responsible for network traversal.
 
 ---
 
 ## Section 4 — Vector / RAG Design
 
-### 4.1 What is embedded
+### 4.1 Overview
 
-The vector database stores policy chunks in the `policy_documents` table. Each row contains:
+TransitFlow uses a Retrieval-Augmented Generation (RAG) design for policy-related questions. The goal is to answer passenger questions about refunds, booking rules, ticket rules, delay compensation, bicycles, pets, luggage, and other travel policies using the project’s official mock policy data instead of relying only on the LLM’s general knowledge.
+
+The RAG layer is stored in PostgreSQL using pgvector. The transactional database tables handle bookings, trips, payments, users, and schedules, while the vector table stores embedded policy chunks for semantic search.
+
+The main RAG table is:
+
+```sql
+policy_documents
+```
+
+This table stores policy text chunks, metadata, and embedding vectors. The conversational agent uses this table when a user asks policy-related questions.
+
+---
+
+### 4.2 Documents Embedded
+
+The embedded content comes from the project’s policy and rule data. The pre-processed chunk file is:
+
+```text
+train-mock-data/policy_chunks.json
+```
+
+The chunks are generated from policy-related source files such as:
+
+```text
+refund_policy.json
+booking_rules.json
+travel_policies.json
+ticket_types.json
+```
+
+The uploaded `policy_chunks.json` contains structured chunk records with fields such as:
 
 ```text
 chunk_id
-title
-category
+source_file
 document_type
-policy_id
+title
 content
 metadata
-embedding
+```
+
+Examples of embedded policy topics include:
+
+- metro single-ticket refund rules,
+- metro day-pass refund rules,
+- national rail normal-service cancellation windows,
+- national rail express-service cancellation windows,
+- delay compensation rules,
+- national rail advance booking rules,
+- national rail seat-selection rules,
+- metro ticket-change rules,
+- bicycle policies,
+- luggage policies,
+- pet policies,
+- prohibited item policies.
+
+Each chunk is written as natural-language policy text rather than raw JSON only. This improves retrieval quality because user questions are also natural language.
+
+---
+
+### 4.3 Chunk Design
+
+The chunking strategy is policy-aware rather than using arbitrary fixed-size text splitting.
+
+Each chunk is centred on a specific policy concept, rule, or sub-rule. For example:
+
+```text
+refund_policy_RF001_W1
+refund_policy_RF001_W2
+refund_policy_RF005_RF005_R1
+booking_rules_national_rail_advance_booking
+travel_policies_metro_bicycles
+```
+
+This design keeps each retrieved chunk focused. For example, a question about a 45-minute train delay should retrieve the RF005 delay-compensation chunk rather than an unrelated cancellation-refund chunk.
+
+Each chunk includes:
+
+```text
+content
+metadata
+```
+
+The `content` field is what gets embedded. The `metadata` field stores structured information such as:
+
+```text
+policy_id
+network_type
+service_type
+topic
+rule_id
+rule_type
+ticket_type
+json_path
+related_policy_ids
+```
+
+This metadata is useful for debugging, filtering, and explaining which original rule the retrieved answer came from.
+
+---
+
+### 4.4 Vector Table Design
+
+The RAG data is stored in PostgreSQL in the `policy_documents` table.
+
+The table stores both human-readable policy fields and vector-search fields:
+
+```sql
+policy_documents(
+    id,
+    chunk_id,
+    title,
+    category,
+    document_type,
+    policy_id,
+    content,
+    metadata,
+    embedding,
+    source_file,
+    created_at
+)
+```
+
+The important fields are:
+
+| Field | Purpose |
+|---|---|
+| `chunk_id` | Stable identifier for each policy chunk. |
+| `title` | Human-readable title for retrieved results. |
+| `category` | General category used by the application. |
+| `document_type` | More specific source type, such as refund policy, booking rule, or travel policy. |
+| `policy_id` | Policy identifier when available, such as `RF005`. |
+| `content` | Natural-language text embedded and shown in retrieved answers. |
+| `metadata` | JSONB metadata copied from `policy_chunks.json`. |
+| `embedding` | pgvector embedding used for similarity search. |
+| `source_file` | Original JSON policy source file. |
+
+The seeding script also ensures supporting columns and indexes exist before inserting documents.
+
+---
+
+### 4.5 Embedding Model and Dimension Choice
+
+The default local embedding provider is Ollama with:
+
+```text
+nomic-embed-text
+```
+
+The configured embedding dimension for Ollama is:
+
+```text
+768
+```
+
+This matches the PostgreSQL vector column used by the project:
+
+```sql
+vector(768)
+```
+
+The project also supports Gemini as an alternative provider. In `skeleton/config.py`, the configured Gemini embedding dimension is:
+
+```text
+3072
+```
+
+This means the embedding provider and the database vector dimension must match. If the project is seeded with Ollama embeddings, then query-time embeddings must also use the same Ollama embedding dimension. If the project switches to Gemini embeddings, the vector schema/index must be compatible with Gemini’s 3072-dimensional vectors and the vector table must be re-seeded.
+
+The project’s `llm_provider.py` explicitly separates the chat provider from the embedding provider. Runtime chat-provider switching does not automatically change the embedding provider used for vector search. This protects the RAG layer from accidentally comparing embeddings generated by different models.
+
+---
+
+### 4.6 Vector Seeding Workflow
+
+The vector seeding process is implemented in:
+
+```text
+skeleton/seed_vectors.py
+```
+
+The workflow is:
+
+1. Ensure the `policy_documents` table has the required policy metadata columns.
+2. Load policy chunks from `train-mock-data/policy_chunks.json`.
+3. For each chunk, embed the chunk’s `content`.
+4. Check that the returned embedding length matches the active provider’s expected dimension.
+5. Store the policy document through `store_policy_document`.
+6. Upsert by `chunk_id`, so re-running the seeder can refresh existing chunks.
+
+The process can be summarized as:
+
+```text
+policy_chunks.json
+        ↓
+load each chunk
+        ↓
+llm.embed(chunk["content"])
+        ↓
+validate embedding dimension
+        ↓
+store_policy_document(...)
+        ↓
+policy_documents table
+```
+
+The seeding script is intended to be re-run when:
+
+- policy JSON data changes,
+- `policy_chunks.json` changes,
+- the embedding provider changes,
+- the embedding model changes.
+
+This is necessary because embeddings are model-specific. A vector produced by one embedding model is not directly comparable to a vector produced by another embedding model.
+
+---
+
+### 4.7 Retrieval Workflow
+
+When a user asks a policy-related question, the agent attempts vector retrieval first.
+
+The retrieval flow is:
+
+```text
+user policy question
+        ↓
+optional query rewrite for policy-specific wording
+        ↓
+llm.embed(query)
+        ↓
+query_policy_vector_search(embedding)
+        ↓
+retrieve top matching policy chunks from policy_documents
+        ↓
+format retrieved policy content
+        ↓
+return grounded answer to user
+```
+
+The agent contains policy-specific routing logic. For example, if a user asks about bicycles, pets, luggage, refunds, delay compensation, or policy rules, the agent directs the question toward the policy lookup path.
+
+For some policy categories, the agent rewrites the user query before embedding. For example, a bicycle question may be rewritten to include whether the user is asking about metro or national rail. This improves retrieval because the policy chunks distinguish between network-specific rules.
+
+---
+
+### 4.8 Similarity Search
+
+The project uses cosine-similarity search through pgvector.
+
+The vector-search settings are configured in `skeleton/config.py`:
+
+```python
+VECTOR_TOP_K = 3
+VECTOR_SIMILARITY_THRESHOLD = 0.5
+```
+
+This means the system retrieves a small number of high-ranking chunks rather than returning a large set of loosely related policy records.
+
+Cosine similarity is appropriate here because policy search is based on semantic meaning rather than exact keyword overlap. For example, a user may ask:
+
+```text
+Can I get money back if my train is late?
+```
+
+The exact phrase may not appear in the JSON file, but it is semantically close to:
+
+```text
+delay compensation
+late train refund
+refund for delay
+```
+
+Vector search helps retrieve the relevant RF005 delay-compensation policy even when the user does not use the exact policy wording.
+
+---
+
+### 4.9 JSON Fallback for Deterministic Policy Answers
+
+The project also includes a deterministic JSON fallback in:
+
+```text
+skeleton/policy_lookup.py
+```
+
+This fallback searches official mock JSON policy files directly when vector retrieval is unavailable or when a deterministic rule is safer.
+
+This is especially useful for policy questions with exact thresholds. For example, delay compensation has clear minute ranges:
+
+```text
+30–59 minutes
+60–119 minutes
+120+ minutes
+```
+
+For a question such as:
+
+```text
+My train was delayed 45 minutes — what compensation am I entitled to?
+```
+
+the agent can use the exact RF005 rule from JSON rather than relying only on semantic ranking.
+
+This fallback makes the RAG system more robust because it avoids a failure mode where the nearest vector chunk is semantically similar but not the exact threshold rule needed for the answer.
+
+---
+
+### 4.10 RAG Answer Formatting
+
+The agent formats retrieved policy chunks into a concise answer. A retrieved document normally includes:
+
+```text
+title
+content
+similarity
+```
+
+The formatted answer uses the retrieved policy title and policy content. The similarity score may also be displayed for debugging or transparency.
+
+The answer is grounded in project data because it is generated from:
+
+1. `policy_chunks.json`,
+2. `policy_documents`,
+3. deterministic JSON policy fallback when needed.
+
+The LLM is not used as the sole source of truth for policy rules. It is used to embed the query and, when needed, to produce natural-language output around retrieved content.
+
+---
+
+### 4.11 Provider Switching and Re-seeding Requirement
+
+The project supports two LLM providers:
+
+```text
+Ollama
+Gemini
+```
+
+The default local provider is Ollama. Gemini is available when a Gemini API key is configured.
+
+However, provider switching creates an important vector-dimension issue:
+
+| Provider | Embedding model | Dimension |
+|---|---|---:|
+| Ollama | `nomic-embed-text` | 768 |
+| Gemini | `gemini-embedding-001` | 3072 |
+
+Because pgvector columns and indexes depend on vector dimensionality, embeddings from these providers are not interchangeable.
+
+Therefore:
+
+```text
+If the embedding provider changes, seed_vectors.py must be re-run.
+```
+
+If the database was seeded with 768-dimensional Ollama vectors, it cannot correctly compare those stored vectors against 3072-dimensional Gemini vectors. The embedding model used for query-time retrieval must match the embedding model used during seeding.
+
+---
+
+### 4.12 Why RAG Is Used Instead of Plain LLM Answers
+
+Policy questions require grounded answers. A plain LLM response may be fluent but may invent refund windows, ticket rules, or travel restrictions that do not exist in the project data.
+
+RAG reduces this risk by retrieving policy text from the project’s own data before answering. This is important for questions such as:
+
+- refund eligibility,
+- delay compensation,
+- seat-selection rules,
+- bicycle restrictions,
+- pet rules,
+- metro ticket validity,
+- national rail booking deadlines.
+
+The final answer is therefore based on the mock policy documents, not on general real-world transit assumptions.
+
+---
+
+### 4.13 Summary
+
+The vector/RAG layer stores embedded policy chunks in PostgreSQL using pgvector. The embedded source is `policy_chunks.json`, which is derived from the project’s official policy JSON files.
+
+The design uses:
+
+- policy-aware chunks,
+- metadata-rich document records,
+- Ollama `nomic-embed-text` embeddings by default,
+- 768-dimensional vectors for the default local setup,
+- cosine similarity for semantic retrieval,
+- a deterministic JSON fallback for exact policy rules,
+- re-seeding when the embedding provider or model changes.
+
+This design allows TransitFlow to answer natural-language policy questions using the project’s own data while keeping structured booking operations in relational tables and route traversal in Neo4j.
+
+---
+
+## Section 5 — AI Tool Usage Evidence
+
+### 5.1 Overview
+
+AI tools were used as development assistants during the TransitFlow project. The team used AI mainly to support implementation review, query design, debugging, and documentation consistency. AI was not treated as the final authority. All generated suggestions were checked against the actual project files, mock data, schema, and working code.
+
+To make AI-assisted work more consistent, the team also maintained an `AI_SESSION_CONTEXT.md` file. This file summarized the project architecture, coding conventions, relational schema, graph schema, implemented function signatures, team decisions, and prompts that produced useful results. The purpose was to reduce ambiguity when using AI in later coding sessions and to prevent generated code from using table names, function names, or design assumptions that did not match the actual project.
+
+The most useful AI support occurred in the following areas:
+
+1. designing direction-correct national rail availability queries,
+2. preparing pgvector-ready policy chunks for RAG,
+3. keeping AI coding sessions consistent through a shared session-context file,
+4. correcting overly broad or inaccurate AI assumptions against the actual schema,
+5. improving password hashing and authentication safety,
+6. developing the Task 6 seat-occupancy extension.
+
+---
+
+### 5.2 Example 1 — National Rail Availability Query
+
+#### Context
+
+National rail schedules contain ordered stops. A train should only be returned if the origin station appears before the destination station in the same schedule. It is not enough to check that both stations appear somewhere on the same route, because that could return a reverse-direction service.
+
+The team decision recorded in `AI_SESSION_CONTEXT.md` states:
+
+```text
+National rail direction: o_stop.stop_order < d_stop.stop_order
+```
+
+This rule was important because the project requires direction-sensitive schedule lookup.
+
+#### Prompt
+
+The AI session context records the following working prompt:
+
+```text
+Implement query_national_rail_availability using _connect() and RealDictCursor.
+Require origin stop_order < destination stop_order on national_rail_schedule_stops.
+```
+
+#### Outcome
+
+The final implementation of `query_national_rail_availability` joins `national_rail_schedule_stops` twice:
+
+```text
+o_stop = origin stop
+d_stop = destination stop
+```
+
+It then enforces:
+
+```sql
+o_stop.stop_order < d_stop.stop_order
+```
+
+The query also requires both origin and destination to be stopping stations:
+
+```sql
+is_stopping = TRUE
+```
+
+This prevents express pass-through stations from being incorrectly returned as valid boarding or alighting stations.
+
+The final query also calculates:
+
+```text
+stops_travelled
+booked_seats
+available_seats
+```
+
+#### Result in the final project
+
+This AI-assisted work helped produce a PostgreSQL query that correctly supports national rail availability. The final result respects route direction, filters by travel date when provided, excludes non-stopping pass-through stations, and returns seat availability information.
+
+---
+
+### 5.3 Example 2 — RAG Policy Chunk Preparation
+
+#### Context
+
+TransitFlow includes policy data from JSON files such as refund policies, booking rules, travel policies, and ticket types. These policies are used to answer natural-language questions about refunds, delay compensation, bicycle rules, pet rules, luggage limits, ticket validity, and booking restrictions.
+
+Embedding raw JSON files directly would make retrieval less precise because each file contains many different policy topics. For example, a question about a 45-minute delay should retrieve the specific RF005 delay-compensation rule, not an unrelated cancellation rule.
+
+#### Prompt
+
+The AI session context records the following working prompt:
+
+```text
+Generate pgvector-ready policy_chunks.json from booking_rules, refund_policy,
+travel_policies, ticket_types — one topic per chunk with chunk_id and metadata.
+```
+
+#### Outcome
+
+The final project uses:
+
+```text
+train-mock-data/policy_chunks.json
+```
+
+Each chunk has a focused policy topic and includes fields such as:
+
+```text
+chunk_id
 source_file
+document_type
+title
+content
+metadata
 ```
 
-The embedded documents come from policy-related JSON data, including:
-
-1. `refund_policy.json`
-2. `booking_rules.json`
-3. `ticket_types.json`
-4. `travel_policies.json`
-
-The actual `policy_chunks.json` file breaks these policies into smaller retrieval units. Examples include:
-
-- national rail cancellation refund windows;
-- express service refund rules;
-- metro single ticket refund rules;
-- metro day pass refund rules;
-- delay compensation rules;
-- bicycle policies;
-- luggage policies;
-- pet policies;
-- ticket validity rules;
-- child fare rules;
-- group fare rules.
-
-Smaller chunks are better than embedding one large policy document because they allow the vector search to retrieve the specific rule that answers the user’s question.
-
----
-
-### 4.2 Why policy documents need RAG
-
-Many user questions are not exact keyword matches. For example:
+Examples of final chunk IDs include:
 
 ```text
-Can I bring my bike on the train?
-Can I get money back if the train is 45 minutes late?
-Can I cancel an express ticket tomorrow?
-Are pets allowed in first class?
+refund_policy_RF003
+refund_policy_RF004
+refund_policy_RF001_W1
+refund_policy_RF005_RF005_R1
+booking_rules_national_rail_advance_booking
+travel_policies_metro_bicycles
+travel_policies_national_rail_bicycles
 ```
 
-A rule-based keyword system might miss these if the user says “bike” while the policy says “bicycle”, or “money back” while the policy says “refund” or “compensation”.
-
-RAG solves this by retrieving documents based on semantic similarity rather than exact wording. The LLM then answers using retrieved project-specific policy text instead of relying only on general knowledge.
-
----
-
-### 4.3 Embedding and storage process
-
-The vector seeding pipeline works as follows:
-
-1. Load `policy_chunks.json`.
-2. For each chunk, read `content`, `title`, `metadata`, `policy_id`, `document_type`, and `source_file`.
-3. Use the configured LLM provider to create an embedding vector.
-4. Check that the embedding dimension matches the configured dimension.
-5. Insert the document and embedding into `policy_documents`.
-
-The seed script validates vector dimension before storage. If the returned embedding length does not match the configured embedding dimension, the script stops and warns that the embedding dimension settings must be updated.
-
-This validation is important because pgvector columns have fixed dimensions. If the project expects 768-dimensional vectors but the provider returns a different dimension, the stored vectors and query vectors will not be compatible.
-
----
-
-### 4.4 Embedding dimension
-
-The schema stores:
+The chunks also preserve metadata such as:
 
 ```text
-embedding vector(768)
+policy_id
+network_type
+service_type
+topic
+rule_id
+rule_type
+ticket_type
+json_path
+related_policy_ids
 ```
 
-This means the current implementation is configured for 768-dimensional embeddings, which matches the Ollama `nomic-embed-text` provider.
+#### Result in the final project
 
-If the team switches to a provider such as Gemini, the embedding dimension may be different, for example 3072 dimensions. This change has a practical consequence: existing rows and indexes in `policy_documents` cannot be reused safely because pgvector columns have a fixed dimension.
+The final RAG design embeds pre-chunked policy records instead of embedding full raw JSON files at query time. This makes policy retrieval more precise and easier to debug.
 
-If a provider switch occurs after seeding, the correct process is:
-
-1. update the vector dimension in schema/config if needed;
-2. reset or migrate the vector table;
-3. re-run the vector seeding script;
-4. rebuild the vector index.
-
-Otherwise, inserts may fail or similarity search may become unusable due to dimension mismatch.
-
----
-
-### 4.5 Cosine similarity justification
-
-The vector search uses cosine distance through pgvector. Cosine similarity is appropriate because embeddings represent semantic direction in a high-dimensional vector space.
-
-Cosine similarity compares the angle between two vectors, not their raw magnitude. This is important because policy chunks may differ in length. A long policy chunk can have a different vector norm from a short user question, but they may still have the same semantic direction.
-
-For example:
+The vector seeding workflow is implemented in:
 
 ```text
-User question: "Can I get compensation for a 45 minute delay?"
-Relevant chunk: "Delay compensation policy. If a passenger's train is delayed by 30–59 minutes due to operator fault..."
+skeleton/seed_vectors.py
 ```
 
-Even though one text is short and the other is longer, their semantic meaning is close. Cosine similarity helps retrieve the correct chunk because it focuses on directional similarity rather than document length.
-
----
-
-### 4.6 RAG pipeline
-
-The RAG pipeline is:
+The session context also records the operational command:
 
 ```text
-User question
-→ optional query rewriting / keyword normalisation
-→ query embedding
-→ pgvector similarity search
-→ retrieved policy chunks
-→ answer generation
+After editing policy_chunks.json, run: python3 skeleton/seed_vectors.py
+(Ensure Ollama is running: ollama pull nomic-embed-text)
 ```
 
-Detailed process:
-
-1. **User question**  
-   The user asks a policy-related question in natural language.
-
-2. **Policy intent detection**  
-   The agent checks for policy-related terms such as refund, cancel, compensation, delay, bicycle, luggage, baggage, pet, or similar Chinese keywords.
-
-3. **Embedding generation**  
-   The agent calls `llm.embed(msg)` to convert the question into a vector.
-
-4. **Similarity search**  
-   The query vector is passed to `query_policy_vector_search`. PostgreSQL compares it against `policy_documents.embedding` using vector distance.
-
-5. **Thresholding and top-k retrieval**  
-   The query function returns the most relevant chunks using configured top-k and similarity threshold values.
-
-6. **Retrieved document context**  
-   The returned policy chunks provide titles, content, metadata, source files, and similarity scores. These retrieved chunks become the factual context for the assistant’s response.
-
-7. **Answer construction**  
-   The agent displays the top policy title and policy content. If multiple chunks are relevant, it lists additional related titles.
-
-8. **Fallback behavior**  
-   If pgvector is unavailable, the policy reply may return `None`, allowing the rest of the agent pipeline or LLM fallback to handle the question.
+This became part of the team’s repeatable workflow for updating the vector store.
 
 ---
 
-### 4.7 Why metadata is stored with policy chunks
+### 5.4 Example 3 — AI Session Context for Consistent Code Generation
 
-Each policy document row stores JSONB metadata. This supports traceability and future filtering. Metadata may include:
+#### Context
+
+During the project, the team used AI multiple times for code review, query generation, debugging, and design-document drafting. Without a shared context file, AI output could easily become inconsistent with the project’s actual schema or naming conventions.
+
+For example, an AI tool might invent a table name, assume a different foreign key structure, or use a function signature that does not exist in the repository.
+
+#### AI-assisted workflow
+
+The team maintained:
+
+```text
+AI_SESSION_CONTEXT.md
+```
+
+This file was designed to be pasted at the start of AI coding sessions so generated code would follow the team’s contracts.
+
+The file records:
+
+```text
+Project Overview
+Tech Stack
+Coding Conventions
+Agreed Relational Schema
+Agreed Graph Schema
+Function Signatures
+Team Decisions Log
+Prompts That Worked
+```
+
+It also states important project contracts, including:
+
+```text
+PostgreSQL = structured transit/booking/payment
+Neo4j = routing
+pgvector = policy RAG
+```
+
+and:
+
+```text
+Agent: rule-based handlers first; LLM fallback only when no DB match.
+```
+
+#### Outcome
+
+The context file helped keep future AI-generated suggestions aligned with the actual implementation. It documented that the relational schema contains:
+
+```text
+users
+user_credentials
+user_security_questions
+journeys
+bookings
+metro_trips
+payments
+feedback
+policy_documents
+```
+
+It also documented that the graph schema contains:
+
+```text
+MetroStation
+NationalRailStation
+METRO_LINK
+RAIL_LINK
+INTERCHANGE_TO
+```
+
+#### Result in the final project
+
+This file became an internal quality-control tool for AI usage. It reduced the risk of inconsistent naming, incorrect table assumptions, or unsupported architectural changes when asking AI for help.
+
+---
+
+### 5.5 Example 4 — Correcting AI Output Against the Actual Schema
+
+#### Context
+
+AI-generated design explanations can be too broad or too absolute if they are not checked against the actual schema. During documentation and review, the team needed to ensure that the written design matched the implemented database exactly.
+
+One important correction involved the relationship between:
+
+```text
+national_rail_schedules
+seat_layouts
+```
+
+A careless ERD description might say that every national rail schedule has exactly one seat layout. However, the schema only guarantees that one schedule can have at most one layout because `seat_layouts.schedule_id` is unique. The schema does not force every schedule to have a seat layout row.
+
+#### Incorrect assumption
+
+The overly broad version was:
+
+```text
+Every national rail schedule has exactly one seat layout.
+```
+
+#### Correction
+
+The precise version is:
+
+```text
+A national rail schedule may have at most one seat layout.
+A seat layout belongs to one national rail schedule.
+```
+
+In ERD cardinality, this should be represented as:
+
+```text
+national_rail_schedules ||--o| seat_layouts : "may have seat layout"
+```
+
+#### Outcome
+
+This correction shows that AI output was not accepted blindly. The team checked wording against the actual schema and changed the design document to avoid claiming constraints that the database does not enforce.
+
+#### Result in the final project
+
+The final documentation uses more precise language for optional and unique relationships. This makes the design document better aligned with the implemented schema and avoids overstating what the database guarantees.
+
+---
+
+### 5.6 Example 5 — Agent Routing and Closed-Station Handling
+
+#### Context
+
+The conversational agent uses rule-based handlers before falling back to the LLM. This design decision is recorded in the AI session context:
+
+```text
+Agent: rule-based handlers first; LLM fallback only when no DB match.
+```
+
+This is important because many user questions should be answered by database queries, not by a general LLM response.
+
+One route-related use case is a closed-station question such as:
+
+```text
+If Old Town station (NR03) is closed, what alternative routes exist from NR01 to NR05?
+```
+
+The system needs to identify the avoided station and call the Neo4j alternative-route logic.
+
+#### AI-assisted issue review
+
+During debugging, the team reviewed station extraction and avoid-station logic to ensure explicit station IDs were preferred over inferred station names.
+
+A representative prompt for this type of review was:
+
+```text
+Inspect the agent station parsing logic for closed-station questions.
+When the user explicitly writes a station ID such as NR03, the parser should prefer that ID over station-name inference.
+```
+
+#### Outcome
+
+The final agent contains `_extract_avoid_station`, which checks explicit closed-station patterns before falling back to other station IDs. It handles cases such as:
+
+```text
+station (NR03) is closed
+NR03 is closed
+closed NR03
+```
+
+The agent then calls graph routing logic for alternative routes.
+
+#### Result in the final project
+
+This improved the reliability of closed-station route questions. It also reflects the team’s general agent design: deterministic parsing and database/graph tools are preferred before LLM fallback.
+
+---
+
+### 5.7 Example 6 — Password Hashing Review
+
+#### Context
+
+The project stores user credentials and security-question answers. These values should not be stored as plaintext. They also should not use fast general-purpose hash functions such as MD5 or SHA-1.
+
+The AI session context records the coding convention:
+
+```text
+Passwords: Argon2id via skeleton/password_hash.py
+```
+
+#### AI-assisted review
+
+A representative prompt for this review was:
+
+```text
+Review the authentication design. Passwords and security-question answers must not be stored in plaintext. Recommend a secure password hashing approach with per-user salts and verification logic.
+```
+
+#### Outcome
+
+The final project uses Argon2id in:
+
+```text
+skeleton/password_hash.py
+```
+
+The implementation uses:
+
+```python
+argon2.low_level.hash_secret_raw(..., type=Type.ID)
+```
+
+Each password or security answer receives a random salt:
+
+```python
+salt = os.urandom(_SALT_LEN)
+```
+
+The stored credential fields include:
+
+```text
+password_hash
+password_salt
+hash_algorithm
+```
+
+Security-question answers use corresponding fields:
+
+```text
+secret_answer_hash
+secret_answer_salt
+hash_algorithm
+```
+
+Verification recomputes the Argon2id hash using the stored salt and compares it with the stored hash using constant-time comparison:
+
+```python
+secrets.compare_digest(...)
+```
+
+#### Result in the final project
+
+The final implementation uses salted Argon2id hashes for both passwords and security-question answers. This is stronger than plaintext storage or fast hashes such as MD5/SHA-1.
+
+---
+
+### 5.8 Example 7 — Task 6 Seat Occupancy Extension
+
+#### Context
+
+The optional Task 6 extension added seat-occupancy analytics and UI support. The goal was to answer questions such as:
+
+```text
+How many standard seats are available on NR_SCH01 on 2026-06-15?
+```
+
+The existing booking system already handled available seat lists, but the Task 6 extension required an aggregated view:
+
+```text
+total seats
+booked seats
+available seats
+```
+
+The AI session context records the implemented function signature:
+
+```text
+query_schedule_seat_occupancy(schedule_id, travel_date, fare_class)
+```
+
+#### AI-assisted task
+
+A representative prompt for this extension was:
+
+```text
+Add a Task 6 database operation that returns seat occupancy for a national rail schedule, travel date, and fare class. It should return total seats, booked seats, and available seats, and it should reuse the existing active-booking logic.
+```
+
+#### Outcome
+
+The final Task 6 implementation is documented in:
+
+```text
+TASK6.md
+```
+
+The modified or added files include:
+
+```text
+databases/relational/queries.py
+skeleton/agent.py
+skeleton/ui.py
+skeleton/validate_integration.py
+TASK6.md
+Team29_DESIGN_DOC.md
+```
+
+The new database operation is:
+
+```text
+query_schedule_seat_occupancy(schedule_id, travel_date, fare_class)
+```
+
+It returns:
+
+```text
+total_seats
+booked_seats
+available_seats
+```
+
+The UI exposes the feature through:
+
+```text
+My Bookings tab
+Seat Capacity tab
+```
+
+The agent also supports natural-language seat-capacity questions when the user includes a national rail schedule ID, travel date, and seat-related wording.
+
+#### Result in the final project
+
+This feature extends the booking system from individual seat lookup to aggregate capacity reporting. It is useful for both passenger-facing questions and UI demonstration during evaluation.
+
+---
+
+### 5.9 Reflection on AI Tool Use
+
+AI was useful for generating first-pass query patterns, reviewing schema decisions, improving documentation, and identifying likely correctness issues. However, the team did not accept AI output without verification.
+
+The most important lesson was that AI needs project context. The `AI_SESSION_CONTEXT.md` file helped by giving the AI a stable summary of the team’s schema, function contracts, graph design, RAG workflow, and coding conventions.
+
+AI suggestions were still checked against:
+
+```text
+schema.sql
+databases/relational/queries.py
+databases/graph/queries.py
+skeleton/agent.py
+skeleton/seed_vectors.py
+skeleton/password_hash.py
+TASK6.md
+```
+
+This verification step was necessary because AI can produce plausible but incorrect assumptions. For example, the final design document had to distinguish between “exactly one seat layout” and “at most one seat layout” based on the actual schema constraint.
+
+Overall, AI tools improved development speed and helped the team organize implementation decisions, but the final project design was grounded in the actual database schema, source code, and mock data.
+
+---
+
+## Section 6 — Reflection & Trade-offs
+
+### 6.1 Overview
+
+TransitFlow required several design trade-offs because the project combines three different data access patterns:
+
+1. structured transactional data,
+2. transport-network routing,
+3. natural-language policy retrieval.
+
+The final architecture separates these responsibilities across PostgreSQL, Neo4j, and pgvector:
+
+```text
+PostgreSQL = structured users, schedules, bookings, trips, payments, feedback
+Neo4j      = route traversal, interchanges, alternative routes, delay ripple
+pgvector   = semantic search over policy documents
+```
+
+This separation made the system clearer, but it also introduced trade-offs. Some data, especially station information, exists in more than one database. The team accepted this because each database is used for a different purpose.
+
+---
+
+### 6.2 Trade-off 1 — PostgreSQL for Transactions, Neo4j for Routing
+
+#### Decision
+
+The team used PostgreSQL for relational transaction data and Neo4j for route traversal.
+
+PostgreSQL stores:
+
+```text
+users
+user_credentials
+user_security_questions
+stations
+schedules
+schedule stops
+journeys
+bookings
+metro_trips
+payments
+feedback
+policy_documents
+```
+
+Neo4j stores:
+
+```text
+MetroStation
+NationalRailStation
+METRO_LINK
+RAIL_LINK
+INTERCHANGE_TO
+```
+
+#### Reason
+
+The relational database is better for enforcing transactional integrity. For example, national rail bookings need primary keys, foreign keys, fare-class checks, valid station references, valid seat references, payment records, and cancellation status. These are naturally relational constraints.
+
+Neo4j is better for path traversal. Route questions such as fastest route, cheapest route, interchange path, and alternative routes around a closed station are graph problems. They are easier to express using station nodes and weighted relationships than repeated SQL joins or recursive CTEs.
+
+#### Benefit
+
+This separation keeps each database responsible for the type of query it handles best:
+
+- PostgreSQL enforces booking and payment correctness.
+- Neo4j handles station connectivity and pathfinding.
+- pgvector handles semantic policy lookup.
+
+#### Trade-off
+
+The main cost is duplicated station data. Station information exists in PostgreSQL for schedules and bookings, and also exists in Neo4j for routing. This means both databases must be seeded consistently from the same mock JSON data.
+
+The team accepted this duplication because the station ID values are shared across both systems. IDs such as `MS01` and `NR01` allow the agent to move between PostgreSQL queries and Neo4j route queries without needing a separate mapping layer.
+
+---
+
+### 6.3 Trade-off 2 — `journeys` Supertype for Metro and National Rail Transactions
+
+#### Decision
+
+The schema uses `journeys` as a shared supertype table. Network-specific details are stored in subtype tables:
+
+```text
+bookings     = national rail details
+metro_trips  = metro trip details
+```
+
+`payments` and `feedback` reference `journeys(journey_id)` instead of referencing `bookings` or `metro_trips` separately.
+
+#### Reason
+
+Metro and national rail transactions share common attributes:
+
+```text
+user_id
+network
+ticket_type
+amount_usd
+status
+```
+
+However, their detailed fields are different. National rail bookings require fare class, coach, seat, departure time, and seat occupancy. Metro trips do not use reserved seats.
+
+Using a shared `journeys` table avoids duplicated common columns and avoids a weak polymorphic design such as:
+
+```text
+payments.booking_id
+payments.trip_id
+```
+
+where one of the two columns would have to be null.
+
+#### Benefit
+
+This design gives `payments` and `feedback` one stable foreign key target. It also makes user booking history easier to query because both national rail bookings and metro trips can be treated as journeys.
+
+#### Trade-off
+
+The schema must ensure that each journey has the correct subtype row. PostgreSQL foreign keys enforce that each `booking_id` or `trip_id` points to a real journey, but additional application logic is still needed to ensure that a `network = 'national_rail'` journey receives a `bookings` row and a `network = 'metro'` journey receives a `metro_trips` row.
+
+The team accepted this because the supertype design keeps payments and feedback much cleaner.
+
+---
+
+### 6.4 Trade-off 3 — Soft Delete for Cancellations and Seat Reuse
+
+#### Decision
+
+The project does not physically delete a booking when it is cancelled. Instead, cancellation updates:
+
+```text
+journeys.status = 'cancelled'
+bookings.seat_occupies_slot = FALSE
+```
+
+The schema uses a partial unique index so that only active seat reservations block a seat:
+
+```sql
+CREATE UNIQUE INDEX idx_bookings_active_seat_unique
+ON bookings (schedule_id, travel_date, departure_time, coach, seat_id)
+WHERE seat_occupies_slot = TRUE;
+```
+
+#### Reason
+
+If cancelled bookings were deleted, the system would lose historical information about the booking, payment, cancellation, and refund. Keeping the booking row makes the database better for auditing and user history.
+
+However, the seat must become available again after cancellation. The `seat_occupies_slot` flag solves this by separating booking history from active seat occupation.
+
+#### Benefit
+
+This design supports both requirements:
+
+1. cancelled bookings remain visible as historical records,
+2. cancelled seats can be rebooked.
+
+It also supports the Task 6 seat-occupancy feature because the occupancy logic can count only active seat reservations.
+
+#### Trade-off
+
+The schema becomes slightly more complex because queries must remember to check active booking status or `seat_occupies_slot`. If a query forgets this condition, it may incorrectly treat cancelled bookings as still occupying seats.
+
+The team accepted this complexity because keeping cancellation history is more valuable than physically deleting booking records.
+
+---
+
+### 6.5 Trade-off 4 — Pre-chunked Policy RAG Instead of Raw JSON Retrieval
+
+#### Decision
+
+The team used pre-processed policy chunks in:
+
+```text
+policy_chunks.json
+```
+
+These chunks are embedded and stored in:
+
+```text
+policy_documents
+```
+
+The system does not embed the full raw JSON files directly at query time.
+
+#### Reason
+
+The policy JSON files contain many different topics. A full file may include refund rules, no-show rules, delay compensation, bicycles, pets, luggage, ticket changes, and booking restrictions. If an entire JSON file were embedded as one document, retrieval would be less precise.
+
+Pre-chunking allows each policy topic or rule to become a separate searchable unit.
+
+#### Benefit
+
+This improves semantic retrieval. For example, a question about a 45-minute delay can retrieve the RF005 delay-compensation chunk instead of an unrelated cancellation policy.
+
+The metadata in each chunk also makes the retrieval result easier to debug because the chunk records preserve fields such as:
 
 ```text
 policy_id
@@ -1021,210 +2630,464 @@ service_type
 topic
 rule_id
 ticket_type
-refund_percent
-admin_fee_usd
-claim_deadline_days
 json_path
 ```
 
-This means the system can not only retrieve text semantically, but also explain where the answer came from. For example, a delay compensation answer can refer to policy `RF005_R1`, while a cancellation answer can refer to `RF001_W2` or `RF002_W3`.
+#### Trade-off
 
-Metadata also makes future improvements easier. For example, the system could filter search results to only national rail policies when the user asks about a national rail ticket, or only metro policies when the user asks about metro day passes.
+The cost is maintenance. If the source policy JSON files change, `policy_chunks.json` must be updated and `seed_vectors.py` must be re-run. If the embedding provider changes, the vector store must also be re-seeded because embedding dimensions differ between providers.
 
----
-
-### 4.8 Vector database boundary
-
-The vector database is not used for exact operational facts such as seat availability, user bookings, payments, or route timing. These facts require exact SQL or graph traversal.
-
-The RAG layer is used for policy text, where semantic retrieval is valuable. This separation avoids using vector search for facts that should be deterministic.
-
-For example:
-
-- “How many seats are available on `NR_SCH01`?” should use PostgreSQL.
-- “What is the fastest route from `MS01` to `MS14`?” should use Neo4j.
-- “Can I get compensation for a 45-minute delay?” should use pgvector RAG.
-
-This keeps each database responsible for the type of problem it is best suited to solve.
+The team accepted this because the improved retrieval precision is more important than avoiding an extra seeding step.
 
 ---
 
-## Section 5 — AI Tool Usage Evidence
+### 6.6 Trade-off 5 — Rule-based Agent Before LLM Fallback
 
-### Example 1 — Relational schema design for dual-network transactions
+#### Decision
 
-- **Context:**  
-  The team needed to design a relational schema that supports both national rail advance bookings and metro same-day trips. The two transaction types share some attributes, such as user, ticket type, amount and status, but also have different attributes. National rail needs seat reservation, coach, fare class and travel date; metro trips do not have reserved seats but may reference day-pass usage.
+The agent uses deterministic rule-based handlers before falling back to the LLM.
 
-- **Prompt:**  
-  “Design a PostgreSQL schema for TransitFlow using the provided mock JSON files. The schema must support users, authentication, metro stations, national rail stations, schedules, schedule stops, seat layouts, national rail bookings, metro trips, payments, feedback, ticket types, refund policies and pgvector policy documents. Avoid nullable foreign keys for payments and feedback across booking/trip subtypes.”
-
-- **Outcome:**  
-  The final schema introduced a `journeys` supertype table and two subtype tables: `bookings` for national rail and `metro_trips` for metro. This allowed `payments` and `feedback` to reference one shared parent table instead of having separate nullable foreign keys. The output was useful, but we refined it by adding id-pattern checks such as `MT%` for metro journeys and `BK%` for national rail journeys.
-
----
-
-### Example 2 — National rail availability direction filter
-
-- **Context:**  
-  While implementing national rail schedule lookup, the team needed to avoid returning trains travelling in the wrong direction. For example, a route from `NR01` to `NR05` should not return a reverse-direction service where `NR05` appears before `NR01`.
-
-- **Prompt:**  
-  “Implement `query_national_rail_availability(origin_id, destination_id, travel_date)` so that it joins `national_rail_schedule_stops` twice and only returns schedules where the origin stop order is smaller than the destination stop order. Also return stop count, travel time, seat count and booked seats.”
-
-- **Outcome:**  
-  The query uses two aliases of `national_rail_schedule_stops`, one for origin and one for destination, and applies `origin_stop.stop_order < destination_stop.stop_order`. This became a core rule used by both schedule lookup and booking validation. We kept the direction check because it matches the user’s from-to wording and prevents invalid booking routes.
-
----
-
-### Example 3 — Seat selection and double-booking prevention
-
-- **Context:**  
-  The booking flow needed to confirm that a selected seat exists, belongs to the selected fare class, and is not already booked for the same schedule and travel date. Cancellations also needed to release a seat without deleting historical booking rows.
-
-- **Prompt:**  
-  “Implement national rail booking logic that verifies schedule existence, validates origin and destination stop order, calculates fare from fare class and stops travelled, checks seat layout and fare class, prevents double booking for non-cancelled journeys, inserts the parent journey, inserts the child booking, and records payment in one transaction.”
-
-- **Outcome:**  
-  The implemented booking function performs validation inside a database transaction. It checks the schedule, stop order, fare class, seat existence and active seat conflict before inserting `journeys`, `bookings`, and `payments`. It excludes cancelled journeys when checking seat conflict, so historical cancelled bookings remain in the database but do not block future seat availability.
-
----
-
-### Example 4 — AI-generated idea that required correction: closed-station parsing
-
-- **Context:**  
-  During testing, a route query involving “Old Town station (NR03) is closed” could be misinterpreted because the station name “Old Town” is associated with both the metro-side interchange and the national rail station. The original parsing approach could prioritise a station name match over the explicit station id in parentheses.
-
-- **Prompt:**  
-  “Debug the route parsing logic for the input `Old Town station (NR03) is closed`. The parser should prioritise explicit station ids inside parentheses over inferred station names, and the alternative route query should avoid the explicit station id.”
-
-- **Outcome:**  
-  The parsing logic was adjusted to respect explicit station ids such as `NR03`. This correction was important because AI-assisted parsing can produce plausible but wrong station mappings when names overlap. After correction, the alternative route logic avoids the intended station instead of substituting the metro interchange station.
-
----
-
-### Example 5 — RAG policy chunk design and vector seeding
-
-- **Context:**  
-  The assistant needed to answer policy questions from project-specific rules, not from general LLM knowledge. The policy JSON files contained refund windows, delay compensation, bicycle rules, ticket changes, luggage rules and other passenger policies.
-
-- **Prompt:**  
-  “Convert the refund policy, booking rules, ticket types and travel policies into retrieval-friendly chunks. Each chunk should include a clear title, content, policy id or rule id, source file and metadata. Then seed the pgvector table using the configured embedding provider and validate the embedding dimension.”
-
-- **Outcome:**  
-  The policy content was reorganised into `policy_chunks.json` and embedded through `seed_vectors.py`. The seeding script checks vector dimension before storing documents. This improved policy retrieval because user questions like “Can I bring my bike?” or “My train was delayed 45 minutes” can match semantically relevant policy chunks even if the exact wording differs.
-
----
-
-## Section 6 — Reflection & Trade-offs
-
-### 6.1 Design decision 1: using business identifiers instead of purely generated numeric ids
-
-The system uses readable business identifiers such as:
+The session context records this decision as:
 
 ```text
-RU01
-MS01
-NR01
-MS_SCH01
+Agent: rule-based handlers first; LLM fallback only when no DB match.
+```
+
+#### Reason
+
+Many TransitFlow questions require exact database answers. For example:
+
+```text
+Show my bookings
+Cancel booking BK-XXXX
+How many seats are available on NR_SCH01?
+What trains run from NR01 to NR05?
+```
+
+These questions should not be answered from general LLM knowledge. They require PostgreSQL, Neo4j, or policy lookup.
+
+#### Benefit
+
+Rule-based routing makes the system more reliable for structured tasks. It ensures that bookings, cancellations, route queries, payment queries, and policy lookups call the correct database-backed functions.
+
+#### Trade-off
+
+The agent code becomes more complex because it needs parsers for station IDs, dates, booking IDs, schedule IDs, policy keywords, and route intents.
+
+The team accepted this because deterministic database access is safer than allowing the LLM to invent booking or policy information.
+
+---
+
+### 6.7 What Would Be Different in Production
+
+The submitted project is designed for a course environment with mock data and local services. In a production deployment, several parts would need to be strengthened.
+
+#### Database migrations
+
+The project currently relies on schema files and seed scripts for local setup. In production, schema changes should be managed with a migration tool such as Alembic or Flyway. This would make schema updates versioned, reversible, and easier to deploy safely.
+
+#### Secret management
+
+Local development uses `.env` configuration for database credentials and API keys. In production, secrets should be stored in a secret manager instead of plain environment files committed or copied between machines.
+
+Examples include:
+
+```text
+cloud secret manager
+container orchestration secrets
+encrypted deployment variables
+```
+
+#### Connection pooling
+
+The local project opens database connections through application code. In production, PostgreSQL should use connection pooling, such as PgBouncer or an application-level pool, to avoid excessive connection creation under concurrent users.
+
+#### Transaction isolation and concurrency
+
+The booking system already uses a transaction and a partial unique index to prevent active seat double-booking. In production, this should be tested under concurrent booking load. Additional retry logic, clearer transaction isolation settings, and stronger error handling would be needed for high traffic.
+
+#### Observability
+
+The local system prints debug information and displays a database debug panel in the UI. In production, this should be replaced with structured logging, request tracing, metrics, and alerting. Sensitive data such as password hashes, salts, user emails, and payment details should not be exposed in logs.
+
+#### Authentication and security
+
+The project uses Argon2id hashing, which is appropriate for password storage. In production, additional authentication controls would be needed, such as:
+
+```text
+rate limiting
+email verification
+password reset tokens
+session expiration
+CSRF protection
+account lockout after repeated failed logins
+```
+
+#### RAG lifecycle management
+
+The local RAG system is seeded manually through `seed_vectors.py`. In production, policy-document updates should have a formal ingestion pipeline. The system should track embedding model versions, chunk versions, source document versions, and re-indexing history.
+
+This is especially important because Ollama and Gemini embeddings have different dimensions. A production system should prevent mixed embedding dimensions from being inserted into the same vector index.
+
+---
+
+### 6.8 Summary
+
+The main design trade-offs in TransitFlow were:
+
+1. using PostgreSQL for transaction integrity and Neo4j for graph traversal,
+2. using a `journeys` supertype to support both metro trips and national rail bookings,
+3. keeping cancelled bookings as historical records while releasing seat capacity through `seat_occupies_slot`,
+4. using pre-chunked policy documents for RAG instead of embedding raw JSON,
+5. routing structured questions through deterministic handlers before using LLM fallback.
+
+These decisions made the system more reliable and easier to reason about, but they also introduced complexity. The most important complexity is keeping PostgreSQL, Neo4j, pgvector, and the agent layer consistent with one another.
+
+For the course project, this trade-off is acceptable because each database technology is used for a clearly defined purpose. In production, the same design would need stronger migrations, secret management, connection pooling, logging, monitoring, concurrency testing, and RAG lifecycle controls.
+
+---
+
+## Section 7 — Optional Extension (Task 6)
+
+See **`TASK6.md`** for the Task 6 file manifest.
+
+### 7.1 Motivation
+
+The optional Task 6 extension adds seat-occupancy analytics and a persistent trip-history UI.
+
+The first motivation is **capacity visibility**. The original booking flow can list available seats, but users often need an aggregated answer instead of a full seat list. For example, a user may ask:
+
+```text
+How many standard seats are available on NR_SCH01 on 2026-06-15?
+```
+
+A useful answer should show:
+
+```text
+total seats
+booked seats
+available seats
+```
+
+The second motivation is **trip-history visibility**. Chat replies are temporary and conversational. A logged-in passenger benefits from a persistent table showing National Rail and Metro journeys in one place. The **My Bookings** tab provides this structured view.
+
+Together, these improvements make TransitFlow more useful for both passenger-facing use and live demonstration.
+
+---
+
+### 7.2 Database Changes
+
+No new database tables were added for Task 6. The extension reuses the existing normalized seat and booking schema:
+
+```text
+seat_layouts → coaches → seats → bookings
+```
+
+The main Task 6 database operation is:
+
+```python
+pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
+```
+
+It returns:
+
+```text
+schedule_id
+travel_date
+fare_class
+total_seats
+booked_seats
+available_seats
+```
+
+The function works as follows:
+
+1. Count total seats for the selected schedule and fare class through `seat_layouts`, `coaches`, and `seats`.
+2. Count currently available seats by delegating to the existing `query_available_seats(...)` function.
+3. Calculate booked seats as:
+
+```python
+booked_seats = total_seats - available_seats
+```
+
+This design avoids duplicating seat-availability logic. It also respects the existing cancellation model, where cancelled bookings release seats through:
+
+```text
+bookings.seat_occupies_slot = FALSE
+```
+
+Therefore, the Task 6 occupancy result stays consistent with the booking and cancellation system.
+
+---
+
+### 7.3 UI Changes
+
+Task 6 adds two substantial UI panels in `skeleton/ui.py`.
+
+| Tab | Data source | Purpose |
+|---|---|---|
+| **My Bookings** | `query_user_bookings(email)` | Displays a dataframe of the logged-in user's National Rail and Metro journeys. |
+| **Seat Capacity** | `query_schedule_seat_occupancy(...)` | Performs a direct schedule/date/fare-class occupancy lookup without LLM guessing. |
+
+The **Seat Capacity** tab bypasses the LLM and directly calls PostgreSQL. This is important because seat capacity must be calculated from live database state, not generated from model text.
+
+The **My Bookings** tab also uses structured PostgreSQL data rather than the chat transcript. This gives the passenger a persistent, scannable booking history.
+
+---
+
+### 7.4 Agent Integration
+
+The agent also supports natural-language seat-capacity questions.
+
+When the user message includes seat-capacity wording such as:
+
+```text
+seat
+seats
+available
+remaining
+capacity
+occupancy
+座位
+空位
+剩餘
+```
+
+and includes a National Rail schedule ID such as:
+
+```text
 NR_SCH01
-BK001
-MT001
 ```
 
-This decision was made because the mock data, agent prompts, UI examples, route queries and database rows all use these ids. Keeping them as primary keys reduces the need for separate surrogate-to-business-id mapping.
+the agent calls:
 
-The benefit is strong cross-system consistency. A station id such as `NR03` can be used in PostgreSQL, Neo4j, JSON data and the agent without translation. This makes debugging and demo queries easier.
+```python
+pg.query_schedule_seat_occupancy(schedule_id, travel_date, fare_class)
+```
 
-The trade-off is that string keys are larger than integer keys and may be slightly less efficient for joins. In a production system with very large data volume, we might use internal numeric surrogate keys while preserving business ids as unique external identifiers. For this educational project, readable ids are more valuable.
-
----
-
-### 6.2 Design decision 2: introducing `journeys` as a transaction supertype
-
-The project supports national rail bookings and metro trips. They are different operationally, but both are passenger journeys with a user, ticket type, amount, network and status.
-
-The design uses `journeys` as a supertype table and stores subtype-specific fields in `bookings` and `metro_trips`. This avoids duplication and simplifies payments and feedback.
-
-The benefit is that `payments` and `feedback` have one stable reference:
+Example user question:
 
 ```text
-payments.journey_id → journeys.journey_id
-feedback.journey_id → journeys.journey_id
+How many seats are available on NR_SCH01 on 2026-06-15?
 ```
 
-The trade-off is that application code must understand subtype logic. For example, a `BK%` journey should have a row in `bookings`, while an `MT%` journey should have a row in `metro_trips`. This is managed through schema checks and seed logic.
-
----
-
-### 6.3 Design decision 3: separating relational, graph, and vector responsibilities
-
-The system deliberately uses different databases for different access patterns.
-
-PostgreSQL is used for data that needs strong consistency and exact relationships. Neo4j is used for path traversal. pgvector is used for semantic retrieval over policy text.
-
-The benefit is that each database is used for its strongest purpose:
+Expected response shape:
 
 ```text
-PostgreSQL → exact transactional facts
-Neo4j → connected network traversal
-pgvector → semantic policy search
+Seat occupancy — NR_SCH01 on 2026-06-15 (standard)
+total seats: ...
+booked: ...
+available: ...
 ```
 
-The trade-off is operational complexity. Developers must seed and maintain three data layers. The agent must also decide which tool or database to use for each user question. For this project, the complexity is justified because it demonstrates why different database models are useful in different scenarios.
+This keeps the answer grounded in database state instead of relying on the LLM to infer capacity.
 
 ---
 
-### 6.4 Design decision 4: soft cancellation and audit preservation
+### 7.5 Example Queries and Expected Output
 
-The booking cancellation flow updates status instead of deleting booking rows. This keeps the original transaction available for audit, refund explanation, and user history.
+#### Example 1 — Python query
 
-The benefit is historical accuracy. The system can still show that a booking existed, how much was paid, and what refund rule was applied. This is important for customer service and payment traceability.
+```python
+>>> from databases.relational import queries as pg
+>>> pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
+{'schedule_id': 'NR_SCH01', 'travel_date': '2026-06-01', 'fare_class': 'standard',
+ 'total_seats': 18, 'booked_seats': 2, 'available_seats': 16}
+```
 
-The trade-off is that availability queries must filter out cancelled journeys. This adds complexity to SQL, but it is safer than deleting records and losing payment context.
+#### Example 2 — Agent query
 
----
+```text
+How many seats are available on NR_SCH01 on 2026-06-15?
+```
 
-### 6.5 Production difference 1: schema migrations
+Expected output:
 
-In this project, the schema is stored in a single `schema.sql` file. For production, this should be replaced by migration tooling such as Flyway, Liquibase, or Alembic.
+```text
+Seat occupancy — NR_SCH01 on 2026-06-15 (standard)
+total seats: ...
+booked: ...
+available: ...
+```
 
-A production database should not be rebuilt from scratch whenever the schema changes. Migrations allow the team to apply incremental changes while preserving existing data. They also provide version control for schema evolution.
+#### Example 3 — UI query
 
----
+```text
+Seat Capacity tab
+Schedule: NR_SCH01
+Date: 2026-06-01
+Class: standard
+Click: Look up occupancy
+```
 
-### 6.6 Production difference 2: secret management
+Expected output:
 
-The project uses environment configuration for database and provider settings. In production, secrets should not be stored in plain `.env` files on developer machines or servers.
-
-A production system should use a secret manager such as AWS Secrets Manager, Google Secret Manager, HashiCorp Vault, or a Kubernetes secret system. This reduces the risk of leaking database passwords, API keys, or LLM credentials.
-
----
-
-### 6.7 Production difference 3: connection pooling and transaction management
-
-For production PostgreSQL, the system should use connection pooling such as PgBouncer or application-level pooling. Opening a new database connection for each query is acceptable for a small educational system but inefficient at scale.
-
-The booking flow also requires strong transaction management. In production, the seat booking transaction should be protected with stricter concurrency control, such as row-level locking or a database-level uniqueness strategy for active seat occupation. This would prevent race conditions if two users attempt to book the same seat at nearly the same time.
-
----
-
-### 6.8 Production difference 4: monitoring and testing
-
-A production version should add:
-
-1. automated unit tests for fare and refund calculations;
-2. integration tests for PostgreSQL, Neo4j, and pgvector queries;
-3. end-to-end UI tests for booking and cancellation;
-4. monitoring for database latency and failed tool calls;
-5. alerting for vector dimension mismatch or failed seeding.
-
-The current design is suitable for course demonstration, but production reliability would require automated validation and observability.
+```text
+Total seats: 18
+Booked seats: 2
+Available seats: 16
+```
 
 ---
 
-## Section 7 — Optional Extension
+### 7.6 Testing Evidence — Screenshots
 
-This section is intentionally left pending in this version.
+The following screenshots should be saved in:
 
-The optional Task 6 extension should be completed after the implementation details, `TASK6.md`, test output, and screenshots are confirmed.
+```text
+docs/screenshots/
+```
+
+The Markdown image links below assume the following file names:
+
+```text
+docs/screenshots/task6_my_bookings.png
+docs/screenshots/task6_seat_capacity.png
+docs/screenshots/task6_chat_seats.png
+```
+
+#### Screenshot 1 — My Bookings tab after login
+
+Steps:
+
+```text
+1. Run python3 skeleton/ui.py
+2. Log in as alice.tan@email.com / alice1990
+3. Open the My Bookings tab
+4. Click Refresh bookings
+```
+
+Expected result:
+
+```text
+A dataframe showing the logged-in user's National Rail and Metro journeys.
+The note should show the journey count for alice.tan@email.com.
+```
+
+![Task 6 — My Bookings tab after login](docs/screenshots/task6_my_bookings.png)
+
+---
+
+#### Screenshot 2 — Seat Capacity tab direct database lookup
+
+Steps:
+
+```text
+1. Run python3 skeleton/ui.py
+2. Open the Seat Capacity tab
+3. Select schedule NR_SCH01
+4. Enter date 2026-06-01
+5. Select fare class standard
+6. Click Look up occupancy
+```
+
+Expected result:
+
+```text
+A Markdown result block showing total seats, booked seats, and available seats.
+For the seeded data, the expected result is 18 total seats, 2 booked seats, and 16 available seats.
+```
+
+![Task 6 — Seat Capacity lookup for NR_SCH01](docs/screenshots/task6_seat_capacity.png)
+
+---
+
+#### Screenshot 3 — Chat agent seat-occupancy response
+
+Steps:
+
+```text
+1. Run python3 skeleton/ui.py
+2. Open the Chat tab
+3. Ask: How many seats are available on NR_SCH01 on 2026-06-15?
+```
+
+Expected result:
+
+```text
+The agent returns a formatted seat-occupancy block with total, booked, and available seats.
+```
+
+![Task 6 — Chat seat occupancy response](docs/screenshots/task6_chat_seats.png)
+
+---
+
+### 7.7 Automated Test Evidence
+
+The Task 6 feature can also be validated through project scripts.
+
+```bash
+python3 skeleton/validate_integration.py
+python3 skeleton/validate_rubric.py
+python3 skeleton/validate_ui.py
+```
+
+These scripts should be run before final submission. If all tests pass, record the terminal output or include it as additional evidence.
+
+The most important direct database check is:
+
+```python
+>>> pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
+{'schedule_id': 'NR_SCH01', 'travel_date': '2026-06-01', 'fare_class': 'standard',
+ 'total_seats': 18, 'booked_seats': 2, 'available_seats': 16}
+```
+
+---
+
+### 7.8 Summary
+
+Task 6 adds a database-backed capacity feature and a substantial UI enhancement.
+
+The extension contributes:
+
+1. `query_schedule_seat_occupancy(...)` for aggregated seat occupancy.
+2. A **Seat Capacity** tab for direct database lookup.
+3. A **My Bookings** tab for persistent journey history.
+4. Agent support for natural-language seat-capacity questions.
+5. Screenshot and validation evidence for live demonstration.
+
+The extension fits the existing design because it reuses normalized seat inventory, active booking logic, cancellation seat-release logic, and user booking history. It does not add duplicate tables or rely on ungrounded LLM-generated capacity answers.
+
+### Example queries & expected output
+
+#### Example 1 — Python query
+
+```python
+>>> from databases.relational import queries as pg
+>>> pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
+{'schedule_id': 'NR_SCH01', 'travel_date': '2026-06-01', 'fare_class': 'standard',
+ 'total_seats': 18, 'booked_seats': 2, 'available_seats': 16}
+```
+
+#### Example 2 — Agent query
+
+```text
+How many seats are available on NR_SCH01 on 2026-06-15?
+```
+
+Expected output:
+
+```text
+Seat occupancy — NR_SCH01 on 2026-06-15 (standard)
+total seats: ...
+booked: ...
+available: ...
+```
+
+#### Example 3 — UI query
+
+```text
+Seat Capacity tab
+Schedule: NR_SCH01
+Date: 2026-06-01
+Class: standard
+Click: Look up occupancy
+```
+
+Expected output:
+
+```text
+Total seats: 18
+Booked seats: 2
+Available seats: 16
+```
