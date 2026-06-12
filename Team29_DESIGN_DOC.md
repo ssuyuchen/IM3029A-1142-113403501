@@ -2720,91 +2720,92 @@ See **`TASK6.md`** for the file manifest.
 
 ### Motivation
 
-The Task 6 extension adds seat-occupancy analytics and a persistent trip-history UI to TransitFlow.
-
-Aggregated seat occupancy is useful because users do not always need a full list of available seat IDs. In many cases, they only need an operational summary, such as:
-
-```text
-How many standard seats are available on NR_SCH01 on 2026-06-15?
-```
-
-The system should answer this with:
-
-```text
-total seats
-booked seats
-available seats
-```
-
-The extension also adds a **My Bookings** table. This gives logged-in passengers a persistent and scannable history of their National Rail and Metro journeys. This is more useful than relying only on temporary chat replies.
-
----
+Aggregated seat occupancy answers operational capacity questions without listing every seat row. A **My Bookings** table gives logged-in passengers persistent, scannable history — something ephemeral chat replies cannot provide.
 
 ### Database changes
 
-No new database tables were added for Task 6. The extension reuses the existing normalized seat and booking schema:
+No new tables were added for this extension. The Task 6 extension reuses the existing seat inventory and booking schema.
 
-```text
-seat_layouts → coaches → seats → bookings
-```
-
-The main extension function is:
+Extension function:
 
 ```python
 pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
 # → total_seats, booked_seats, available_seats
 ```
 
-The function calculates occupancy in three steps:
+SQL counts seats through:
 
-1. Count total seats through `seat_layouts`, `coaches`, and `seats`.
-2. Count available seats by delegating to the existing `query_available_seats(...)` function.
-3. Calculate booked seats from the difference between total seats and available seats.
-
-Conceptually:
-
-```python
-booked_seats = total_seats - available_seats
+```text
+seat_layouts → coaches → seats
 ```
 
-This avoids duplicating seat-availability logic. It also keeps the Task 6 occupancy result consistent with the existing booking and cancellation rules.
+The available-seat count delegates to the existing:
 
-Cancelled national rail bookings do not continue to occupy seats because the booking system uses:
+```python
+query_available_seats(...)
+```
+
+This keeps the occupancy result consistent with the existing booking logic. Cancelled bookings do not continue to occupy seats because the booking system uses:
 
 ```text
 bookings.seat_occupies_slot = FALSE
 ```
 
-when a booking is cancelled.
-
----
-
 ### UI changes (substantial — Task 6 live demo)
-
-Task 6 adds substantial UI support in `skeleton/ui.py`.
 
 | Tab | Data source | Purpose |
 |-----|-------------|---------|
-| **My Bookings** | `query_user_bookings(email)` | Dataframe of National Rail and Metro journeys for the logged-in user |
-| **Seat Capacity** | `query_schedule_seat_occupancy(...)` | Dropdown schedule + date + fare-class lookup without LLM guessing |
+| **My Bookings** | `query_user_bookings(email)` | Dataframe of National Rail and Metro journeys |
+| **Seat Capacity** | `query_schedule_seat_occupancy(...)` | Dropdown schedule + date lookup without LLM |
 
-The **Seat Capacity** tab performs a direct PostgreSQL lookup. It does not rely on the LLM to estimate or invent seat availability.
+The **Seat Capacity** tab performs a direct database lookup. It does not rely on the LLM to estimate or invent seat availability.
 
-The **My Bookings** tab gives passengers a structured journey-history view after login.
+The **My Bookings** tab gives logged-in users a persistent journey-history view instead of requiring them to search through chat replies.
 
----
+### Testing evidence — screenshots
 
-### Agent integration
+> **How to add:** Run `python3 skeleton/ui.py`, capture PNGs, save to `docs/screenshots/` (see that folder's README). Replace broken image icons below after saving files.
 
-The agent also supports natural-language seat-capacity questions.
+#### Screenshot 1 — My Bookings tab (login required)
 
-Example:
+**Steps:** Login `alice.tan@email.com` / `alice1990` → open **📋 My Bookings** → click **Refresh bookings**.
+
+**Expected:** Dataframe with at least one National Rail and/or Metro row; note shows journey count for Alice.
+
+![Task 6 — My Bookings tab after login](docs/screenshots/task6_my_bookings.png)
+
+#### Screenshot 2 — Seat Capacity tab (direct DB lookup)
+
+**Steps:** Open **💺 Seat Capacity** → schedule `NR_SCH01`, date `2026-06-01`, class `standard` → **Look up occupancy**.
+
+**Expected:** Markdown block showing total / booked / available seats, such as 18 total, 2 booked, and 16 available for the seeded data.
+
+![Task 6 — Seat Capacity lookup for NR_SCH01](docs/screenshots/task6_seat_capacity.png)
+
+#### Screenshot 3 — Chat agent seat question *(optional bonus evidence)*
+
+**Steps:** **💬 Chat** tab → ask: *How many seats are available on NR_SCH01 on 2026-06-15?*
+
+**Expected:** Agent returns formatted seat occupancy with total / booked / available seats.
+
+![Task 6 — Chat seat occupancy response](docs/screenshots/task6_chat_seats.png)
+
+### Automated test evidence
+
+```python
+>>> from databases.relational import queries as pg
+>>> pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
+{'schedule_id': 'NR_SCH01', 'travel_date': '2026-06-01', 'fare_class': 'standard',
+ 'total_seats': 18, 'booked_seats': 2, 'available_seats': 16}
+```
+
+Agent test:
 
 ```text
 How many seats are available on NR_SCH01 on 2026-06-15?
 ```
 
-Expected answer shape:
+Expected result:
 
 ```text
 Seat occupancy — NR_SCH01 on 2026-06-15 (standard)
@@ -2813,15 +2814,15 @@ booked: ...
 available: ...
 ```
 
-This answer is grounded in:
+Validation commands:
 
-```python
-pg.query_schedule_seat_occupancy(...)
+```bash
+python3 skeleton/validate_integration.py
+python3 skeleton/validate_rubric.py
+python3 skeleton/validate_ui.py
 ```
 
-rather than unsupported LLM inference.
-
----
+These commands should be run before final submission. If they pass, the terminal output can be saved or screenshotted as additional testing evidence.
 
 ### Example queries & expected output
 
@@ -2866,73 +2867,6 @@ Total seats: 18
 Booked seats: 2
 Available seats: 16
 ```
-
----
-
-### Testing evidence — screenshots
-
-> **How to add:** Run `python3 skeleton/ui.py`, capture PNGs, save to `docs/screenshots/` using the exact filenames below. Replace broken image icons after saving the files.
-
-#### Screenshot 1 — My Bookings tab (login required)
-
-**Steps:** Login `alice.tan@email.com` / `alice1990` → open **📋 My Bookings** → click **Refresh bookings**.
-
-**Expected:** Dataframe with at least one National Rail and/or Metro row; note shows journey count for Alice.
-
-![Task 6 — My Bookings tab after login](docs/screenshots/task6_my_bookings.png)
-
-#### Screenshot 2 — Seat Capacity tab (direct DB lookup)
-
-**Steps:** Open **💺 Seat Capacity** → schedule `NR_SCH01`, date `2026-06-01`, class `standard` → **Look up occupancy**.
-
-**Expected:** Markdown block showing total / booked / available seats, such as 18 total, 2 booked, and 16 available for the seeded data.
-
-![Task 6 — Seat Capacity lookup for NR_SCH01](docs/screenshots/task6_seat_capacity.png)
-
-#### Screenshot 3 — Chat agent seat question *(optional bonus evidence)*
-
-**Steps:** **💬 Chat** tab → ask: *How many seats are available on NR_SCH01 on 2026-06-15?*
-
-**Expected:** Agent returns formatted seat occupancy with total / booked / available seats.
-
-![Task 6 — Chat seat occupancy response](docs/screenshots/task6_chat_seats.png)
-
----
-
-### Automated test evidence
-
-The Task 6 feature can be checked through a direct database query:
-
-```python
->>> from databases.relational import queries as pg
->>> pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
-{'schedule_id': 'NR_SCH01', 'travel_date': '2026-06-01', 'fare_class': 'standard',
- 'total_seats': 18, 'booked_seats': 2, 'available_seats': 16}
-```
-
-The agent can also be tested with:
-
-```text
-How many seats are available on NR_SCH01 on 2026-06-15?
-```
-
-Expected result:
-
-```text
-The agent returns a formatted occupancy block with total, booked, and available seats.
-```
-
-Validation commands:
-
-```bash
-python3 skeleton/validate_integration.py
-python3 skeleton/validate_rubric.py
-python3 skeleton/validate_ui.py
-```
-
-These commands should be run before final submission. If they pass, the terminal output can be saved or screenshotted as additional testing evidence.
-
----
 
 ### Summary
 
