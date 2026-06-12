@@ -2896,6 +2896,14 @@ The following screenshots were captured from the Task 6 UI.
 
 ![Task 6 — Seat Capacity lookup for NR_SCH01](https://cdn.phototourl.com/free/2026-06-12-6aa3af64-7f48-4028-be80-4f2cd208b239.png)
 
+#### Screenshot 3 — Agent seat-capacity query
+
+**Steps:** Open the **💬 Chat** tab → ask: `How many seats are available on NR_SCH01 on 2026-06-15?`
+
+**Expected:** The agent returns a formatted seat-occupancy answer showing total seats, booked seats, and available seats.
+
+![Task 6 — Agent seat-capacity query](第三張圖片連結放這裡)
+
 ---
 
 ### Automated test evidence
