@@ -8,23 +8,16 @@ TransitFlow final project design document (IM2002 Database Management)
 
 ### 1.1 Overview
 
-The relational layer of TransitFlow models the structured data required for a dual-network transport system. The project contains two transport networks:
+The relational database supports the structured part of TransitFlow, including users, authentication, stations, schedules, ordered stops, fare tables, seat inventory, journeys, national rail bookings, metro trips, payments, feedback, and policy documents for vector search.
 
-1. **City Metro**, where tickets are purchased for same-day travel and no reserved seat is assigned.
-2. **National Rail**, where passengers can make advance bookings with fare classes and reserved seats.
+The schema separates the two transport networks because their business rules are different:
 
-The relational database stores users, authentication records, stations, schedules, schedule stops, ticket types, journeys, national rail bookings, metro trips, payments, feedback, and policy documents for the pgvector RAG layer.
+- **Metro** supports same-day travel and does not use reserved seating.
+- **National Rail** supports advance booking, fare classes, reserved seats, and seat availability checks.
 
-The most important design decision in the relational schema is the use of `journeys` as a shared supertype table. Both national rail bookings and metro trips are treated as journeys:
+The schema uses a shared `journeys` table as a transaction supertype. National rail journeys store their network-specific details in `bookings`, while metro journeys store their network-specific details in `metro_trips`. This allows `payments` and `feedback` to reference a single common journey identifier instead of using separate nullable foreign keys for metro trips and national rail bookings.
 
-- A national rail journey has a corresponding row in `bookings`.
-- A metro journey has a corresponding row in `metro_trips`.
-
-This design allows shared transaction tables such as `payments` and `feedback` to reference `journeys(journey_id)` directly, instead of needing separate nullable foreign keys for `bookings` and `metro_trips`.
-
-The schema also keeps the two networks structurally separate where their business rules differ. National rail supports reserved seats and fare classes, so it has seat layout, coach, seat, and fare-class tables. Metro does not support reserved seating, so metro trips only store route, date, and purchase/travel timestamps.
-
-`policy_documents` is included in this section because it is stored in PostgreSQL, but it is not part of the core booking transaction model. It supports the vector/RAG component through pgvector and is discussed further in Section 4.
+The `policy_documents` table is also stored in PostgreSQL. It supports the vector/RAG component through pgvector and is discussed further in Section 4.
 
 ---
 
@@ -40,521 +33,495 @@ erDiagram
     ticket_types ||--o{ ticket_type_networks : "valid on networks"
     ticket_types ||--o{ journeys : "used by"
 
-    journeys ||--o| bookings : "national rail subtype"
-    journeys ||--o| metro_trips : "metro subtype"
+    journeys ||--o| bookings : "national rail detail"
+    journeys ||--o| metro_trips : "metro detail"
     journeys ||--o{ payments : "has payments"
     journeys ||--o{ feedback : "receives feedback"
     journeys ||--o{ metro_trips : "day pass reference"
 
-    metro_stations |o--o| national_rail_stations : "interchange mapping"
+    metro_stations |o--o| national_rail_stations : "optional interchange"
 
     metro_stations ||--o{ metro_station_lines : "served by"
     national_rail_stations ||--o{ national_rail_station_lines : "served by"
 
-    metro_stations ||--o{ metro_schedules : "origin station"
-    metro_stations ||--o{ metro_schedules : "destination station"
-    national_rail_stations ||--o{ national_rail_schedules : "origin station"
-    national_rail_stations ||--o{ national_rail_schedules : "destination station"
-
     metro_schedules ||--o{ metro_schedule_stops : "has ordered stops"
-    metro_schedules ||--o{ metro_schedule_operates_on : "operates on"
-    metro_schedules ||--o{ metro_trips : "used by trips"
+    metro_stations ||--o{ metro_schedule_stops : "appears in"
 
     national_rail_schedules ||--o{ national_rail_schedule_stops : "has ordered stops"
-    national_rail_schedules ||--o{ national_rail_schedule_operates_on : "operates on"
-    national_rail_schedules ||--o{ national_rail_schedule_fares : "has fare classes"
-    national_rail_schedules ||--o| seat_layouts : "may have seat layout"
-    national_rail_schedules ||--o{ bookings : "used by bookings"
-
-    metro_stations ||--o{ metro_schedule_stops : "appears in"
     national_rail_stations ||--o{ national_rail_schedule_stops : "appears in"
 
+    metro_schedules ||--o{ metro_schedule_operates_on : "operates on"
+    national_rail_schedules ||--o{ national_rail_schedule_operates_on : "operates on"
+
+    national_rail_schedules ||--o{ national_rail_schedule_fares : "has fare classes"
+    national_rail_schedules ||--o| seat_layouts : "may have seat layout"
+
+    seat_layouts ||--o{ coaches : "contains coaches"
+    coaches ||--o{ seats : "contains seats"
+    seats ||--o{ bookings : "reserved by"
+
+    national_rail_schedules ||--o{ bookings : "used by"
     national_rail_stations ||--o{ bookings : "origin station"
     national_rail_stations ||--o{ bookings : "destination station"
+
+    metro_schedules ||--o{ metro_trips : "used by"
     metro_stations ||--o{ metro_trips : "origin station"
     metro_stations ||--o{ metro_trips : "destination station"
 
-    seat_layouts ||--o{ coaches : "contains"
-    coaches ||--o{ seats : "contains"
-    seats ||--o{ bookings : "reserved by"
-
     users {
-        varchar user_id PK
-        varchar first_name
-        varchar last_name
-        varchar email UK
-        varchar phone
+        string user_id PK
+        string first_name
+        string last_name
+        string email
+        string phone
         date date_of_birth
-        timestamptz registered_at
+        datetime registered_at
         boolean is_active
     }
 
     user_credentials {
-        varchar user_id PK_FK
-        text password_hash
-        bytea password_salt
-        text hash_algorithm
-        timestamptz created_at
-        timestamptz updated_at
+        string user_id PK
+        string password_hash
+        string password_salt
+        string hash_algorithm
+        datetime created_at
+        datetime updated_at
     }
 
     user_security_questions {
-        varchar security_question_id PK
-        varchar user_id FK
-        varchar secret_question
-        text secret_answer_hash
-        bytea secret_answer_salt
-        text hash_algorithm
-        timestamptz created_at
-        timestamptz updated_at
+        string security_question_id PK
+        string user_id FK
+        string secret_question
+        string secret_answer_hash
+        string secret_answer_salt
+        string hash_algorithm
+        datetime created_at
+        datetime updated_at
     }
 
     metro_stations {
-        varchar station_id PK
-        varchar name
+        string station_id PK
+        string name
         boolean is_interchange_metro
         boolean is_interchange_national_rail
-        varchar interchange_national_rail_station_id FK
+        string interchange_national_rail_station_id FK
     }
 
     national_rail_stations {
-        varchar station_id PK
-        varchar name
+        string station_id PK
+        string name
         boolean is_interchange_national_rail
         boolean is_interchange_metro
-        varchar interchange_metro_station_id FK
+        string interchange_metro_station_id FK
     }
 
     metro_station_lines {
-        varchar station_id PK_FK
-        varchar line PK
+        string station_id PK
+        string line PK
     }
 
     national_rail_station_lines {
-        varchar station_id PK_FK
-        varchar line PK
+        string station_id PK
+        string line PK
     }
 
     metro_schedules {
-        varchar schedule_id PK
-        varchar line
-        varchar direction
-        varchar origin_station_id FK
-        varchar destination_station_id FK
-        time first_train_time
-        time last_train_time
+        string schedule_id PK
+        string line
+        string direction
+        string origin_station_id FK
+        string destination_station_id FK
+        string first_train_time
+        string last_train_time
         int frequency_min
-        numeric base_fare_usd
-        numeric per_stop_rate_usd
+        float base_fare_usd
+        float per_stop_rate_usd
     }
 
     national_rail_schedules {
-        varchar schedule_id PK
-        varchar line
-        enum service_type
-        varchar direction
-        varchar origin_station_id FK
-        varchar destination_station_id FK
-        time first_train_time
-        time last_train_time
+        string schedule_id PK
+        string line
+        string service_type
+        string direction
+        string origin_station_id FK
+        string destination_station_id FK
+        string first_train_time
+        string last_train_time
         int frequency_min
     }
 
+    national_rail_schedule_fares {
+        string schedule_id PK
+        string fare_class PK
+        float base_fare_usd
+        float per_stop_rate_usd
+    }
+
     metro_schedule_stops {
-        varchar schedule_id PK_FK
-        varchar station_id FK
+        string schedule_id PK
         int stop_order PK
+        string station_id FK
         int travel_time_from_origin_min
     }
 
     national_rail_schedule_stops {
-        varchar schedule_id PK_FK
-        varchar station_id FK
+        string schedule_id PK
         int stop_order PK
+        string station_id FK
         int travel_time_from_origin_min
         boolean is_stopping
     }
 
     metro_schedule_operates_on {
-        varchar schedule_id PK_FK
-        enum day_of_week PK
+        string schedule_id PK
+        string day_of_week PK
     }
 
     national_rail_schedule_operates_on {
-        varchar schedule_id PK_FK
-        enum day_of_week PK
-    }
-
-    national_rail_schedule_fares {
-        varchar schedule_id PK_FK
-        enum fare_class PK
-        numeric base_fare_usd
-        numeric per_stop_rate_usd
+        string schedule_id PK
+        string day_of_week PK
     }
 
     seat_layouts {
-        varchar layout_id PK
-        varchar schedule_id FK_UK
+        string layout_id PK
+        string schedule_id FK
     }
 
     coaches {
-        varchar layout_id PK_FK
-        varchar coach PK
-        enum fare_class
+        string layout_id PK
+        string coach PK
+        string fare_class
     }
 
     seats {
-        varchar layout_id PK_FK
-        varchar coach PK_FK
-        varchar seat_id PK
+        string layout_id PK
+        string coach PK
+        string seat_id PK
         int seat_row
-        varchar seat_column
+        string seat_column
     }
 
     ticket_types {
-        enum ticket_type PK
-        text display_name
-        text description
+        string ticket_type PK
+        string display_name
+        string description
     }
 
     ticket_type_networks {
-        enum ticket_type PK_FK
-        enum network PK
+        string ticket_type PK
+        string network PK
     }
 
     journeys {
-        varchar journey_id PK
-        enum network
-        varchar user_id FK
-        enum ticket_type FK
-        numeric amount_usd
-        enum status
+        string journey_id PK
+        string network
+        string user_id FK
+        string ticket_type FK
+        float amount_usd
+        string status
     }
 
     bookings {
-        varchar booking_id PK_FK
-        varchar schedule_id FK
-        varchar origin_station_id FK
-        varchar destination_station_id FK
+        string booking_id PK
+        string schedule_id FK
+        string origin_station_id FK
+        string destination_station_id FK
         date travel_date
-        time departure_time
-        enum fare_class
-        varchar layout_id FK
-        varchar coach FK
-        varchar seat_id FK
+        string departure_time
+        string fare_class
+        string layout_id FK
+        string coach FK
+        string seat_id FK
         int stops_travelled
-        timestamptz booked_at
-        timestamptz travelled_at
+        datetime booked_at
+        datetime travelled_at
         boolean seat_occupies_slot
     }
 
     metro_trips {
-        varchar trip_id PK_FK
-        varchar schedule_id FK
-        varchar origin_station_id FK
-        varchar destination_station_id FK
+        string trip_id PK
+        string schedule_id FK
+        string origin_station_id FK
+        string destination_station_id FK
         date travel_date
-        varchar day_pass_ref FK
+        string day_pass_ref FK
         int stops_travelled
-        timestamptz purchased_at
-        timestamptz travelled_at
+        datetime purchased_at
+        datetime travelled_at
     }
 
     payments {
-        varchar payment_id PK
-        varchar journey_id FK
-        numeric amount_usd
-        enum method
-        enum status
-        timestamptz paid_at
+        string payment_id PK
+        string journey_id FK
+        float amount_usd
+        string method
+        string status
+        datetime paid_at
     }
 
     feedback {
-        varchar feedback_id PK
-        varchar journey_id FK
-        varchar user_id FK
+        string feedback_id PK
+        string journey_id FK
+        string user_id FK
         int rating
-        text comment
-        timestamptz submitted_at
+        string comment
+        datetime submitted_at
     }
 
     policy_documents {
-        serial id PK
-        varchar chunk_id UK
-        varchar title
-        varchar category
-        varchar document_type
-        varchar policy_id
-        text content
-        jsonb metadata
-        vector embedding
-        varchar source_file
-        timestamptz created_at
+        int id PK
+        string chunk_id
+        string title
+        string category
+        string document_type
+        string policy_id
+        string content
+        string metadata
+        string embedding
+        string source_file
+        datetime created_at
     }
 ```
 
 ---
 
-### 1.3 Entity Design Explanation
+### 1.3 Main Entity Groups
 
-#### Users, credentials, and security questions
+#### Users and authentication
 
-The `users` table stores the passenger profile. It contains the stable user identifier, name, email, phone number, date of birth, registration time, and active status.
+The schema separates user profile data from authentication data.
 
-Sensitive authentication data is not stored directly in `users`. Instead, the schema separates it into:
+- `users` stores profile information, including `first_name`, `last_name`, `email`, `phone`, `date_of_birth`, `registered_at`, and `is_active`.
+- `user_credentials` stores password hashes, salts, and the hashing algorithm.
+- `user_security_questions` stores security questions, hashed answers, salts, and the hashing algorithm.
 
-- `user_credentials`
-- `user_security_questions`
+This separation prevents plaintext passwords and plaintext security answers from being stored in the main user table. Passwords and security-question answers are hashed with Argon2id, which is discussed further in Section 2.
 
-`user_credentials.user_id` is both the primary key and a foreign key to `users(user_id)`. This means each credential row belongs to exactly one user, and each user can have at most one credential row in the schema.
+#### Stations and station lines
 
-`user_security_questions` stores password-recovery data. Each security question belongs to one user through `user_id`. The table allows multiple security-question rows per user because `security_question_id` is the primary key and `user_id` is a foreign key rather than a unique key.
+Metro and national rail stations are stored separately because they belong to different transport networks and have different schedule tables.
 
-Both credential-related tables store Argon2id hash data through `password_hash` / `secret_answer_hash`, separate salt columns, and `hash_algorithm`.
+- `metro_stations` stores metro station information and an optional national rail interchange reference.
+- `national_rail_stations` stores national rail station information and an optional metro interchange reference.
+- `metro_station_lines` stores the metro lines served by each metro station.
+- `national_rail_station_lines` stores the national rail lines served by each rail station.
 
----
-
-#### Stations and interchange data
-
-The project uses separate station tables for the two networks:
-
-- `metro_stations`
-- `national_rail_stations`
-
-This separation matches the mock data and keeps station identifiers clear: metro stations use IDs such as `MS01`, while national rail stations use IDs such as `NR01`.
-
-Each station table also stores interchange fields:
-
-- `metro_stations.interchange_national_rail_station_id`
-- `national_rail_stations.interchange_metro_station_id`
-
-These fields are nullable foreign keys. Therefore, not every station is an interchange station. Only stations with a non-null interchange reference are connected to a station in the other network.
-
-Line membership is stored in separate junction tables:
-
-- `metro_station_lines`
-- `national_rail_station_lines`
-
-This is necessary because a station can be served by more than one line. The composite primary key `(station_id, line)` prevents duplicate line membership rows for the same station.
-
----
+The interchange relationship is optional because only some stations connect across networks.
 
 #### Schedules and ordered stops
 
-The schema stores metro and national rail schedules separately:
+The schema separates schedules by network:
 
 - `metro_schedules`
 - `national_rail_schedules`
 
-This matches the project’s business rules because metro and national rail have different fare structures. Metro schedules store `base_fare_usd` and `per_stop_rate_usd` directly in `metro_schedules`. National rail stores fare rates in `national_rail_schedule_fares`, because national rail fares depend on `fare_class`.
-
-Ordered stops are stored in:
+Each schedule has ordered stops:
 
 - `metro_schedule_stops`
 - `national_rail_schedule_stops`
 
-Both stop tables use `(schedule_id, stop_order)` as the primary key. This preserves the order of stations within a schedule. The schema also has `UNIQUE (schedule_id, station_id)`, preventing the same station from being repeated within the same schedule.
+The ordered stop tables are important because route direction depends on `stop_order`. A valid trip must have the origin stop before the destination stop.
 
-The national rail stop table includes `is_stopping`. This allows the schema to represent express services where a train may pass through a station but not stop there for passenger boarding or alighting.
+For national rail, the `is_stopping` column distinguishes real stopping stations from express pass-through stations. This prevents pass-through stations from being used as valid boarding or alighting stations.
 
-Operating days are stored in:
+Operating days are also normalized into junction tables:
 
 - `metro_schedule_operates_on`
 - `national_rail_schedule_operates_on`
 
-Both use `(schedule_id, day_of_week)` as a composite primary key. This avoids storing operating days as a list inside the schedule table.
+This avoids storing a list of operating days directly inside the schedule tables.
 
----
+#### National rail fare classes and seat inventory
 
-#### National rail seat inventory
+National rail fares are stored in:
 
-Reserved seating is modelled only for national rail. The seat inventory is represented through three tables:
+```text
+national_rail_schedule_fares
+```
 
-1. `seat_layouts`
-2. `coaches`
-3. `seats`
+The primary key is:
 
-`seat_layouts.schedule_id` is a unique foreign key to `national_rail_schedules(schedule_id)`. This means one national rail schedule can have at most one seat layout, and one seat layout belongs to exactly one schedule.
+```text
+(schedule_id, fare_class)
+```
 
-However, the relationship is written as optional from schedule to layout because the schema does not force every schedule to have a row in `seat_layouts`. This is also consistent with the seeding code, which looks up a layout by `schedule_id` before inserting booking rows.
+This allows each schedule to have different fare rates for standard and first class.
 
-`coaches` uses `(layout_id, coach)` as a composite primary key. `seats` uses `(layout_id, coach, seat_id)` as a composite primary key and references `coaches(layout_id, coach)`.
+Reserved seating is modeled with:
 
-The `bookings` table stores `layout_id`, `coach`, and `seat_id`, and references the composite primary key of `seats`. This ensures that a booking can only reserve a real seat that exists in the relevant seat layout.
+```text
+seat_layouts
+coaches
+seats
+```
 
----
+A `seat_layouts` row belongs to one national rail schedule through `schedule_id`. Since `seat_layouts.schedule_id` is unique, a national rail schedule can have at most one seat layout.
 
-#### Journeys supertype and booking/trip subtypes
+Each layout contains coaches, and each coach contains physical seats. Coaches also store the `fare_class`, allowing the system to check whether a requested seat belongs to the correct fare class.
 
-The `journeys` table is the shared transaction supertype. It stores fields common to both networks:
+#### Journeys, bookings, and metro trips
 
-- `journey_id`
-- `network`
-- `user_id`
-- `ticket_type`
-- `amount_usd`
-- `status`
+The `journeys` table is a shared transaction supertype. It stores fields common to both networks:
 
-The schema enforces the journey ID pattern with a `CHECK` constraint:
+```text
+journey_id
+network
+user_id
+ticket_type
+amount_usd
+status
+```
 
-- Metro journeys must have an ID beginning with `MT`.
-- National rail journeys must have an ID beginning with `BK`.
+Network-specific details are stored in subtype tables:
 
-The subtype tables are:
+- `bookings` stores national rail booking details.
+- `metro_trips` stores metro journey details.
 
-- `bookings`
-- `metro_trips`
+The `journeys` table also enforces ID prefix consistency:
 
-`bookings.booking_id` is both the primary key and a foreign key to `journeys(journey_id)`. Therefore, each national rail booking row corresponds to exactly one journey row.
+```text
+MT% for metro journeys
+BK% for national rail journeys
+```
 
-`metro_trips.trip_id` is also both the primary key and a foreign key to `journeys(journey_id)`. Therefore, each metro trip row corresponds to exactly one journey row.
-
-This design solves the polymorphic transaction problem. Shared transaction tables such as `payments` and `feedback` do not need to guess whether an ID belongs to a booking or a metro trip. They reference `journeys(journey_id)` directly.
-
----
+This design allows `payments` and `feedback` to reference `journeys(journey_id)` directly.
 
 #### National rail bookings
 
-The `bookings` table stores national rail booking details. It includes the selected schedule, origin station, destination station, travel date, departure time, fare class, seat reference, number of stops travelled, booking timestamp, travel timestamp, and seat occupation flag.
+The `bookings` table stores national rail-specific information, including:
 
-The seat reference is enforced through:
-
-```sql
-FOREIGN KEY (layout_id, coach, seat_id)
-REFERENCES seats(layout_id, coach, seat_id)
+```text
+schedule_id
+origin_station_id
+destination_station_id
+travel_date
+departure_time
+fare_class
+layout_id
+coach
+seat_id
+stops_travelled
+seat_occupies_slot
 ```
 
-The schema also prevents invalid routes using:
+The seat reference is a composite foreign key:
 
-```sql
-CHECK (origin_station_id <> destination_station_id)
+```text
+(layout_id, coach, seat_id)
 ```
 
-Seat rebooking after cancellation is handled through `seat_occupies_slot`. The partial unique index only blocks active seat holds:
+which points to:
 
-```sql
-CREATE UNIQUE INDEX idx_bookings_active_seat_unique
-ON bookings (schedule_id, travel_date, departure_time, coach, seat_id)
-WHERE seat_occupies_slot = TRUE;
+```text
+seats(layout_id, coach, seat_id)
 ```
 
-This means historical cancelled bookings can remain in the database, while the cancelled seat becomes available for future booking.
+This ensures that a booking can only reserve a seat that exists in the seat inventory.
 
----
+The `seat_occupies_slot` field is used to distinguish active seat reservations from historical cancelled bookings. Cancelled bookings remain in the database, but they no longer block the seat.
 
 #### Metro trips
 
-The `metro_trips` table stores metro journey details. It references a metro schedule, origin station, destination station, and the shared `journeys` table.
+The `metro_trips` table stores metro-specific trip data, including:
 
-Metro trips do not reference seats, coaches, or seat layouts because the mock data and booking rules define metro travel as non-reserved seating.
+```text
+schedule_id
+origin_station_id
+destination_station_id
+travel_date
+day_pass_ref
+stops_travelled
+purchased_at
+travelled_at
+```
 
-`day_pass_ref` is an optional foreign key to `journeys(journey_id)`. This allows additional metro trips to be linked to a parent day-pass journey. The foreign key uses `ON DELETE SET NULL`, so if the parent journey is deleted, the child trip record can remain while losing the parent reference.
+Metro trips do not reference seats because the metro system does not use reserved seating.
 
----
+The `day_pass_ref` field can reference a parent day-pass journey. It uses `ON DELETE SET NULL`, allowing related trip records to remain even if the referenced day-pass journey is removed.
 
 #### Payments and feedback
 
-`payments` references `journeys(journey_id)`. This allows one payment structure to support both national rail bookings and metro trips.
+`payments` references `journeys(journey_id)`, so the same payment table supports both metro and national rail transactions.
 
-The schema also contains a partial unique index:
+The key payment fields are:
 
-```sql
-CREATE UNIQUE INDEX idx_payments_one_paid_per_journey
-ON payments(journey_id)
-WHERE status = 'paid';
+```text
+payment_id
+journey_id
+amount_usd
+method
+status
+paid_at
 ```
 
-This means a journey can have payment records, but it can have at most one payment whose status is currently `paid`.
+`feedback` also references `journeys(journey_id)` and `users(user_id)`. It includes a unique constraint on `(journey_id, user_id)` so the same user cannot submit duplicate feedback for the same journey.
 
-`feedback` references both `journeys(journey_id)` and `users(user_id)`. It also has:
+#### Policy documents
 
-```sql
-UNIQUE (journey_id, user_id)
+The `policy_documents` table stores embedded policy chunks for the vector/RAG component. It includes:
+
+```text
+chunk_id
+title
+category
+document_type
+policy_id
+content
+metadata
+embedding
+source_file
+created_at
 ```
 
-This prevents the same user from submitting multiple feedback rows for the same journey.
+The table uses pgvector with a 768-dimensional embedding column and an HNSW cosine index. This supports semantic policy retrieval while keeping policy search separate from transactional booking data.
 
 ---
 
-#### Ticket types and ticket-network mapping
+### 1.4 Cardinality Explanation
 
-The `ticket_types` table stores the ticket catalogue. The schema also includes `ticket_type_networks`, which maps ticket types to the networks where they are valid.
-
-The primary key of `ticket_type_networks` is `(ticket_type, network)`. This allows the same ticket type to be associated with more than one network when appropriate, while still preventing duplicate mappings.
-
-`journeys.ticket_type` references `ticket_types(ticket_type)`, so every journey must use a valid ticket type from the ticket catalogue.
-
----
-
-#### Policy documents for pgvector RAG
-
-The `policy_documents` table stores policy chunks for semantic retrieval. It includes:
-
-- `chunk_id`
-- `title`
-- `category`
-- `document_type`
-- `policy_id`
-- `content`
-- `metadata`
-- `embedding`
-- `source_file`
-
-The `embedding` column uses pgvector. In the submitted schema, the vector dimension is `vector(768)`, matching the default Ollama `nomic-embed-text` embedding configuration.
-
-The table has an HNSW index on `embedding vector_cosine_ops`, supporting cosine-similarity search for policy lookup. This table is part of PostgreSQL, but it is logically separate from the transactional booking model.
-
----
-
-### 1.4 Cardinality Notes
-
-| Relationship | Cardinality | Basis in schema |
-|---|---:|---|
-| `users` → `user_credentials` | 1:0..1 | `user_credentials.user_id` is PK and FK to `users(user_id)`. |
-| `users` → `user_security_questions` | 1:N | `user_security_questions.user_id` is a non-unique FK. |
-| `users` → `journeys` | 1:N | `journeys.user_id` references `users(user_id)`. |
-| `users` → `feedback` | 1:N | `feedback.user_id` references `users(user_id)`. |
-| `ticket_types` → `ticket_type_networks` | 1:N | `ticket_type_networks.ticket_type` references `ticket_types(ticket_type)`. |
-| `ticket_types` → `journeys` | 1:N | `journeys.ticket_type` references `ticket_types(ticket_type)`. |
-| `journeys` → `bookings` | 1:0..1 | `bookings.booking_id` is PK and FK to `journeys(journey_id)`. |
-| `journeys` → `metro_trips` | 1:0..1 | `metro_trips.trip_id` is PK and FK to `journeys(journey_id)`. |
-| `journeys` → `payments` | 1:N | `payments.journey_id` references `journeys(journey_id)`. |
-| `journeys` → `feedback` | 1:N | `feedback.journey_id` references `journeys(journey_id)`. |
-| `metro_stations` → `metro_station_lines` | 1:N | `(station_id, line)` is the PK in `metro_station_lines`. |
-| `national_rail_stations` → `national_rail_station_lines` | 1:N | `(station_id, line)` is the PK in `national_rail_station_lines`. |
-| `metro_schedules` → `metro_schedule_stops` | 1:N | `(schedule_id, stop_order)` is the PK in `metro_schedule_stops`. |
-| `national_rail_schedules` → `national_rail_schedule_stops` | 1:N | `(schedule_id, stop_order)` is the PK in `national_rail_schedule_stops`. |
-| `metro_schedules` → `metro_schedule_operates_on` | 1:N | `(schedule_id, day_of_week)` is the PK. |
-| `national_rail_schedules` → `national_rail_schedule_operates_on` | 1:N | `(schedule_id, day_of_week)` is the PK. |
-| `national_rail_schedules` → `national_rail_schedule_fares` | 1:N | `(schedule_id, fare_class)` is the PK. |
-| `national_rail_schedules` → `seat_layouts` | 1:0..1 | `seat_layouts.schedule_id` is a unique FK. |
-| `seat_layouts` → `coaches` | 1:N | `coaches.layout_id` references `seat_layouts(layout_id)`. |
-| `coaches` → `seats` | 1:N | `seats(layout_id, coach)` references `coaches(layout_id, coach)`. |
-| `seats` → `bookings` | 1:N over time | Bookings reference `(layout_id, coach, seat_id)`; active duplicates are blocked by partial unique index. |
-| `metro_schedules` → `metro_trips` | 1:N | `metro_trips.schedule_id` references `metro_schedules(schedule_id)`. |
-| `national_rail_schedules` → `bookings` | 1:N | `bookings.schedule_id` references `national_rail_schedules(schedule_id)`. |
-| `metro_trips.day_pass_ref` → `journeys` | N:0..1 | `day_pass_ref` is nullable and references `journeys(journey_id)`. |
+| Relationship | Cardinality | Explanation |
+|---|---|---|
+| `users` → `user_credentials` | 1 to 0..1 | A user may have one credential record. |
+| `users` → `user_security_questions` | 1 to many | A user may have multiple security questions. |
+| `users` → `journeys` | 1 to many | A user may create many journeys. |
+| `ticket_types` → `ticket_type_networks` | 1 to many | A ticket type may be valid on one or more networks. |
+| `ticket_types` → `journeys` | 1 to many | A ticket type can be used by many journeys. |
+| `journeys` → `bookings` | 1 to 0..1 | A national rail journey may have one booking detail row. |
+| `journeys` → `metro_trips` | 1 to 0..1 | A metro journey may have one metro trip detail row. |
+| `journeys` → `payments` | 1 to many | A journey can have payment records. |
+| `journeys` → `feedback` | 1 to many | A journey can receive feedback. |
+| `journeys` → `metro_trips` through `day_pass_ref` | 1 to many | A day pass journey may be referenced by related metro trips. |
+| `metro_stations` ↔ `national_rail_stations` | optional 1 to optional 1 | Some metro and national rail stations are connected by interchange references. |
+| `metro_stations` → `metro_station_lines` | 1 to many | A metro station may serve multiple metro lines. |
+| `national_rail_stations` → `national_rail_station_lines` | 1 to many | A rail station may serve multiple rail lines. |
+| `metro_schedules` → `metro_schedule_stops` | 1 to many | A metro schedule contains ordered stops. |
+| `national_rail_schedules` → `national_rail_schedule_stops` | 1 to many | A national rail schedule contains ordered stops. |
+| `metro_schedules` → `metro_schedule_operates_on` | 1 to many | A metro schedule can operate on multiple days. |
+| `national_rail_schedules` → `national_rail_schedule_operates_on` | 1 to many | A rail schedule can operate on multiple days. |
+| `national_rail_schedules` → `national_rail_schedule_fares` | 1 to many | A rail schedule can have multiple fare classes. |
+| `national_rail_schedules` → `seat_layouts` | 1 to 0..1 | A rail schedule may have at most one seat layout. |
+| `seat_layouts` → `coaches` | 1 to many | A seat layout contains multiple coaches. |
+| `coaches` → `seats` | 1 to many | A coach contains multiple physical seats. |
+| `seats` → `bookings` | 1 to many over time | A seat can appear in many historical bookings, but only one active booking for the same schedule, travel date, departure time, coach, and seat. |
 
 ---
 
-### 1.5 Key Constraints Supporting the ER Design
+### 1.5 Important Constraints
 
-The schema uses the following constraints to enforce data correctness:
+The schema uses constraints to protect data correctness.
 
 1. **Primary keys** identify all major entities, including users, stations, schedules, journeys, bookings, metro trips, payments, feedback, and policy documents.
-2. **Foreign keys** enforce references between users, journeys, schedules, stations, seats, payments, and feedback.
-3. **Composite primary keys** are used where the identifier is only meaningful in context, such as:
-   - `(schedule_id, stop_order)`
-   - `(schedule_id, day_of_week)`
-   - `(schedule_id, fare_class)`
-   - `(layout_id, coach)`
-   - `(layout_id, coach, seat_id)`
-4. **Unique constraints** prevent duplicate business records, such as duplicate station appearances in the same schedule and duplicate active paid payments.
-5. **Partial unique indexes** are used for active seat reservations. Cancelled bookings can remain in the database without blocking the same seat from being booked again.
-6. **CHECK constraints** enforce valid business values, such as positive fare values, positive stop counts, valid travel timestamps, different origin and destination stations, and correct `journey_id` prefixes for metro and national rail.
-7. **Enumerated types** restrict controlled values such as network type, ticket type, service type, fare class, journey status, payment method, payment status, and day of week.
+2. **Foreign keys** preserve references between users, credentials, security questions, schedules, stops, stations, seats, journeys, payments, and feedback.
+3. **Schedule stop order** supports direction-sensitive route and availability queries.
+4. **National rail pass-through stations** are represented with `is_stopping = FALSE`.
+5. **Ticket type validity** is normalized through `ticket_type_networks`, which prevents invalid network-ticket combinations at the data-model level.
+6. **Journey ID prefix checks** enforce that metro journeys use `MT%` IDs and national rail journeys use `BK%` IDs.
+7. **Seat inventory integrity** is enforced through the composite seat foreign key `(layout_id, coach, seat_id)`.
+8. **Active seat uniqueness** is enforced with a partial unique index on active seat reservations, so cancelled bookings can remain in history while releasing the seat.
+9. **Feedback uniqueness** is enforced with a unique constraint on `(journey_id, user_id)`.
+10. **Policy retrieval data** is stored separately in `policy_documents`, so RAG search does not interfere with transactional booking integrity.
 
-Overall, the ER design follows the project’s actual implementation: common transaction fields are stored in `journeys`, network-specific details are stored in `bookings` and `metro_trips`, national rail seat reservations are enforced through composite keys and a partial unique index, and policy RAG data is stored separately in `policy_documents`.
+Overall, the ER design keeps transactional data normalized while supporting the different requirements of metro trips, national rail bookings, route lookup, reserved seating, payments, feedback, and policy retrieval.
 
 ---
 
@@ -2751,17 +2718,17 @@ For the course project, this trade-off is acceptable because each database techn
 
 See **`TASK6.md`** for the Task 6 file manifest.
 
-### 7.1 Motivation
+### Motivation
 
-The optional Task 6 extension adds seat-occupancy analytics and a persistent trip-history UI.
+Aggregated seat occupancy answers operational capacity questions without listing every seat row. The original booking system can show available seats, but an aggregated capacity answer is more useful when the user wants a quick operational summary.
 
-The first motivation is **capacity visibility**. The original booking flow can list available seats, but users often need an aggregated answer instead of a full seat list. For example, a user may ask:
+For example, a user may ask:
 
 ```text
 How many standard seats are available on NR_SCH01 on 2026-06-15?
 ```
 
-A useful answer should show:
+The Task 6 extension answers this type of question with:
 
 ```text
 total seats
@@ -2769,13 +2736,11 @@ booked seats
 available seats
 ```
 
-The second motivation is **trip-history visibility**. Chat replies are temporary and conversational. A logged-in passenger benefits from a persistent table showing National Rail and Metro journeys in one place. The **My Bookings** tab provides this structured view.
-
-Together, these improvements make TransitFlow more useful for both passenger-facing use and live demonstration.
+A **My Bookings** table also gives logged-in passengers persistent, scannable journey history. This is more useful than relying only on ephemeral chat replies.
 
 ---
 
-### 7.2 Database Changes
+### Database Changes
 
 No new database tables were added for Task 6. The extension reuses the existing normalized seat and booking schema:
 
@@ -2783,87 +2748,55 @@ No new database tables were added for Task 6. The extension reuses the existing 
 seat_layouts → coaches → seats → bookings
 ```
 
-The main Task 6 database operation is:
+The main extension function is:
 
 ```python
 pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
+# returns: total_seats, booked_seats, available_seats
 ```
 
-It returns:
+SQL counts total seats through:
 
 ```text
-schedule_id
-travel_date
-fare_class
-total_seats
-booked_seats
-available_seats
+seat_layouts → coaches → seats
 ```
 
-The function works as follows:
-
-1. Count total seats for the selected schedule and fare class through `seat_layouts`, `coaches`, and `seats`.
-2. Count currently available seats by delegating to the existing `query_available_seats(...)` function.
-3. Calculate booked seats as:
+The available-seat count delegates to the existing:
 
 ```python
-booked_seats = total_seats - available_seats
+query_available_seats(...)
 ```
 
-This design avoids duplicating seat-availability logic. It also respects the existing cancellation model, where cancelled bookings release seats through:
+This keeps the occupancy result consistent with the normal booking flow and the existing active-seat logic.
+
+Cancelled bookings do not continue to occupy seats because the booking system uses:
 
 ```text
 bookings.seat_occupies_slot = FALSE
 ```
 
-Therefore, the Task 6 occupancy result stays consistent with the booking and cancellation system.
+when a national rail booking is cancelled.
 
 ---
 
-### 7.3 UI Changes
+### UI Changes
 
-Task 6 adds two substantial UI panels in `skeleton/ui.py`.
+Task 6 adds substantial UI support for live demonstration.
 
 | Tab | Data source | Purpose |
-|---|---|---|
-| **My Bookings** | `query_user_bookings(email)` | Displays a dataframe of the logged-in user's National Rail and Metro journeys. |
-| **Seat Capacity** | `query_schedule_seat_occupancy(...)` | Performs a direct schedule/date/fare-class occupancy lookup without LLM guessing. |
+|-----|-------------|---------|
+| **My Bookings** | `query_user_bookings(email)` | Dataframe of National Rail and Metro journeys for the logged-in user. |
+| **Seat Capacity** | `query_schedule_seat_occupancy(...)` | Dropdown schedule + date + fare-class lookup without LLM guessing. |
 
-The **Seat Capacity** tab bypasses the LLM and directly calls PostgreSQL. This is important because seat capacity must be calculated from live database state, not generated from model text.
+The **Seat Capacity** tab performs a direct PostgreSQL lookup. It does not ask the LLM to estimate seat capacity.
 
-The **My Bookings** tab also uses structured PostgreSQL data rather than the chat transcript. This gives the passenger a persistent, scannable booking history.
+The **My Bookings** tab also uses structured PostgreSQL data and gives the logged-in user a persistent journey-history table.
 
 ---
 
-### 7.4 Agent Integration
+### Agent Integration
 
 The agent also supports natural-language seat-capacity questions.
-
-When the user message includes seat-capacity wording such as:
-
-```text
-seat
-seats
-available
-remaining
-capacity
-occupancy
-座位
-空位
-剩餘
-```
-
-and includes a National Rail schedule ID such as:
-
-```text
-NR_SCH01
-```
-
-the agent calls:
-
-```python
-pg.query_schedule_seat_occupancy(schedule_id, travel_date, fare_class)
-```
 
 Example user question:
 
@@ -2880,11 +2813,17 @@ booked: ...
 available: ...
 ```
 
-This keeps the answer grounded in database state instead of relying on the LLM to infer capacity.
+The agent response is generated from:
+
+```python
+pg.query_schedule_seat_occupancy(...)
+```
+
+rather than from unsupported LLM inference.
 
 ---
 
-### 7.5 Example Queries and Expected Output
+### Example Queries and Expected Output
 
 #### Example 1 — Python query
 
@@ -2930,21 +2869,9 @@ Available seats: 16
 
 ---
 
-### 7.6 Testing Evidence — Screenshots
+### Testing Evidence — Screenshots
 
-The following screenshots should be saved in:
-
-```text
-docs/screenshots/
-```
-
-The Markdown image links below assume the following file names:
-
-```text
-docs/screenshots/task6_my_bookings.png
-docs/screenshots/task6_seat_capacity.png
-docs/screenshots/task6_chat_seats.png
-```
+> **How to add:** Run `python3 skeleton/ui.py`, capture PNG screenshots, and save them to `docs/screenshots/`. The Markdown image links below assume the screenshot files use the listed names.
 
 #### Screenshot 1 — My Bookings tab after login
 
@@ -2952,16 +2879,16 @@ Steps:
 
 ```text
 1. Run python3 skeleton/ui.py
-2. Log in as alice.tan@email.com / alice1990
-3. Open the My Bookings tab
+2. Log in with alice.tan@email.com / alice1990
+3. Open My Bookings
 4. Click Refresh bookings
 ```
 
 Expected result:
 
 ```text
-A dataframe showing the logged-in user's National Rail and Metro journeys.
-The note should show the journey count for alice.tan@email.com.
+A dataframe with at least one National Rail and/or Metro row.
+The note should show the journey count for Alice.
 ```
 
 ![Task 6 — My Bookings tab after login](docs/screenshots/task6_my_bookings.png)
@@ -2974,17 +2901,17 @@ Steps:
 
 ```text
 1. Run python3 skeleton/ui.py
-2. Open the Seat Capacity tab
+2. Open Seat Capacity
 3. Select schedule NR_SCH01
 4. Enter date 2026-06-01
-5. Select fare class standard
+5. Select class standard
 6. Click Look up occupancy
 ```
 
 Expected result:
 
 ```text
-A Markdown result block showing total seats, booked seats, and available seats.
+A Markdown block showing total, booked, and available seats.
 For the seeded data, the expected result is 18 total seats, 2 booked seats, and 16 available seats.
 ```
 
@@ -2992,29 +2919,49 @@ For the seeded data, the expected result is 18 total seats, 2 booked seats, and 
 
 ---
 
-#### Screenshot 3 — Chat agent seat-occupancy response
+#### Screenshot 3 — Chat agent seat question
 
 Steps:
 
 ```text
 1. Run python3 skeleton/ui.py
-2. Open the Chat tab
+2. Open Chat
 3. Ask: How many seats are available on NR_SCH01 on 2026-06-15?
 ```
 
 Expected result:
 
 ```text
-The agent returns a formatted seat-occupancy block with total, booked, and available seats.
+The agent returns a formatted seat-occupancy response with total, booked, and available seats.
 ```
 
 ![Task 6 — Chat seat occupancy response](docs/screenshots/task6_chat_seats.png)
 
 ---
 
-### 7.7 Automated Test Evidence
+### Automated Test Evidence
 
-The Task 6 feature can also be validated through project scripts.
+The Task 6 feature can also be checked with the following direct database query:
+
+```python
+>>> pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
+{'schedule_id': 'NR_SCH01', 'travel_date': '2026-06-01', 'fare_class': 'standard',
+ 'total_seats': 18, 'booked_seats': 2, 'available_seats': 16}
+```
+
+The agent can also be tested with:
+
+```text
+How many seats are available on NR_SCH01 on 2026-06-15?
+```
+
+Expected result:
+
+```text
+The agent returns a formatted occupancy block.
+```
+
+Validation commands:
 
 ```bash
 python3 skeleton/validate_integration.py
@@ -3022,21 +2969,13 @@ python3 skeleton/validate_rubric.py
 python3 skeleton/validate_ui.py
 ```
 
-These scripts should be run before final submission. If all tests pass, record the terminal output or include it as additional evidence.
-
-The most important direct database check is:
-
-```python
->>> pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
-{'schedule_id': 'NR_SCH01', 'travel_date': '2026-06-01', 'fare_class': 'standard',
- 'total_seats': 18, 'booked_seats': 2, 'available_seats': 16}
-```
+These commands should be run before final submission. If all validation scripts pass, the terminal output can be saved or screenshotted as additional testing evidence.
 
 ---
 
-### 7.8 Summary
+### Summary
 
-Task 6 adds a database-backed capacity feature and a substantial UI enhancement.
+Task 6 adds a database-backed seat-occupancy feature and a substantial UI enhancement.
 
 The extension contributes:
 
@@ -3044,50 +2983,6 @@ The extension contributes:
 2. A **Seat Capacity** tab for direct database lookup.
 3. A **My Bookings** tab for persistent journey history.
 4. Agent support for natural-language seat-capacity questions.
-5. Screenshot and validation evidence for live demonstration.
+5. Screenshot-based testing evidence for live demonstration.
 
 The extension fits the existing design because it reuses normalized seat inventory, active booking logic, cancellation seat-release logic, and user booking history. It does not add duplicate tables or rely on ungrounded LLM-generated capacity answers.
-
-### Example queries & expected output
-
-#### Example 1 — Python query
-
-```python
->>> from databases.relational import queries as pg
->>> pg.query_schedule_seat_occupancy("NR_SCH01", "2026-06-01", "standard")
-{'schedule_id': 'NR_SCH01', 'travel_date': '2026-06-01', 'fare_class': 'standard',
- 'total_seats': 18, 'booked_seats': 2, 'available_seats': 16}
-```
-
-#### Example 2 — Agent query
-
-```text
-How many seats are available on NR_SCH01 on 2026-06-15?
-```
-
-Expected output:
-
-```text
-Seat occupancy — NR_SCH01 on 2026-06-15 (standard)
-total seats: ...
-booked: ...
-available: ...
-```
-
-#### Example 3 — UI query
-
-```text
-Seat Capacity tab
-Schedule: NR_SCH01
-Date: 2026-06-01
-Class: standard
-Click: Look up occupancy
-```
-
-Expected output:
-
-```text
-Total seats: 18
-Booked seats: 2
-Available seats: 16
-```
